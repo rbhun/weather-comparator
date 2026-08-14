@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PMC 2026 - Weather Decision Dashboard</title>
+    <script src="./vendor/plotly.min.js"></script>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #131a2d;
+        --panel-border: #243251;
+        --text: #f2f5ff;
+        --muted: #b7c4e5;
+        --accent: #78a6ff;
+        --warn-bg: #3a2b04;
+        --warn-border: #c9951a;
+        --warn-text: #ffe5a8;
+        --bad-bg: #33201e;
+        --bad-border: #8a4f49;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 17px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        border-bottom: 1px solid var(--panel-border);
+        background: rgba(11, 16, 32, 0.96);
+        backdrop-filter: blur(4px);
+        padding: 0.8rem 1rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .title-wrap h1 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+
+      .title-wrap p {
+        margin: 0.25rem 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .time-toggle {
+        display: inline-flex;
+        gap: 0.35rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.35rem;
+        background: #0f1629;
+      }
+
+      .time-toggle button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 0.45rem 0.85rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .time-toggle button.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .container {
+        width: min(1400px, calc(100% - 1.5rem));
+        margin: 0.75rem auto 2rem;
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .warning-banner {
+        border: 1px solid var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-radius: 0.8rem;
+        padding: 0.7rem 0.9rem;
+      }
+
+      .warning-banner strong {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      .warning-banner ul {
+        margin: 0;
+        padding-left: 1.3rem;
+      }
+
+      .status {
+        border: 1px solid var(--panel-border);
+        background: var(--panel);
+        border-radius: 0.8rem;
+        padding: 0.85rem 1rem;
+        color: var(--muted);
+      }
+
+      .card {
+        border: 1px solid var(--panel-border);
+        background: var(--panel);
+        border-radius: 0.8rem;
+        padding: 0.9rem;
+      }
+
+      .card h2,
+      .card h3 {
+        margin: 0;
+      }
+
+      .card h2 {
+        font-size: 1.22rem;
+      }
+
+      .subnote {
+        margin-top: 0.3rem;
+        color: var(--muted);
+        font-size: 0.96rem;
+      }
+
+      .controls {
+        margin-top: 0.75rem;
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      label {
+        font-weight: 600;
+      }
+
+      input[type="range"],
+      select {
+        width: 100%;
+      }
+
+      .plot {
+        width: 100%;
+        min-height: 380px;
+      }
+
+      .plot.short {
+        min-height: 300px;
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 0.85rem;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.7rem;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--panel-border);
+        padding: 0.45rem 0.5rem;
+        text-align: left;
+      }
+
+      th {
+        background: #101832;
+      }
+
+      .biased-row {
+        background: var(--bad-bg);
+        border-left: 4px solid var(--bad-border);
+      }
+
+      .badge {
+        display: inline-block;
+        margin: 0.16rem 0.25rem 0.16rem 0;
+        padding: 0.22rem 0.5rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        font-size: 0.83rem;
+      }
+
+      .meta-grid {
+        display: grid;
+        gap: 0.6rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .meta-card {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.6rem;
+        background: #101732;
+      }
+
+      .meta-card .k {
+        color: var(--muted);
+        display: block;
+        font-size: 0.88rem;
+      }
+
+      .meta-card .v {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+
+      .help {
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title-wrap">
+        <h1>PMC 2026 - Calm Risk and Route Strategy</h1>
+        <p id="generated-time">Generated: loading...</p>
+      </div>
+      <div class="time-toggle" role="group" aria-label="Time display mode">
+        <button id="mode-local" class="active" type="button">Local time</button>
+        <button id="mode-utc" type="button">UTC</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="warning-banner" class="warning-banner"></section>
+      <section id="status" class="status">Loading dashboard/data.json...</section>
+
+      <section class="card">
+        <h2>1) Calm risk map (flagship)</h2>
+        <p class="subnote">
+          Domain heatmap of probability of wind below 5 kt. Tap a cell for details.
+        </p>
+        <div class="controls">
+          <label for="hour-slider" id="hour-label">Hour:</label>
+          <input id="hour-slider" type="range" min="0" max="23" step="1" value="0" />
+        </div>
+        <div id="map-plot" class="plot" aria-label="Calm risk map"></div>
+      </section>
+
+      <section class="card">
+        <h2>2) Route comparison and uncertainty</h2>
+        <p class="subnote">
+          Distributions are shown as full sample spreads. Focus on percentiles, not means.
+        </p>
+        <div id="route-plot" class="plot short"></div>
+        <div id="route-summary" class="meta-grid"></div>
+      </section>
+
+      <section class="card">
+        <h3>Head-to-head margins (percentiles included)</h3>
+        <div id="head-to-head-table"></div>
+      </section>
+
+      <section class="card">
+        <h2>3) Point detail (selected grid cell)</h2>
+        <p class="subnote">
+          One tap away from map click. Includes by-hour speed and calm risk, plus wind rose when directional components are present.
+        </p>
+        <div class="grid-2">
+          <div>
+            <h3 id="point-title">Selected cell: --</h3>
+            <div id="point-metrics" class="meta-grid"></div>
+            <div id="point-detail-table"></div>
+          </div>
+          <div>
+            <div id="point-hour-plot" class="plot short"></div>
+            <div id="point-rose-plot" class="plot short"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>4) Cross-shore transects</h2>
+        <p class="subnote">Mean wind vs offshore distance, by hour.</p>
+        <div id="transect-controls" class="controls hidden">
+          <label for="transect-select">Transect</label>
+          <select id="transect-select"></select>
+        </div>
+        <div id="transect-plot" class="plot short"></div>
+        <p id="transect-empty" class="help hidden">
+          Transect data is not present in this payload. The dashboard can render it when a `transects` section is included in data.json.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>5) Model skill</h2>
+        <p class="subnote">
+          Rows tagged <code>reference_biased=true</code> are visually separated and are not comparable to independent models.
+        </p>
+        <div id="skill-table"></div>
+      </section>
+
+      <section id="file-loader" class="card hidden">
+        <h3>Local file fallback</h3>
+        <p class="help">
+          Your browser blocked direct local fetch of <code>data.json</code> (common on file:// pages). Select the same file manually to continue.
+        </p>
+        <input id="data-file-input" type="file" accept=".json,application/json" />
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      const state = {
+        payload: null,
+        timeMode: "local",
+        selectedHour: 0,
+        selectedLatIdx: 0,
+        selectedLonIdx: 0,
+      };
+
+      const els = {
+        status: document.getElementById("status"),
+        warningBanner: document.getElementById("warning-banner"),
+        generatedTime: document.getElementById("generated-time"),
+        hourSlider: document.getElementById("hour-slider"),
+        hourLabel: document.getElementById("hour-label"),
+        modeLocal: document.getElementById("mode-local"),
+        modeUtc: document.getElementById("mode-utc"),
+        mapPlot: document.getElementById("map-plot"),
+        routePlot: document.getElementById("route-plot"),
+        routeSummary: document.getElementById("route-summary"),
+        headToHeadTable: document.getElementById("head-to-head-table"),
+        pointTitle: document.getElementById("point-title"),
+        pointMetrics: document.getElementById("point-metrics"),
+        pointDetailTable: document.getElementById("point-detail-table"),
+        pointHourPlot: document.getElementById("point-hour-plot"),
+        pointRosePlot: document.getElementById("point-rose-plot"),
+        transectControls: document.getElementById("transect-controls"),
+        transectSelect: document.getElementById("transect-select"),
+        transectPlot: document.getElementById("transect-plot"),
+        transectEmpty: document.getElementById("transect-empty"),
+        skillTable: document.getElementById("skill-table"),
+        fileLoader: document.getElementById("file-loader"),
+        dataFileInput: document.getElementById("data-file-input"),
+      };
+
+      const plotLayoutBase = {
+        paper_bgcolor: "#131a2d",
+        plot_bgcolor: "#131a2d",
+        font: { color: "#f2f5ff", size: 14 },
+        margin: { l: 50, r: 20, t: 40, b: 60 },
+        hovermode: false,
+      };
+
+      function asNum(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function formatTimeWithZone(dateUtc, timeZone) {
+        const fmt = new Intl.DateTimeFormat("en-GB", {
+          timeZone,
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZoneName: "short",
+        });
+        const parts = fmt.formatToParts(dateUtc);
+        const byType = {};
+        parts.forEach((p) => {
+          byType[p.type] = (byType[p.type] || "") + p.value;
+        });
+        return `${byType.day} ${byType.month} ${byType.hour}:${byType.minute} ${byType.timeZoneName}`;
+      }
+
+      function formatTimestamp(isoUtc) {
+        const date = new Date(isoUtc);
+        if (state.timeMode === "utc") {
+          return formatTimeWithZone(date, "UTC");
+        }
+        return formatTimeWithZone(date, state.payload.meta.display_timezone);
+      }
+
+      function hourLabel(hour) {
+        const utcDate = new Date(Date.UTC(2026, 7, 21, hour, 0, 0));
+        if (state.timeMode === "utc") {
+          return formatTimeWithZone(utcDate, "UTC");
+        }
+        return formatTimeWithZone(utcDate, state.payload.meta.display_timezone);
+      }
+
+      function setStatus(msg, isError) {
+        els.status.textContent = msg;
+        els.status.style.color = isError ? "#ffd0d0" : "#b7c4e5";
+      }
+
+      function round2(v) {
+        return v == null ? "N/A" : (Math.round(v * 100) / 100).toFixed(2);
+      }
+
+      function windDirFromUv(u, v) {
+        if (u == null || v == null) return null;
+        const rad = Math.atan2(-u, -v);
+        const deg = ((rad * 180) / Math.PI + 360) % 360;
+        return deg;
+      }
+
+      function buildWarnings(meta) {
+        const warnings = Array.isArray(meta.warnings) ? meta.warnings.slice() : [];
+        if (meta.polar_is_validated === false) {
+          const txt = "Polar below 8 kt is unvalidated. Treat elapsed times as relative comparison, not absolute forecast.";
+          if (!warnings.some((w) => String(w).toLowerCase().includes("unvalidated"))) {
+            warnings.unshift(txt);
+          }
+        }
+        const lis = warnings.map((w) => `<li>${String(w)}</li>`).join("");
+        els.warningBanner.innerHTML = `<strong>Persistent operational warnings</strong><ul>${lis || "<li>None supplied.</li>"}</ul>`;
+      }
+
+      function getByHour(hour) {
+        return state.payload.climatology.by_hour.find((row) => Number(row.hour) === Number(hour));
+      }
+
+      function getCellSeries(field) {
+        return state.payload.climatology.by_hour.map((row) => {
+          const matrix = row[field];
+          if (!Array.isArray(matrix)) return null;
+          const latRow = matrix[state.selectedLatIdx];
+          if (!Array.isArray(latRow)) return null;
+          return asNum(latRow[state.selectedLonIdx]);
+        });
+      }
+
+      function refreshTimeLabelsOnly() {
+        if (!state.payload) return;
+        els.generatedTime.textContent = `Generated: ${formatTimestamp(state.payload.meta.generated_utc)}`;
+        els.hourLabel.textContent = `Hour: ${hourLabel(state.selectedHour)} (from UTC hour ${state.selectedHour})`;
+      }
+
+      function renderCalmMap() {
+        const byHour = getByHour(state.selectedHour) || state.payload.climatology.by_hour[0];
+        const z = byHour.p_below_5kt;
+        const lat = state.payload.climatology.grid.lat;
+        const lon = state.payload.climatology.grid.lon;
+        const course = state.payload.meta.course || {};
+        const routes = Array.isArray(state.payload.routes) ? state.payload.routes : [];
+
+        const routeTraces = routes.map((route) => ({
+          type: "scatter",
+          mode: "lines",
+          x: route.legs.map((pt) => pt[1]),
+          y: route.legs.map((pt) => pt[0]),
+          line: { width: 1.2, color: "rgba(235,235,235,0.35)" },
+          hoverinfo: "skip",
+          showlegend: false,
+        }));
+        const keyRoute = [
+          [course.start && course.start[0], course.start && course.start[1]],
+          [course.gate && course.gate[0], course.gate && course.gate[1]],
+          [course.finish && course.finish[0], course.finish && course.finish[1]],
+        ].filter((pt) => pt[0] != null && pt[1] != null);
+
+        const traces = [
+          {
+            type: "heatmap",
+            z,
+            x: lon,
+            y: lat,
+            zmin: 0,
+            zmax: 1,
+            colorscale: "Cividis",
+            colorbar: { title: "P(<5 kt)" },
+            hoverinfo: "skip",
+          },
+          ...routeTraces,
+          {
+            type: "scatter",
+            mode: "lines+markers",
+            x: keyRoute.map((pt) => pt[1]),
+            y: keyRoute.map((pt) => pt[0]),
+            name: "Start-Gate-Finish",
+            line: { width: 3, color: "#ffffff" },
+            marker: { size: 7, color: "#ffffff" },
+            hoverinfo: "skip",
+          },
+        ];
+
+        const layout = {
+          ...plotLayoutBase,
+          title: `Calm risk at ${hourLabel(state.selectedHour)}`,
+          xaxis: { title: "Longitude (deg E)", zeroline: false },
+          yaxis: { title: "Latitude (deg N)", zeroline: false },
+        };
+        Plotly.react(els.mapPlot, traces, layout, { displayModeBar: false, responsive: true });
+      }
+
+      function renderRouteComparison() {
+        const routes = Array.isArray(state.payload.routes) ? state.payload.routes : [];
+        const traces = routes.map((route) => ({
+          type: "box",
+          y: (route.elapsed_hours && route.elapsed_hours.samples) || [],
+          name: route.label || route.id,
+          boxpoints: false,
+          marker: { color: "#88b3ff" },
+          line: { color: "#9bc1ff" },
+          hoverinfo: "skip",
+        }));
+        const layout = {
+          ...plotLayoutBase,
+          title: "Elapsed-time distributions (hours) with full sample uncertainty",
+          yaxis: { title: "Elapsed hours" },
+          xaxis: { tickangle: -25 },
+        };
+        Plotly.react(els.routePlot, traces, layout, { displayModeBar: false, responsive: true });
+
+        els.routeSummary.innerHTML = routes
+          .map((route) => {
+            const e = route.elapsed_hours || {};
+            return `
+              <div class="meta-card">
+                <span class="k">${route.label || route.id}</span>
+                <div class="v">${round2(asNum(e.p50))} h median</div>
+                <div class="badge">P10 ${round2(asNum(e.p10))} h</div>
+                <div class="badge">P90 ${round2(asNum(e.p90))} h</div>
+                <div class="badge">Stall rate ${round2(asNum(route.stall_rate) * 100)}%</div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function renderHeadToHeadTable() {
+        const rows = Array.isArray(state.payload.head_to_head) ? state.payload.head_to_head : [];
+        const body = rows
+          .map(
+            (r) => `<tr>
+              <td>${r.a}</td>
+              <td>${r.b}</td>
+              <td>${round2(asNum(r.a_wins_pct))}%</td>
+              <td>${round2(asNum(r.median_margin_hours))} h</td>
+              <td>${round2(asNum(r.p10_margin_hours))} h</td>
+              <td>${round2(asNum(r.p90_margin_hours))} h</td>
+              <td>${r.n}</td>
+            </tr>`
+          )
+          .join("");
+        els.headToHeadTable.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Route A</th>
+                <th>Route B</th>
+                <th>A wins</th>
+                <th>Median margin</th>
+                <th>P10 margin</th>
+                <th>P90 margin</th>
+                <th>N</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        `;
+      }
+
+      function renderPointDetail() {
+        const lat = state.payload.climatology.grid.lat[state.selectedLatIdx];
+        const lon = state.payload.climatology.grid.lon[state.selectedLonIdx];
+        const selected = getByHour(state.selectedHour);
+        const p5 = selected && selected.p_below_5kt ? asNum(selected.p_below_5kt[state.selectedLatIdx][state.selectedLonIdx]) : null;
+        const speed = selected && selected.mean_tws_kt ? asNum(selected.mean_tws_kt[state.selectedLatIdx][state.selectedLonIdx]) : null;
+        const dconst =
+          selected && selected.directional_const
+            ? asNum(selected.directional_const[state.selectedLatIdx][state.selectedLonIdx])
+            : null;
+        const nSamples =
+          selected && selected.n_samples ? asNum(selected.n_samples[state.selectedLatIdx][state.selectedLonIdx]) : null;
+
+        els.pointTitle.textContent = `Selected cell: ${round2(asNum(lat))} N, ${round2(asNum(lon))} E`;
+        els.pointMetrics.innerHTML = `
+          <div class="meta-card"><span class="k">Mean wind</span><div class="v">${round2(speed)} kt</div></div>
+          <div class="meta-card"><span class="k">Calm risk</span><div class="v">${round2(p5 == null ? null : p5 * 100)}%</div></div>
+          <div class="meta-card"><span class="k">Directional constancy</span><div class="v">${round2(dconst)}</div></div>
+          <div class="meta-card"><span class="k">Samples</span><div class="v">${nSamples == null ? "N/A" : Math.round(nSamples)}</div></div>
+        `;
+
+        const xHours = state.payload.climatology.by_hour.map((row) => Number(row.hour));
+        const ticktext = xHours.map((hr) => hourLabel(hr));
+        const meanSeries = getCellSeries("mean_tws_kt");
+        const p5Series = getCellSeries("p_below_5kt").map((v) => (v == null ? null : v * 100));
+        const dconstSeries = getCellSeries("directional_const");
+        const sampleSeries = getCellSeries("n_samples");
+
+        Plotly.react(
+          els.pointHourPlot,
+          [
+            {
+              type: "scatter",
+              mode: "lines+markers",
+              x: xHours,
+              y: meanSeries,
+              name: "Mean wind (kt)",
+              line: { color: "#8dd3ff", width: 2 },
+              marker: { size: 5 },
+              hoverinfo: "skip",
+            },
+            {
+              type: "scatter",
+              mode: "lines+markers",
+              x: xHours,
+              y: p5Series,
+              yaxis: "y2",
+              name: "P(<5 kt) %",
+              line: { color: "#ffd166", width: 2 },
+              marker: { size: 5 },
+              hoverinfo: "skip",
+            },
+          ],
+          {
+            ...plotLayoutBase,
+            title: "By-hour wind and calm probability at selected cell",
+            xaxis: { title: "Hour", tickvals: xHours, ticktext, tickangle: -30 },
+            yaxis: { title: "Mean wind (kt)" },
+            yaxis2: { title: "P(<5 kt) %", overlaying: "y", side: "right", range: [0, 100] },
+            legend: { orientation: "h" },
+          },
+          { displayModeBar: false, responsive: true }
+        );
+
+        const rowHtml = xHours
+          .map((hr, i) => {
+            return `<tr>
+              <td>${hourLabel(hr)}</td>
+              <td>${round2(meanSeries[i])}</td>
+              <td>${round2(p5Series[i])}%</td>
+              <td>${round2(dconstSeries[i])}</td>
+              <td>${sampleSeries[i] == null ? "N/A" : Math.round(sampleSeries[i])}</td>
+            </tr>`;
+          })
+          .join("");
+        els.pointDetailTable.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Hour</th><th>Mean kt</th><th>P&lt;5 kt</th><th>Dir const.</th><th>N</th></tr>
+            </thead>
+            <tbody>${rowHtml}</tbody>
+          </table>
+        `;
+
+        const uSeries = getCellSeries("vector_mean_u");
+        const vSeries = getCellSeries("vector_mean_v");
+        const hasVector = uSeries.some((v) => v != null) && vSeries.some((v) => v != null);
+        if (!hasVector) {
+          Plotly.purge(els.pointRosePlot);
+          els.pointRosePlot.innerHTML =
+            "<p class='help'>Wind-rose data unavailable in this payload (missing vector_mean_u/vector_mean_v).</p>";
+          return;
+        }
+        const dirSeries = uSeries.map((u, i) => windDirFromUv(u, vSeries[i]));
+        Plotly.react(
+          els.pointRosePlot,
+          [
+            {
+              type: "barpolar",
+              theta: dirSeries,
+              r: meanSeries,
+              marker: { color: meanSeries, colorscale: "Cividis" },
+              hoverinfo: "skip",
+              name: "Mean wind by hour",
+            },
+          ],
+          {
+            ...plotLayoutBase,
+            title: "Diurnal wind rose (selected cell)",
+            polar: {
+              bgcolor: "#131a2d",
+              radialaxis: { color: "#f2f5ff" },
+              angularaxis: { color: "#f2f5ff", direction: "clockwise" },
+            },
+          },
+          { displayModeBar: false, responsive: true }
+        );
+      }
+
+      function normalizeTransects(raw) {
+        if (!Array.isArray(raw)) return [];
+        return raw
+          .map((t) => {
+            if (!t || typeof t !== "object") return null;
+            const dist = Array.isArray(t.distance_nm)
+              ? t.distance_nm
+              : Array.isArray(t.dist_nm)
+              ? t.dist_nm
+              : Array.isArray(t.distance_offshore_nm)
+              ? t.distance_offshore_nm
+              : null;
+            const byHour = Array.isArray(t.by_hour) ? t.by_hour : null;
+            if (!dist || !byHour) return null;
+            return {
+              name: t.name || t.id || "transect",
+              distance_nm: dist.map(asNum),
+              by_hour: byHour,
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function renderTransects() {
+        const transects = normalizeTransects(state.payload.transects || state.payload.cross_shore_transects);
+        if (transects.length === 0) {
+          els.transectControls.classList.add("hidden");
+          els.transectEmpty.classList.remove("hidden");
+          Plotly.purge(els.transectPlot);
+          els.transectPlot.innerHTML = "";
+          return;
+        }
+
+        els.transectEmpty.classList.add("hidden");
+        els.transectControls.classList.remove("hidden");
+        els.transectSelect.innerHTML = transects
+          .map((t, i) => `<option value="${i}">${t.name}</option>`)
+          .join("");
+
+        const draw = () => {
+          const idx = Number(els.transectSelect.value || 0);
+          const t = transects[idx];
+          const traces = t.by_hour.map((row) => ({
+            type: "scatter",
+            mode: "lines",
+            x: t.distance_nm,
+            y: Array.isArray(row.mean_tws_kt) ? row.mean_tws_kt.map(asNum) : [],
+            name: hourLabel(Number(row.hour)),
+            line: { width: Number(row.hour) === state.selectedHour ? 3 : 1.4 },
+            hoverinfo: "skip",
+          }));
+          Plotly.react(
+            els.transectPlot,
+            traces,
+            {
+              ...plotLayoutBase,
+              title: `Cross-shore transect: ${t.name}`,
+              xaxis: { title: "Distance offshore (nm)" },
+              yaxis: { title: "Mean wind (kt)" },
+              legend: { font: { size: 11 } },
+            },
+            { displayModeBar: false, responsive: true }
+          );
+        };
+        els.transectSelect.onchange = draw;
+        draw();
+      }
+
+      function renderSkillTable() {
+        const rows = Array.isArray(state.payload.skill) ? state.payload.skill : [];
+        const body = rows
+          .map((r) => {
+            const cls = r.reference_biased ? "biased-row" : "";
+            const tag = r.reference_biased ? "Yes - not directly comparable" : "No";
+            return `<tr class="${cls}">
+              <td>${r.model}</td>
+              <td>${r.lead_days}</td>
+              <td>${r.wind_bin}</td>
+              <td>${round2(asNum(r.vec_rmse_kt))}</td>
+              <td>${round2(asNum(r.speed_bias_kt))}</td>
+              <td>${round2(asNum(r.dir_mae_deg))}</td>
+              <td>${tag}</td>
+            </tr>`;
+          })
+          .join("");
+        els.skillTable.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Lead days</th>
+                <th>Wind bin</th>
+                <th>Vector RMSE (kt)</th>
+                <th>Speed bias (kt)</th>
+                <th>Direction MAE (deg)</th>
+                <th>Reference biased</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+          <p class="help"><strong>Important:</strong> ECMWF/AIFS rows marked as reference-biased are scored against their own analysis and are not comparable to independent models.</p>
+        `;
+      }
+
+      function updateTimeModeButtons() {
+        const local = state.timeMode === "local";
+        els.modeLocal.classList.toggle("active", local);
+        els.modeUtc.classList.toggle("active", !local);
+      }
+
+      function renderAll() {
+        refreshTimeLabelsOnly();
+        renderCalmMap();
+        renderRouteComparison();
+        renderHeadToHeadTable();
+        renderPointDetail();
+        renderTransects();
+        renderSkillTable();
+      }
+
+      function bindEvents() {
+        els.hourSlider.oninput = () => {
+          state.selectedHour = Number(els.hourSlider.value);
+          renderCalmMap();
+          refreshTimeLabelsOnly();
+          renderPointDetail();
+          renderTransects();
+        };
+        els.modeLocal.onclick = () => {
+          state.timeMode = "local";
+          updateTimeModeButtons();
+          renderAll();
+        };
+        els.modeUtc.onclick = () => {
+          state.timeMode = "utc";
+          updateTimeModeButtons();
+          renderAll();
+        };
+        els.mapPlot.on("plotly_click", (ev) => {
+          const pt = ev && ev.points && ev.points[0];
+          if (!pt || pt.curveNumber !== 0) return;
+          const lat = asNum(pt.y);
+          const lon = asNum(pt.x);
+          const lats = state.payload.climatology.grid.lat;
+          const lons = state.payload.climatology.grid.lon;
+          state.selectedLatIdx = lats.reduce((bestIdx, val, idx) => {
+            const cur = Math.abs(Number(val) - lat);
+            const best = Math.abs(Number(lats[bestIdx]) - lat);
+            return cur < best ? idx : bestIdx;
+          }, 0);
+          state.selectedLonIdx = lons.reduce((bestIdx, val, idx) => {
+            const cur = Math.abs(Number(val) - lon);
+            const best = Math.abs(Number(lons[bestIdx]) - lon);
+            return cur < best ? idx : bestIdx;
+          }, 0);
+          renderPointDetail();
+        });
+      }
+
+      async function tryLoadDefaultData() {
+        try {
+          const res = await fetch("./data.json", { cache: "no-store" });
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function mountWithPayload(payload) {
+        state.payload = payload;
+        state.selectedHour = 0;
+        state.selectedLatIdx = 0;
+        state.selectedLonIdx = 0;
+        els.hourSlider.min = "0";
+        els.hourSlider.max = String(payload.climatology.by_hour.length - 1);
+        els.hourSlider.value = "0";
+        buildWarnings(payload.meta);
+        updateTimeModeButtons();
+        renderAll();
+        bindEvents();
+        setStatus("Loaded dashboard payload from data.json.", false);
+      }
+
+      function setupFileFallback() {
+        els.fileLoader.classList.remove("hidden");
+        setStatus("Direct file fetch failed. Select data.json manually below.", true);
+        els.dataFileInput.onchange = async () => {
+          const file = els.dataFileInput.files && els.dataFileInput.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text();
+            const payload = JSON.parse(text);
+            mountWithPayload(payload);
+            els.fileLoader.classList.add("hidden");
+          } catch (err) {
+            setStatus(`Failed to parse selected JSON: ${String(err)}`, true);
+          }
+        };
+      }
+
+      async function init() {
+        const payload = await tryLoadDefaultData();
+        if (payload) {
+          mountWithPayload(payload);
+          return;
+        }
+        setupFileFallback();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
