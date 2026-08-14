@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,6 +21,8 @@ from pmc import follow as follow_mod  # noqa: E402
 from pmc import polar as polar_mod  # noqa: E402
 from pmc import report as report_mod  # noqa: E402
 from pmc import stats as stats_mod  # noqa: E402
+
+logging.getLogger("pmc.follow").setLevel(logging.ERROR)
 
 
 WARNING_TEXT = (
