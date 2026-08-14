@@ -1,118 +1,53 @@
-- id: ustica_west_tight_bonifacio
-  label: "Ustica west · Sardinia tight · Bonifacio"
-  description: "Western Ustica, tight Sardinian coast, then Bonifacio-side routing."
-  legs:
-    - [38.15, 13.70]
-    - [38.70, 12.95]
-    - [39.60, 10.20]
-    - [40.45, 9.85]
-    - [40.90, 9.82]
+leg1:
+  offsets_nm: [-40, -20, 0, 20]
+  # Built as offset variants from the start->gate rhumb-line corridor, then
+  # snapped to a tested water-only lane near Sardinia with a 0.5 nm land buffer.
+  start_anchor: [38.15, 13.70]
+  gate_proxy: [41.11, 9.58]
+  post_gate_join: [41.60, 9.86]
+  control_lats: [39.85, 40.50, 40.95]
+  lon_ustica_by_offset:
+    "-40": 12.90
+    "-20": 12.95
+    "0": 12.95
+    "20": 12.95
+  lon_control_1_by_offset:
+    "-40": 11.15
+    "-20": 10.95
+    "0": 10.45
+    "20": 10.12
+  lon_control_2_by_offset:
+    "-40": 9.90
+    "-20": 10.30
+    "0": 10.05
+    "20": 9.85
+  lon_control_3_by_offset:
+    "-40": 9.86
+    "-20": 10.26
+    "0": 9.96
+    "20": 9.83
+  gate_approach:
     - [41.02, 9.95]
-    - [41.11, 9.58]
-    - [41.60, 9.86]
-    - [41.35, 9.35]
-    - [41.32, 9.26]
-    - [41.44, 8.87]
-    - [41.56, 8.75]
-    - [41.86, 8.57]
-    - [43.69, 7.70]
-    - [43.70, 7.55]
-  tags: [ustica_west, sardinia_tight, bonifacio]
 
-- id: ustica_west_tight_east_corsica
-  label: "Ustica west · Sardinia tight · East Corsica"
-  description: "Western Ustica with a tight Sardinian lane and east-of-Corsica exit."
-  legs:
-    - [38.15, 13.70]
-    - [38.70, 12.95]
-    - [39.60, 10.20]
-    - [40.45, 9.85]
-    - [40.90, 9.82]
-    - [41.02, 9.95]
-    - [41.11, 9.58]
-    - [41.60, 9.86]
-    - [42.30, 9.76]
-    - [43.00, 9.48]
-    - [43.35, 9.05]
-    - [43.52, 8.62]
-    - [43.70, 7.55]
-  tags: [ustica_west, sardinia_tight, east_corsica]
-
-- id: ustica_west_tight_west_corsica
-  label: "Ustica west · Sardinia tight · West Corsica"
-  description: "Western Ustica and tight Sardinia, then a west-Corsica offshore stand."
-  legs:
-    - [38.15, 13.70]
-    - [38.70, 12.95]
-    - [39.60, 10.20]
-    - [40.45, 9.85]
-    - [40.90, 9.82]
-    - [41.02, 9.95]
-    - [41.11, 9.58]
-    - [41.60, 9.86]
-    - [41.35, 9.35]
-    - [41.32, 9.26]
-    - [41.44, 8.87]
-    - [41.56, 8.75]
-    - [41.86, 8.57]
-    - [43.36, 8.06]
-    - [43.69, 7.70]
-    - [43.70, 7.55]
-  tags: [ustica_west, sardinia_tight, west_corsica]
-
-- id: ustica_west_offshore_east_corsica
-  label: "Ustica west · Sardinia offshore · East Corsica"
-  description: "Western Ustica with offshore Sardinia (10.2-10.4E band) and east-Corsica finish."
-  legs:
-    - [38.15, 13.70]
-    - [38.70, 12.95]
-    - [39.70, 10.95]
-    - [40.50, 10.30]
-    - [40.95, 10.26]
-    - [41.11, 9.58]
-    - [41.60, 9.86]
-    - [42.30, 9.76]
-    - [43.00, 9.48]
-    - [43.35, 9.05]
-    - [43.52, 8.62]
-    - [43.70, 7.55]
-  tags: [ustica_west, sardinia_offshore, east_corsica]
-
-- id: ustica_far_west_tight_bonifacio
-  label: "Ustica far west · Sardinia tight · Bonifacio"
-  description: "Further-west Ustica passage (~12.9E), then tight Sardinia and Bonifacio-side routing."
-  legs:
-    - [38.15, 13.70]
-    - [38.70, 12.90]
-    - [39.70, 10.95]
-    - [40.45, 9.85]
-    - [40.90, 9.82]
-    - [41.02, 9.95]
-    - [41.11, 9.58]
-    - [41.60, 9.86]
-    - [41.35, 9.35]
-    - [41.32, 9.26]
-    - [41.44, 8.87]
-    - [41.56, 8.75]
-    - [41.86, 8.57]
-    - [43.69, 7.70]
-    - [43.70, 7.55]
-  tags: [ustica_far_west, sardinia_tight, bonifacio]
-
-- id: ustica_far_west_offshore_east_corsica
-  label: "Ustica far west · Sardinia offshore · East Corsica"
-  description: "Further-west Ustica passage (~12.9E), offshore Sardinia (10.2-10.4E), then east Corsica."
-  legs:
-    - [38.15, 13.70]
-    - [38.70, 12.90]
-    - [39.85, 11.15]
-    - [40.50, 10.32]
-    - [40.95, 10.28]
-    - [41.11, 9.58]
-    - [41.60, 9.86]
-    - [42.30, 9.76]
-    - [43.00, 9.48]
-    - [43.35, 9.05]
-    - [43.52, 8.62]
-    - [43.70, 7.55]
-  tags: [ustica_far_west, sardinia_offshore, east_corsica]
+leg2:
+  east_of_corsica:
+    label: "East of Corsica"
+    description: "Bypass Bonifacio and stay east of Corsica."
+    waypoints:
+      - [42.30, 9.76]
+      - [43.00, 9.48]
+      - [43.35, 9.05]
+      - [43.52, 8.62]
+      - [43.70, 7.55]
+  bonifacio_west_corsica:
+    label: "Bonifacio + west Corsica"
+    description: "Use Bonifacio Strait then stand offshore (8.0-8.2E) up west Corsica."
+    waypoints:
+      - [41.35, 9.35]
+      - [41.32, 9.26]
+      - [41.44, 8.87]
+      - [41.56, 8.75]
+      - [41.86, 8.57]
+      - [43.36, 8.06]
+      - [43.69, 7.70]
+      - [43.70, 7.55]

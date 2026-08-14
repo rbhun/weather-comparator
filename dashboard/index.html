@@ -277,6 +277,9 @@
         <h2>2) Route comparison and uncertainty</h2>
         <p class="subnote">
           Distributions are shown as full sample spreads. Focus on percentiles, not means.
+          <br />
+          Leg 1 is mostly upwind: follower sails VMG and does not model shift-playing, so
+          leg-1 comparisons can undervalue higher-oscillation regimes (typically coastal).
         </p>
         <div id="route-plot" class="plot short"></div>
         <div id="route-summary" class="meta-grid"></div>
@@ -285,6 +288,20 @@
       <section class="card">
         <h3>Head-to-head margins (percentiles included)</h3>
         <div id="head-to-head-table"></div>
+      </section>
+
+      <section class="card">
+        <h3>Leg-2 fork matchup by gate-arrival hour (local)</h3>
+        <p class="subnote">
+          East-of-Corsica vs Bonifacio/west-Corsica, matched on modeled gate-arrival time.
+        </p>
+        <div id="leg2-hour-table"></div>
+      </section>
+
+      <section class="card">
+        <h3>Bonifacio option decision support</h3>
+        <p id="bonifacio-panel-label" class="subnote"></p>
+        <div id="bonifacio-panel-table"></div>
       </section>
 
       <section class="card">
@@ -359,6 +376,9 @@
         routePlot: document.getElementById("route-plot"),
         routeSummary: document.getElementById("route-summary"),
         headToHeadTable: document.getElementById("head-to-head-table"),
+        leg2HourTable: document.getElementById("leg2-hour-table"),
+        bonifacioPanelLabel: document.getElementById("bonifacio-panel-label"),
+        bonifacioPanelTable: document.getElementById("bonifacio-panel-table"),
         pointTitle: document.getElementById("point-title"),
         pointMetrics: document.getElementById("point-metrics"),
         pointDetailTable: document.getElementById("point-detail-table"),
@@ -664,6 +684,92 @@
         `;
       }
 
+      function renderLeg2DecisionPanels() {
+        const rows = Array.isArray(state.payload.leg2_win_rate_by_arrival_hour_local)
+          ? state.payload.leg2_win_rate_by_arrival_hour_local
+          : [];
+        if (rows.length === 0) {
+          els.leg2HourTable.innerHTML = "<p class='help'>No leg-2 bucketed comparison data present.</p>";
+        } else {
+          const body = rows
+            .map(
+              (r) => `<tr>
+                <td>${hourLabel(Number(r.arrival_hour_local))}</td>
+                <td>${r.n}</td>
+                <td>${round2(asNum(r.east_of_corsica_wins_pct))}%</td>
+                <td>${round2(asNum(r.bonifacio_west_corsica_wins_pct))}%</td>
+                <td>${round2(asNum(r.median_margin_hours))} h</td>
+                <td>${round2(asNum(r.p10_margin_hours))} h</td>
+                <td>${round2(asNum(r.p90_margin_hours))} h</td>
+              </tr>`
+            )
+            .join("");
+          els.leg2HourTable.innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Gate-arrival hour</th>
+                  <th>N</th>
+                  <th>East wins</th>
+                  <th>Bonifacio/west wins</th>
+                  <th>Median margin (B-A)</th>
+                  <th>P10 margin</th>
+                  <th>P90 margin</th>
+                </tr>
+              </thead>
+              <tbody>${body}</tbody>
+            </table>
+          `;
+        }
+
+        const panel = state.payload.bonifacio_decision_support || {};
+        els.bonifacioPanelLabel.textContent = panel.label
+          || "Channel choice inside the Maddalena archipelago is below model resolution. These are the conditions on arrival - the choice is local knowledge.";
+        const panelRows = Array.isArray(panel.rows) ? panel.rows : [];
+        if (panelRows.length === 0) {
+          els.bonifacioPanelTable.innerHTML = "<p class='help'>No Bonifacio decision-support rows present.</p>";
+          return;
+        }
+        const body = panelRows
+          .map((r) => {
+            const forecast = r.race_day_forecast || {};
+            const climo = r.august_climatology_at_hour || {};
+            const climoTws = climo.tws_kt || {};
+            const climoDir = climo.twd_deg || {};
+            const climoNw = climo.nw_component_kt || {};
+            return `<tr>
+              <td>${r.leg1_offset_nm}</td>
+              <td>${r.modeled_entry_time_local || "N/A"}</td>
+              <td>${round2(asNum(forecast.tws_kt))}</td>
+              <td>${round2(asNum(forecast.twd_deg))}</td>
+              <td>${round2(asNum(forecast.nw_component_kt))}</td>
+              <td>${round2(asNum(climoTws.p10))} / ${round2(asNum(climoTws.p50))} / ${round2(asNum(climoTws.p90))}</td>
+              <td>${round2(asNum(climoDir.p10))} / ${round2(asNum(climoDir.p50))} / ${round2(asNum(climoDir.p90))}</td>
+              <td>${round2(asNum(climoNw.p10))} / ${round2(asNum(climoNw.p50))} / ${round2(asNum(climoNw.p90))}</td>
+              <td>${climo.n == null ? "N/A" : climo.n}</td>
+            </tr>`;
+          })
+          .join("");
+        els.bonifacioPanelTable.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Leg1 offset (nm)</th>
+                <th>Modelled entry (local)</th>
+                <th>Forecast TWS (kt)</th>
+                <th>Forecast TWD (deg)</th>
+                <th>Forecast NW comp (kt)</th>
+                <th>Climo TWS p10/p50/p90</th>
+                <th>Climo TWD p10/p50/p90</th>
+                <th>Climo NW comp p10/p50/p90</th>
+                <th>Climo N</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        `;
+      }
+
       function renderPointDetail() {
         const lat = state.payload.climatology.grid.lat[state.selectedLatIdx];
         const lon = state.payload.climatology.grid.lon[state.selectedLonIdx];
@@ -898,6 +1004,7 @@
         renderCalmMap();
         renderRouteComparison();
         renderHeadToHeadTable();
+        renderLeg2DecisionPanels();
         renderPointDetail();
         renderTransects();
         renderSkillTable();

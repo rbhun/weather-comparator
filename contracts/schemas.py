@@ -448,13 +448,91 @@ def load_course(path: Path) -> Course:
     )
 
 
+def _interpolate_offset_lons(samples: dict[str, Any], offset_nm: float) -> float:
+    pairs: list[tuple[float, float]] = []
+    for key, value in samples.items():
+        pairs.append((float(key), float(value)))
+    if not pairs:
+        raise ValueError("Offset interpolation map is empty.")
+    pairs.sort(key=lambda x: x[0])
+    x = np.array([p[0] for p in pairs], dtype=float)
+    y = np.array([p[1] for p in pairs], dtype=float)
+    return float(np.interp(offset_nm, x, y))
+
+
+def _expand_parametric_routes(raw: dict[str, Any]) -> list[dict[str, Any]]:
+    if "leg1" not in raw or "leg2" not in raw:
+        raise ValueError("Parametric routes YAML must contain leg1 and leg2 blocks.")
+    leg1 = raw["leg1"]
+    offsets = [float(v) for v in leg1["offsets_nm"]]
+    control_lats = [float(v) for v in leg1["control_lats"]]
+    if len(control_lats) != 3:
+        raise ValueError("leg1.control_lats must contain exactly three latitudes.")
+    start_anchor = (float(leg1["start_anchor"][0]), float(leg1["start_anchor"][1]))
+    gate_proxy = (float(leg1["gate_proxy"][0]), float(leg1["gate_proxy"][1]))
+    post_gate_join = (
+        float(leg1["post_gate_join"][0]),
+        float(leg1["post_gate_join"][1]),
+    )
+    gate_approach = [
+        (float(lat), float(lon))
+        for lat, lon in leg1.get("gate_approach", [])
+    ]
+
+    routes: list[dict[str, Any]] = []
+    for offset_nm in offsets:
+        ustica_lon = _interpolate_offset_lons(leg1["lon_ustica_by_offset"], offset_nm)
+        lon1 = _interpolate_offset_lons(leg1["lon_control_1_by_offset"], offset_nm)
+        lon2 = _interpolate_offset_lons(leg1["lon_control_2_by_offset"], offset_nm)
+        lon3 = _interpolate_offset_lons(leg1["lon_control_3_by_offset"], offset_nm)
+        leg1_points = [
+            start_anchor,
+            (38.70, ustica_lon),
+            (control_lats[0], lon1),
+            (control_lats[1], lon2),
+            (control_lats[2], lon3),
+            *gate_approach,
+            gate_proxy,
+            post_gate_join,
+        ]
+        offset_label = f"{offset_nm:+.0f} nm"
+        for fork_id, fork in raw["leg2"].items():
+            fork_points = [
+                (float(lat), float(lon))
+                for lat, lon in fork["waypoints"]
+            ]
+            route_id = f"l1_{offset_nm:+.0f}nm__{fork_id}".replace("+", "p").replace("-", "m")
+            routes.append(
+                {
+                    "id": route_id,
+                    "label": f"Leg1 {offset_label} · {fork['label']}",
+                    "description": (
+                        f"Leg1 offset {offset_label} from the start→gate rhumb corridor; "
+                        f"leg2 fork: {fork['description']}"
+                    ),
+                    "legs": leg1_points + fork_points,
+                    "tags": [
+                        f"leg1_offset_nm={offset_nm:+.0f}",
+                        f"leg2_fork={fork_id}",
+                    ],
+                }
+            )
+    return routes
+
+
 def load_routes(path: Path) -> list[Route]:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if isinstance(raw, list):
+        route_rows = raw
+    elif isinstance(raw, dict):
+        route_rows = _expand_parametric_routes(raw)
+    else:
+        raise ValueError("routes.yaml must contain either a route list or route spec object.")
     routes: list[Route] = []
     # Import lazily to avoid import-time cycles between contracts and pmc modules.
     from pmc.geo import crosses_land
 
-    for item in raw:
+    for item in route_rows:
         legs = tuple((float(lat), float(lon)) for lat, lon in item["legs"])
         for (lat0, lon0), (lat1, lon1) in zip(legs[:-1], legs[1:]):
             if crosses_land(lat0, lon0, lat1, lon1, safety_buffer_nm=0.5):

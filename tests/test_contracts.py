@@ -83,6 +83,26 @@ def test_every_configured_route_passes_gate() -> None:
         route.assert_passes_gate(course.gate[0], course.gate[1], course.gate_tolerance_nm)
 
 
+def test_parametric_routes_expand_to_expected_forks_and_offsets() -> None:
+    routes = load_routes(ROOT / "config/routes.yaml")
+    assert len(routes) == 8
+    offsets = {
+        next(tag for tag in route.tags if tag.startswith("leg1_offset_nm="))
+        for route in routes
+    }
+    forks = {
+        next(tag for tag in route.tags if tag.startswith("leg2_fork="))
+        for route in routes
+    }
+    assert offsets == {
+        "leg1_offset_nm=-40",
+        "leg1_offset_nm=-20",
+        "leg1_offset_nm=+0",
+        "leg1_offset_nm=+20",
+    }
+    assert forks == {"leg2_fork=east_of_corsica", "leg2_fork=bonifacio_west_corsica"}
+
+
 def test_route_missing_gate_raises() -> None:
     course = load_course(ROOT / "config" / "course.yaml")
     route = Route(

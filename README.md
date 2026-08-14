@@ -7,3 +7,10 @@ Primary coastline polygons are derived from OpenStreetMap land polygons
 Open Database License (ODbL).
 
 Source: https://osmdata.openstreetmap.de/data/land-polygons.html
+
+## Leg-1 interpretation caveat
+
+Leg 1 is predominantly upwind in this setup. The fixed-route follower therefore
+uses polar VMG angles and does not model shift-playing tactics. As a result,
+leg-1 route deltas can undervalue options that benefit from larger wind
+oscillations (typically tighter coastal lanes).
