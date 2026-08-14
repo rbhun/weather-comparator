@@ -1,9 +1,8 @@
-# Runtime outputs and local secrets
+# Runtime outputs
 data/**
 !data/coastline/
 !data/coastline/*.geojson
 !data/.gitkeep
-.env
 dashboard/data.json
 !dashboard/data.json
 
