@@ -47,6 +47,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum spacing between uncached HTTP requests.",
     )
     parser.add_argument(
+        "--request-jitter-seconds",
+        type=float,
+        default=0.25,
+        help="Random jitter before each request in seconds.",
+    )
+    parser.add_argument(
         "--month-filter",
         default=None,
         help="Comma-separated month numbers to include (e.g. 8 or 6,7,8).",
@@ -82,6 +88,7 @@ def main() -> int:
         retries=args.retries,
         inter_day_delay_seconds=args.inter_day_delay_seconds,
         min_request_interval_seconds=args.min_request_interval_seconds,
+        request_jitter_seconds=args.request_jitter_seconds,
     )
     output_path = Path(args.output_path) if args.output_path else None
     path, summary = fetcher.fetch_wind(

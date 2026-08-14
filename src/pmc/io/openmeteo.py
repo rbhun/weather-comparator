@@ -204,6 +204,7 @@ class OpenMeteoFetcher:
         retries: int = 6,
         inter_day_delay_seconds: float = 0.0,
         min_request_interval_seconds: float = 1.0,
+        request_jitter_seconds: float = 0.25,
     ) -> None:
         self.api_key = api_key
         self.cache = DiskRequestCache(cache_root)
@@ -214,6 +215,7 @@ class OpenMeteoFetcher:
         self.retries = retries
         self.inter_day_delay_seconds = inter_day_delay_seconds
         self.min_request_interval_seconds = min_request_interval_seconds
+        self.request_jitter_seconds = max(0.0, float(request_jitter_seconds))
         self.session = requests.Session()
         self._request_lock = threading.Lock()
         self._last_request_at = 0.0
@@ -362,7 +364,15 @@ class OpenMeteoFetcher:
         lat_axis = cfg.latitudes()
         lon_axis = cfg.longitudes()
         all_points = _grid_points(lat_axis, lon_axis)
-        point_batches = list(_chunked(all_points, self.batch_size))
+        base_batches = list(_chunked(all_points, self.batch_size))
+        sea_point_indices = self._load_known_sea_point_indices(
+            mode=mode_cfg.mode,
+            output_path=output_path,
+            lat_axis=lat_axis,
+            lon_axis=lon_axis,
+        )
+        point_batches = _filter_batches_by_indices(base_batches, sea_point_indices)
+        active_points = sum(len(batch) for batch in point_batches)
         periods = self._build_periods(mode_cfg.mode, start, end, month_filter)
         existing_periods = self._existing_periods(mode_cfg.mode, output_path)
 
@@ -384,7 +394,8 @@ class OpenMeteoFetcher:
         print(
             "[fetch] "
             f"mode={mode_cfg.mode} model={model} periods={len(periods)} "
-            f"grid_points={len(all_points)} batches_per_period={len(point_batches)} "
+            f"grid_points={len(all_points)} active_points={active_points} "
+            f"batches_per_period={len(point_batches)} "
             f"checkpoint={checkpoint_path}",
             flush=True,
         )
@@ -482,6 +493,10 @@ class OpenMeteoFetcher:
             ] = {}
             for batch_index, batch in enumerate(point_batches):
                 task_id = _task_id(period_id=period_id, batch_index=batch_index)
+                if not batch:
+                    checkpoint["completed_tasks"].add(task_id)
+                    self._save_checkpoint(checkpoint_path, checkpoint)
+                    continue
                 if task_id in checkpoint["completed_tasks"]:
                     cached_payloads = self._fetch_batch_resilient(
                         endpoint=endpoint,
@@ -550,6 +565,41 @@ class OpenMeteoFetcher:
         )
         return ds, cells_fetched, cells_missing
 
+    def _load_known_sea_point_indices(
+        self,
+        mode: str,
+        output_path: Path,
+        lat_axis: np.ndarray,
+        lon_axis: np.ndarray,
+    ) -> set[tuple[int, int]] | None:
+        if mode != "analysis":
+            return None
+        if not output_path.exists():
+            return None
+        ds = xr.open_zarr(output_path)
+        try:
+            if "u10" not in ds or "v10" not in ds:
+                return None
+            u = ds["u10"].values
+            v = ds["v10"].values
+            if u.ndim != 3 or v.ndim != 3:
+                return None
+            valid = np.any(np.isfinite(u) & np.isfinite(v), axis=0)
+            indices = set()
+            for lat_idx in range(valid.shape[0]):
+                for lon_idx in range(valid.shape[1]):
+                    if bool(valid[lat_idx, lon_idx]):
+                        indices.add((lat_idx, lon_idx))
+            if not indices:
+                return None
+            print(
+                f"[fetch] sea-point filter active: {len(indices)} / {valid.size} grid nodes",
+                flush=True,
+            )
+            return indices
+        finally:
+            ds.close()
+
     def _apply_payloads_to_arrays(
         self,
         payloads: list[dict[str, Any]],
@@ -593,7 +643,8 @@ class OpenMeteoFetcher:
         allow_network: bool,
     ) -> dict[str, Any]:
         # Jitter reduces synchronized bursts against the API.
-        time.sleep(random.uniform(0.0, 0.25))
+        if self.request_jitter_seconds > 0:
+            time.sleep(random.uniform(0.0, self.request_jitter_seconds))
         latitudes = ",".join(f"{p[2]:.3f}" for p in batch)
         longitudes = ",".join(f"{p[3]:.3f}" for p in batch)
         params = {
@@ -644,6 +695,18 @@ class OpenMeteoFetcher:
                     pending.append(current[:midpoint])
                     continue
                 raise
+            except RuntimeError as exc:
+                message = str(exc).lower()
+                if "status 429" in message and len(current) > 1:
+                    midpoint = len(current) // 2
+                    print(
+                        f"[fetch] split batch size={len(current)} due to 429 rate-limit",
+                        flush=True,
+                    )
+                    pending.append(current[midpoint:])
+                    pending.append(current[:midpoint])
+                    continue
+                raise
         return payloads
 
     def _get_json(self, endpoint: str, params: dict[str, Any], allow_network: bool = True) -> dict[str, Any]:
@@ -655,10 +718,12 @@ class OpenMeteoFetcher:
             self.request_count += 1
             return cached
         if not allow_network:
-            raise RuntimeError(
-                "Checkpoint indicates task complete, but no cached payload exists for "
-                f"params={params}"
+            print(
+                "[fetch] checkpoint cache miss; refetching network payload "
+                "for previously completed task",
+                flush=True,
             )
+            allow_network = True
 
         request_params = dict(params)
         if self._send_api_key:
@@ -704,28 +769,7 @@ class OpenMeteoFetcher:
                         delay = max(delay, float(retry_after))
                     except ValueError:
                         pass
-                if status == 429 and exc.response is not None:
-                    try:
-                        body = exc.response.json()
-                    except ValueError:
-                        body = {}
-                    reason = str(body.get("reason", "")).lower()
-                    if "one minute" in reason or "next minute" in reason or "minutely" in reason:
-                        now_utc = dt.datetime.now(dt.timezone.utc)
-                        next_minute = (
-                            now_utc.replace(second=0, microsecond=0)
-                            + dt.timedelta(minutes=1)
-                        )
-                        until_minute = (next_minute - now_utc).total_seconds() + 2.0
-                        delay = max(delay, until_minute)
-                    if "next hour" in reason:
-                        now_utc = dt.datetime.now(dt.timezone.utc)
-                        next_hour = (
-                            now_utc.replace(minute=0, second=0, microsecond=0)
-                            + dt.timedelta(hours=1)
-                        )
-                        until_hour = (next_hour - now_utc).total_seconds() + 2.0
-                        delay = max(delay, until_hour)
+                delay = min(delay, 60.0)
                 delay += random.uniform(0.0, 0.5)
                 print(
                     "[fetch] retry "
@@ -953,6 +997,18 @@ def _grid_points(lat_axis: np.ndarray, lon_axis: np.ndarray) -> list[tuple[int, 
 def _chunked(values: list[Any], chunk_size: int) -> Iterable[list[Any]]:
     for i in range(0, len(values), chunk_size):
         yield values[i : i + chunk_size]
+
+
+def _filter_batches_by_indices(
+    batches: list[list[tuple[int, int, float, float]]],
+    active_indices: set[tuple[int, int]] | None,
+) -> list[list[tuple[int, int, float, float]]]:
+    if active_indices is None:
+        return batches
+    filtered: list[list[tuple[int, int, float, float]]] = []
+    for batch in batches:
+        filtered.append([p for p in batch if (p[0], p[1]) in active_indices])
+    return filtered
 
 
 def _iter_days(start: dt.date, end: dt.date, month_filter: set[int] | None) -> Iterable[dt.date]:
