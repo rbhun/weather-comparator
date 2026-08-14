@@ -1,103 +1,118 @@
 - id: ustica_west_tight_bonifacio
   label: "Ustica west · Sardinia tight · Bonifacio"
-  description: "Shortest tactical corridor through Bonifacio with coastal leverage."
+  description: "Western Ustica, tight Sardinian coast, then Bonifacio-side routing."
   legs:
-    - [38.20, 13.32]
-    - [38.68, 12.95]
-    - [40.05, 10.65]
-    - [41.13, 9.55]
-    - [41.31, 9.19]
-    - [42.40, 8.62]
-    - [43.73, 7.42]
+    - [38.15, 13.70]
+    - [38.70, 12.95]
+    - [39.60, 10.20]
+    - [40.45, 9.85]
+    - [40.90, 9.82]
+    - [41.02, 9.95]
+    - [41.11, 9.58]
+    - [41.60, 9.86]
+    - [41.35, 9.35]
+    - [41.32, 9.26]
+    - [41.44, 8.87]
+    - [41.56, 8.75]
+    - [41.86, 8.57]
+    - [43.69, 7.70]
+    - [43.70, 7.55]
   tags: [ustica_west, sardinia_tight, bonifacio]
 
 - id: ustica_west_tight_east_corsica
   label: "Ustica west · Sardinia tight · East Corsica"
-  description: "Holds east side of Corsica after gate with tight Sardinian setup."
+  description: "Western Ustica with a tight Sardinian lane and east-of-Corsica exit."
   legs:
-    - [38.20, 13.32]
-    - [38.68, 12.95]
-    - [40.05, 10.65]
-    - [41.13, 9.55]
-    - [41.95, 9.72]
-    - [43.05, 9.35]
-    - [43.73, 7.42]
+    - [38.15, 13.70]
+    - [38.70, 12.95]
+    - [39.60, 10.20]
+    - [40.45, 9.85]
+    - [40.90, 9.82]
+    - [41.02, 9.95]
+    - [41.11, 9.58]
+    - [41.60, 9.86]
+    - [42.30, 9.76]
+    - [43.00, 9.48]
+    - [43.35, 9.05]
+    - [43.52, 8.62]
+    - [43.70, 7.55]
   tags: [ustica_west, sardinia_tight, east_corsica]
 
 - id: ustica_west_tight_west_corsica
   label: "Ustica west · Sardinia tight · West Corsica"
-  description: "Commits west of Corsica after approaching gate from the west."
+  description: "Western Ustica and tight Sardinia, then a west-Corsica offshore stand."
   legs:
-    - [38.20, 13.32]
-    - [38.68, 12.95]
-    - [40.05, 10.65]
-    - [41.13, 9.55]
-    - [42.25, 8.70]
-    - [43.00, 8.05]
-    - [43.73, 7.42]
+    - [38.15, 13.70]
+    - [38.70, 12.95]
+    - [39.60, 10.20]
+    - [40.45, 9.85]
+    - [40.90, 9.82]
+    - [41.02, 9.95]
+    - [41.11, 9.58]
+    - [41.60, 9.86]
+    - [41.35, 9.35]
+    - [41.32, 9.26]
+    - [41.44, 8.87]
+    - [41.56, 8.75]
+    - [41.86, 8.57]
+    - [43.36, 8.06]
+    - [43.69, 7.70]
+    - [43.70, 7.55]
   tags: [ustica_west, sardinia_tight, west_corsica]
 
 - id: ustica_west_offshore_east_corsica
   label: "Ustica west · Sardinia offshore · East Corsica"
-  description: "Stands offshore on Sardinia then exits east of Corsica."
+  description: "Western Ustica with offshore Sardinia (10.2-10.4E band) and east-Corsica finish."
   legs:
-    - [38.20, 13.32]
-    - [38.68, 12.95]
-    - [39.95, 11.10]
-    - [41.13, 9.55]
-    - [41.95, 9.72]
-    - [43.05, 9.35]
-    - [43.73, 7.42]
+    - [38.15, 13.70]
+    - [38.70, 12.95]
+    - [39.70, 10.95]
+    - [40.50, 10.30]
+    - [40.95, 10.26]
+    - [41.11, 9.58]
+    - [41.60, 9.86]
+    - [42.30, 9.76]
+    - [43.00, 9.48]
+    - [43.35, 9.05]
+    - [43.52, 8.62]
+    - [43.70, 7.55]
   tags: [ustica_west, sardinia_offshore, east_corsica]
 
-- id: ustica_east_tight_bonifacio
-  label: "Ustica east · Sardinia tight · Bonifacio"
-  description: "Eastern Ustica option with tight Sardinian coast and Bonifacio exit."
+- id: ustica_far_west_tight_bonifacio
+  label: "Ustica far west · Sardinia tight · Bonifacio"
+  description: "Further-west Ustica passage (~12.9E), then tight Sardinia and Bonifacio-side routing."
   legs:
-    - [38.20, 13.32]
-    - [38.60, 13.85]
-    - [40.20, 11.55]
-    - [41.13, 9.55]
-    - [41.31, 9.19]
-    - [42.40, 8.62]
-    - [43.73, 7.42]
-  tags: [ustica_east, sardinia_tight, bonifacio]
+    - [38.15, 13.70]
+    - [38.70, 12.90]
+    - [39.70, 10.95]
+    - [40.45, 9.85]
+    - [40.90, 9.82]
+    - [41.02, 9.95]
+    - [41.11, 9.58]
+    - [41.60, 9.86]
+    - [41.35, 9.35]
+    - [41.32, 9.26]
+    - [41.44, 8.87]
+    - [41.56, 8.75]
+    - [41.86, 8.57]
+    - [43.69, 7.70]
+    - [43.70, 7.55]
+  tags: [ustica_far_west, sardinia_tight, bonifacio]
 
-- id: ustica_east_tight_west_corsica
-  label: "Ustica east · Sardinia tight · West Corsica"
-  description: "Eastern Ustica choice followed by west-of-Corsica routing."
+- id: ustica_far_west_offshore_east_corsica
+  label: "Ustica far west · Sardinia offshore · East Corsica"
+  description: "Further-west Ustica passage (~12.9E), offshore Sardinia (10.2-10.4E), then east Corsica."
   legs:
-    - [38.20, 13.32]
-    - [38.60, 13.85]
-    - [40.20, 11.55]
-    - [41.13, 9.55]
-    - [42.25, 8.70]
-    - [43.00, 8.05]
-    - [43.73, 7.42]
-  tags: [ustica_east, sardinia_tight, west_corsica]
-
-- id: ustica_east_offshore_bonifacio
-  label: "Ustica east · Sardinia offshore · Bonifacio"
-  description: "Offshore Sardinian approach with Bonifacio transit."
-  legs:
-    - [38.20, 13.32]
-    - [38.60, 13.85]
-    - [40.10, 11.95]
-    - [41.13, 9.55]
-    - [41.31, 9.19]
-    - [42.40, 8.62]
-    - [43.73, 7.42]
-  tags: [ustica_east, sardinia_offshore, bonifacio]
-
-- id: ustica_east_offshore_east_corsica
-  label: "Ustica east · Sardinia offshore · East Corsica"
-  description: "Fully eastern strategic line with offshore Sardinia and east Corsica."
-  legs:
-    - [38.20, 13.32]
-    - [38.60, 13.85]
-    - [40.10, 11.95]
-    - [41.13, 9.55]
-    - [41.95, 9.72]
-    - [43.05, 9.35]
-    - [43.73, 7.42]
-  tags: [ustica_east, sardinia_offshore, east_corsica]
+    - [38.15, 13.70]
+    - [38.70, 12.90]
+    - [39.85, 11.15]
+    - [40.50, 10.32]
+    - [40.95, 10.28]
+    - [41.11, 9.58]
+    - [41.60, 9.86]
+    - [42.30, 9.76]
+    - [43.00, 9.48]
+    - [43.35, 9.05]
+    - [43.52, 8.62]
+    - [43.70, 7.55]
+  tags: [ustica_far_west, sardinia_offshore, east_corsica]

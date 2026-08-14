@@ -451,13 +451,23 @@ def load_course(path: Path) -> Course:
 def load_routes(path: Path) -> list[Route]:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     routes: list[Route] = []
+    # Import lazily to avoid import-time cycles between contracts and pmc modules.
+    from pmc.geo import crosses_land
+
     for item in raw:
+        legs = tuple((float(lat), float(lon)) for lat, lon in item["legs"])
+        for (lat0, lon0), (lat1, lon1) in zip(legs[:-1], legs[1:]):
+            if crosses_land(lat0, lon0, lat1, lon1, safety_buffer_nm=0.5):
+                raise ValueError(
+                    f"Route '{item['id']}' has land crossing segment "
+                    f"({lat0:.4f},{lon0:.4f}) -> ({lat1:.4f},{lon1:.4f})"
+                )
         routes.append(
             Route(
                 id=str(item["id"]),
                 label=str(item["label"]),
                 description=str(item["description"]),
-                legs=tuple((float(lat), float(lon)) for lat, lon in item["legs"]),
+                legs=legs,
                 tags=tuple(str(x) for x in item.get("tags", [])),
             )
         )

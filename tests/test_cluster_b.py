@@ -53,6 +53,16 @@ def test_east_of_corsica_track_segments_do_not_cross_land() -> None:
     assert not crosses_land(via_north_east[0], via_north_east[1], north_clear[0], north_clear[1])
 
 
+def test_all_configured_route_legs_stay_in_water() -> None:
+    routes = load_routes(ROOT / "config/routes.yaml")
+    for route in routes:
+        for (lat0, lon0), (lat1, lon1) in zip(route.legs[:-1], route.legs[1:]):
+            assert not crosses_land(lat0, lon0, lat1, lon1, safety_buffer_nm=0.5), (
+                f"{route.id} crosses land on segment "
+                f"({lat0:.4f},{lon0:.4f})->({lat1:.4f},{lon1:.4f})"
+            )
+
+
 def test_follow_varies_with_start_time_when_wind_changes() -> None:
     route = Route(
         id="vary-test",
