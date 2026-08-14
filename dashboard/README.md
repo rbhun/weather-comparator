@@ -19,10 +19,9 @@ Offline tactical dashboard for PMC-2026.
 1. Prepare payload:
 
    ```bash
-   PYTHONPATH="/workspace/src:/workspace" \
-     python3 -m pmc.report \
-     --input "/workspace/contracts/fixtures/data.json" \
-     --output "/workspace/dashboard/data.json"
+   python -m pmc.report \
+     --input contracts/fixtures/data.json \
+     --output dashboard/data.json
    ```
 
 2. Open `dashboard/index.html` directly from the filesystem (no server).

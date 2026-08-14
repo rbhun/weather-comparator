@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pmc"
+version = "0.1.0"
+description = "Palermo–Montecarlo weather analysis and offline tactical dashboard"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "xarray",
+    "zarr",
+    "netCDF4",
+    "pyyaml",
+    "shapely",
+    "pyshp",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["pmc*", "contracts*"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests"]
