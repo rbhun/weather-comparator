@@ -1,0 +1,6 @@
+# Runtime outputs and local secrets
+data/**
+.env
+
+# Keep committed fixtures: deleting them blocks five parallel agents
+!contracts/fixtures/**
