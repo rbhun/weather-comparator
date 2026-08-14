@@ -26,6 +26,7 @@ C4_COLUMNS: dict[str, str] = {
     "mean_tws_kt": "float32",
     "hours_below_5kt": "float32",
     "hours_upwind": "float32",
+    "land_fill_fraction": "float32",
     "stalled": "bool",
     "max_stall_hours": "float32",
 }
@@ -177,6 +178,7 @@ class FollowResult:
     hours_upwind: float
     stalled: bool
     max_stall_hours: float
+    land_fill_fraction: float
 
     def as_row(self) -> dict[str, Any]:
         ts = pd.Timestamp(self.start_time)
@@ -190,6 +192,7 @@ class FollowResult:
             "mean_tws_kt": np.float32(self.mean_tws_kt),
             "hours_below_5kt": np.float32(self.hours_below_5kt),
             "hours_upwind": np.float32(self.hours_upwind),
+            "land_fill_fraction": np.float32(self.land_fill_fraction),
             "stalled": bool(self.stalled),
             "max_stall_hours": np.float32(self.max_stall_hours),
         }

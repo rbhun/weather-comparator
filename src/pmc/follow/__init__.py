@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 import numpy as np
@@ -22,6 +23,9 @@ DEFAULT_DT_MINUTES = 10
 DEFAULT_STALL_THRESHOLD_KT = 0.5
 DEFAULT_STALL_HOURS = 6.0
 DEFAULT_MAX_SIM_HOURS = 180.0
+DEFAULT_LAND_FILL_WARN_FRACTION = 0.02
+
+LOGGER = logging.getLogger(__name__)
 
 def _route_distance_nm(route: Route) -> float:
     total = 0.0
@@ -48,7 +52,7 @@ def _interp_1d(values: np.ndarray, x: float) -> tuple[int, int, float]:
 
 def _bilinear_value(
     field_2d: np.ndarray, lat_vals: np.ndarray, lon_vals: np.ndarray, lat: float, lon: float
-) -> float:
+) -> tuple[float, bool]:
     lat_c = float(np.clip(lat, lat_vals[0], lat_vals[-1]))
     lon_c = float(np.clip(lon, lon_vals[0], lon_vals[-1]))
     i0, i1, wa = _interp_1d(lat_vals, lat_c)
@@ -72,19 +76,24 @@ def _bilinear_value(
             window = field_2d[i_lo:i_hi, j_lo:j_hi]
             finite = window[np.isfinite(window)]
             if finite.size:
-                return float(np.mean(finite))
-        return float("nan")
+                return float(np.mean(finite)), True
+        return float("nan"), True
     if valid.sum() < 4:
-        return float(np.nanmean(corners))
-    return float(
-        (1.0 - wa) * (1.0 - wb) * f00
-        + wa * (1.0 - wb) * f10
-        + (1.0 - wa) * wb * f01
-        + wa * wb * f11
+        return float(np.nanmean(corners)), True
+    return (
+        float(
+            (1.0 - wa) * (1.0 - wb) * f00
+            + wa * (1.0 - wb) * f10
+            + (1.0 - wa) * wb * f01
+            + wa * wb * f11
+        ),
+        False,
     )
 
 
-def _interpolate_uv(wind: xr.Dataset, t: np.datetime64, lat: float, lon: float) -> tuple[float, float]:
+def _interpolate_uv(
+    wind: xr.Dataset, t: np.datetime64, lat: float, lon: float
+) -> tuple[float, float, bool]:
     times = wind["time"].values.astype("datetime64[ns]")
     time_ns = times.astype(np.int64)
     t_ns = int(t.astype("datetime64[ns]").astype(np.int64))
@@ -97,19 +106,21 @@ def _interpolate_uv(wind: xr.Dataset, t: np.datetime64, lat: float, lon: float) 
 
     lat_vals = wind["lat"].values.astype(float)
     lon_vals = wind["lon"].values.astype(float)
-    u0 = _bilinear_value(wind["u10"].values[i0], lat_vals, lon_vals, lat, lon)
-    v0 = _bilinear_value(wind["v10"].values[i0], lat_vals, lon_vals, lat, lon)
+    u0, u0_sub = _bilinear_value(wind["u10"].values[i0], lat_vals, lon_vals, lat, lon)
+    v0, v0_sub = _bilinear_value(wind["v10"].values[i0], lat_vals, lon_vals, lat, lon)
+    substituted = u0_sub or v0_sub
     if i0 == i1:
-        return u0, v0
-    u1 = _bilinear_value(wind["u10"].values[i1], lat_vals, lon_vals, lat, lon)
-    v1 = _bilinear_value(wind["v10"].values[i1], lat_vals, lon_vals, lat, lon)
+        return u0, v0, substituted
+    u1, u1_sub = _bilinear_value(wind["u10"].values[i1], lat_vals, lon_vals, lat, lon)
+    v1, v1_sub = _bilinear_value(wind["v10"].values[i1], lat_vals, lon_vals, lat, lon)
+    substituted = substituted or u1_sub or v1_sub
     if not np.isfinite([u0, v0, u1, v1]).all():
         u_candidates = [v for v in (u0, u1) if np.isfinite(v)]
         v_candidates = [v for v in (v0, v1) if np.isfinite(v)]
         if not u_candidates or not v_candidates:
-            return float("nan"), float("nan")
-        return float(np.mean(u_candidates)), float(np.mean(v_candidates))
-    return (1.0 - wt) * u0 + wt * u1, (1.0 - wt) * v0 + wt * v1
+            return float("nan"), float("nan"), True
+        return float(np.mean(u_candidates)), float(np.mean(v_candidates)), True
+    return (1.0 - wt) * u0 + wt * u1, (1.0 - wt) * v0 + wt * v1, substituted
 
 
 def follow(
@@ -122,6 +133,7 @@ def follow(
     stall_threshold_kt: float = DEFAULT_STALL_THRESHOLD_KT,
     stall_hours_threshold: float = DEFAULT_STALL_HOURS,
     max_sim_hours: float = DEFAULT_MAX_SIM_HOURS,
+    land_fill_warn_fraction: float = DEFAULT_LAND_FILL_WARN_FRACTION,
 ) -> FollowResult:
     """March a boat along a fixed polyline through the wind field."""
     if len(route.legs) < 2:
@@ -145,6 +157,8 @@ def follow(
     stall_streak_h = 0.0
     max_stall_h = 0.0
     stalled = False
+    substituted_steps = 0
+    sampled_steps = 0
 
     for _ in range(max_steps):
         if waypoint_idx >= len(route.legs):
@@ -157,7 +171,10 @@ def follow(
             waypoint_idx += 1
             continue
 
-        u10, v10 = _interpolate_uv(wind, now_utc, current_lat, current_lon)
+        u10, v10, substituted = _interpolate_uv(wind, now_utc, current_lat, current_lon)
+        sampled_steps += 1
+        if substituted:
+            substituted_steps += 1
         if not np.isfinite([u10, v10]).all():
             tws_kt = 0.0
             twd_deg = 0.0
@@ -216,6 +233,18 @@ def follow(
     if waypoint_idx < len(route.legs):
         stalled = True
 
+    land_fill_fraction = (
+        substituted_steps / sampled_steps if sampled_steps > 0 else 0.0
+    )
+    if land_fill_fraction > land_fill_warn_fraction:
+        LOGGER.warning(
+            "Route %s exceeded land-fill threshold: %.2f%% substituted steps (%d/%d)",
+            route.id,
+            100.0 * land_fill_fraction,
+            substituted_steps,
+            sampled_steps,
+        )
+
     mean_tws = tws_weighted_sum / elapsed_hours if elapsed_hours > 0 else np.nan
     return FollowResult(
         start_time=start,
@@ -227,4 +256,5 @@ def follow(
         hours_upwind=float(np.round(hours_upwind, 2)),
         stalled=stalled,
         max_stall_hours=float(np.round(max_stall_h, 2)),
+        land_fill_fraction=float(np.round(land_fill_fraction, 4)),
     )

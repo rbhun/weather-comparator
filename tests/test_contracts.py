@@ -56,7 +56,8 @@ def test_vector_average_wraparound_justification_for_uv_storage() -> None:
     mean_u = float(np.mean(u))
     mean_v = float(np.mean(v))
     _, mean_twd = uv_to_tws_twd(mean_u, mean_v)
-    assert mean_twd < 20.0 or mean_twd > 340.0
+    dist_to_north = min(abs(float(mean_twd)), abs(360.0 - float(mean_twd)))
+    assert dist_to_north <= 1.0
 
 
 def test_directional_constancy_bounds() -> None:

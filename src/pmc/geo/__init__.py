@@ -19,6 +19,7 @@ DEFAULT_SAFETY_BUFFER_NM = 0.5
 _LAND_POLYGONS: list[Polygon] | None = None
 _LAND_PREPARED = None
 _LAND_INDEX: STRtree | None = None
+_LAND_SOURCE: str | None = None
 
 
 def _fallback_polygons() -> list[Polygon]:
@@ -126,7 +127,7 @@ def _ensure_cached_natural_earth() -> None:
         return
 
 
-def _load_external_polygons() -> list[Polygon]:
+def _load_external_polygons() -> tuple[list[Polygon], str | None]:
     domain_bbox = Polygon([(6.0, 37.0), (15.0, 37.0), (15.0, 44.5), (6.0, 44.5)])
     _ensure_cached_natural_earth()
     polygons: list[Polygon] = []
@@ -145,20 +146,28 @@ def _load_external_polygons() -> list[Polygon]:
                     [poly for poly in geom.geoms if isinstance(poly, Polygon) and poly.intersects(domain_bbox)]
                 )
         if polygons:
-            return polygons
-    return []
+            return polygons, str(candidate)
+    return [], None
 
 
 def _ensure_land_index() -> tuple[list[Polygon], list, STRtree]:
-    global _LAND_POLYGONS, _LAND_PREPARED, _LAND_INDEX
+    global _LAND_POLYGONS, _LAND_PREPARED, _LAND_INDEX, _LAND_SOURCE
     if _LAND_POLYGONS is None or _LAND_PREPARED is None or _LAND_INDEX is None:
-        polygons = _load_external_polygons()
+        polygons, source = _load_external_polygons()
         if not polygons:
             polygons = _fallback_polygons()
+            source = "fallback-polygons"
         _LAND_POLYGONS = polygons
+        _LAND_SOURCE = source
         _LAND_PREPARED = [prep(poly) for poly in polygons]
         _LAND_INDEX = STRtree(polygons)
     return _LAND_POLYGONS, _LAND_PREPARED, _LAND_INDEX
+
+
+def coastline_info() -> dict[str, object]:
+    """Return runtime coastline source metadata."""
+    polygons, _, _ = _ensure_land_index()
+    return {"source": _LAND_SOURCE, "polygon_count": len(polygons)}
 
 
 def _buffer_nm_to_degrees(safety_buffer_nm: float, ref_lat_deg: float) -> float:
