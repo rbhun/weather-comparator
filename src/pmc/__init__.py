@@ -1,1 +1,2 @@
-"""PMC-2026 package."""
+"""PMC 2026 project package."""
+

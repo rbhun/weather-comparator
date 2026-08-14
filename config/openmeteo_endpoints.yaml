@@ -1,0 +1,11 @@
+modes:
+  analysis:
+    endpoint: "https://archive-api.open-meteo.com/v1/archive"
+    auth_mode: "none"
+  previous_runs:
+    endpoint: "https://previous-runs-api.open-meteo.com/v1/forecast"
+    auth_mode: "none"
+  live:
+    endpoint: "https://customer-api.open-meteo.com/v1/forecast"
+    auth_mode: "require_key"
+

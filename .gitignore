@@ -2,10 +2,15 @@
 data/**
 !data/coastline/
 !data/coastline/*.geojson
+!data/.gitkeep
 .env
-__pycache__/
-*.py[cod]
 dashboard/data.json
 
-# Keep committed fixtures: deleting them blocks five parallel agents
+# Python caches and local envs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+# Keep committed fixtures
 !contracts/fixtures/**
