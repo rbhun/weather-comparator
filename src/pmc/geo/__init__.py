@@ -3,171 +3,223 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
+import zipfile
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
 import numpy as np
-from shapely.geometry import LineString, Point, Polygon, shape
+from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
 from shapely.prepared import prep
 from shapely.strtree import STRtree
 
 from contracts.schemas import EARTH_RADIUS_NM, haversine_nm, initial_bearing_deg
 
+LOGGER = logging.getLogger(__name__)
+
 DEFAULT_SAFETY_BUFFER_NM = 0.5
+MIN_DOMAIN_POLYGON_COUNT = 200
+DOMAIN_BBOX = box(6.0, 37.0, 15.0, 44.5)
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+OSM_CLIPPED_REPO_PATH = REPO_ROOT / "data" / "coastline" / "land-polygons-complete-4326-clipped.geojson"
+
+CACHE_ROOT = Path.home() / ".cache" / "pmc"
+CACHE_COASTLINE = CACHE_ROOT / "coastline"
+CACHE_RAW = CACHE_ROOT / "raw"
+
+GSHHG_URL = "https://www.soest.hawaii.edu/pwessel/gshhg/gshhg-shp-2.3.7.zip"
+GSHHG_RAW_ZIP = CACHE_RAW / "gshhg-shp-2.3.7.zip"
+GSHHG_CLIPPED_CACHE = CACHE_COASTLINE / "gshhg-f-l1-clipped.geojson"
+NATURAL_EARTH_10M_URL = (
+    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/"
+    "master/geojson/ne_10m_land.geojson"
+)
+NATURAL_EARTH_RAW = CACHE_COASTLINE / "ne_10m_land.geojson"
+NATURAL_EARTH_CLIPPED = CACHE_COASTLINE / "ne_10m_land_clipped.geojson"
+
 _LAND_POLYGONS: list[Polygon] | None = None
 _LAND_PREPARED = None
 _LAND_INDEX: STRtree | None = None
 _LAND_SOURCE: str | None = None
+_LAND_SCALE: str | None = None
 
 
-def _fallback_polygons() -> list[Polygon]:
-    """
-    Simplified race-area coastline polygons used when external datasets are absent.
-
-    These are hand-curated extracts for Sicily, Sardinia/Corsica, and nearby
-    islands sufficient for route-crossing checks in the race corridor.
-    """
-    sardinia = Polygon(
-        [
-            (8.16, 38.86),
-            (8.30, 39.18),
-            (8.54, 39.62),
-            (8.75, 40.03),
-            (8.86, 40.43),
-            (9.01, 40.79),
-            (9.26, 41.02),
-            (9.58, 41.09),
-            (9.84, 41.01),
-            (9.83, 40.84),
-            (9.66, 40.66),
-            (9.51, 40.45),
-            (9.36, 40.19),
-            (9.43, 39.88),
-            (9.62, 39.50),
-            (9.55, 39.13),
-            (9.19, 38.93),
-            (8.75, 38.83),
-            (8.36, 38.79),
-        ]
-    )
-    corsica = Polygon(
-        [
-            (8.54, 41.35),
-            (8.76, 41.53),
-            (8.97, 41.78),
-            (9.20, 42.05),
-            (9.45, 42.34),
-            (9.54, 42.57),
-            (9.45, 42.84),
-            (9.23, 43.06),
-            (9.04, 43.22),
-            (8.75, 43.28),
-            (8.46, 43.23),
-            (8.22, 43.11),
-            (8.03, 42.89),
-            (8.08, 42.61),
-            (8.20, 42.35),
-            (8.33, 42.06),
-            (8.39, 41.80),
-            (8.42, 41.56),
-        ]
-    )
-    maddalena = Polygon(
-        [
-            (9.18, 41.13),
-            (9.31, 41.17),
-            (9.43, 41.23),
-            (9.44, 41.30),
-            (9.31, 41.31),
-            (9.20, 41.24),
-        ]
-    )
-    sicily_northwest = Polygon(
-        [
-            (12.32, 37.95),
-            (12.70, 37.90),
-            (13.10, 38.00),
-            (13.37, 38.16),
-            (13.95, 38.45),
-            (14.50, 38.40),
-            (14.50, 37.55),
-            (13.60, 37.50),
-            (12.55, 37.50),
-        ]
-    )
-    return [sardinia, corsica, maddalena, sicily_northwest]
-
-
-def _candidate_geojson_paths() -> list[Path]:
-    return [
-        Path("/usr/share/gshhg/gshhs_f.geojson"),
-        Path("/usr/share/gshhg/gshhs_h.geojson"),
-        Path("/usr/share/gshhg/gshhs_l.geojson"),
-        Path.home() / ".cache" / "pmc" / "coastline_10m.geojson",
-    ]
-
-
-def _ensure_cached_natural_earth() -> None:
-    cache_path = Path.home() / ".cache" / "pmc" / "coastline_10m.geojson"
-    if cache_path.exists():
-        return
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    url = (
-        "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/"
-        "master/geojson/ne_10m_land.geojson"
-    )
+def _download_once(url: str, target: Path) -> bool:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        return True
     try:
-        with urlopen(url, timeout=20) as response:
+        with urlopen(url, timeout=90) as response:
             payload = response.read()
-        cache_path.write_bytes(payload)
+        target.write_bytes(payload)
+        return True
     except (URLError, TimeoutError, OSError):
-        # Offline mode or download failure: fallback polygons are used.
-        return
+        return False
 
 
-def _load_external_polygons() -> tuple[list[Polygon], str | None]:
-    domain_bbox = Polygon([(6.0, 37.0), (15.0, 37.0), (15.0, 44.5), (6.0, 44.5)])
-    _ensure_cached_natural_earth()
+def _clip_to_domain(geom) -> list[Polygon]:
+    if geom.is_empty:
+        return []
+    clipped = geom.intersection(DOMAIN_BBOX)
+    if clipped.is_empty:
+        return []
+    if clipped.geom_type == "Polygon":
+        return [clipped]
+    if clipped.geom_type == "MultiPolygon":
+        return [poly for poly in clipped.geoms if not poly.is_empty]
+    if hasattr(clipped, "geoms"):
+        return [g for g in clipped.geoms if g.geom_type == "Polygon" and not g.is_empty]
+    return []
+
+
+def _load_geojson_polygons(path: Path) -> list[Polygon]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    features = raw.get("features", [])
     polygons: list[Polygon] = []
-    for candidate in _candidate_geojson_paths():
-        if not candidate.exists():
+    for feat in features:
+        geom_data = feat.get("geometry")
+        if not geom_data:
             continue
-        raw = json.loads(candidate.read_text(encoding="utf-8"))
-        features = raw.get("features", [])
-        for feat in features:
-            geom = shape(feat.get("geometry"))
-            if geom.geom_type == "Polygon":
-                if geom.intersects(domain_bbox):
-                    polygons.append(geom)
-            elif geom.geom_type == "MultiPolygon":
-                polygons.extend(
-                    [poly for poly in geom.geoms if isinstance(poly, Polygon) and poly.intersects(domain_bbox)]
-                )
+        geom = shape(geom_data)
+        if not geom.is_valid:
+            geom = geom.buffer(0)
+        polygons.extend(_clip_to_domain(geom))
+    return polygons
+
+
+def _write_geojson(path: Path, polygons: list[Polygon], name: str) -> None:
+    features = [
+        {"type": "Feature", "properties": {}, "geometry": mapping(poly)} for poly in polygons
+    ]
+    fc = {"type": "FeatureCollection", "name": name, "features": features}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(fc, separators=(",", ":"), ensure_ascii=True), encoding="utf-8")
+
+
+def _extract_gshhg_f_l1(shp_root: Path) -> Path | None:
+    for candidate in shp_root.rglob("GSHHS_f_L1.shp"):
+        return candidate
+    return None
+
+
+def _build_gshhg_clipped_cache() -> bool:
+    if GSHHG_CLIPPED_CACHE.exists():
+        return True
+    if not _download_once(GSHHG_URL, GSHHG_RAW_ZIP):
+        return False
+
+    try:
+        import shapefile  # pyshp
+    except ImportError:
+        return False
+
+    extract_dir = CACHE_RAW / "gshhg-shp-2.3.7"
+    if not extract_dir.exists():
+        extract_dir.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(GSHHG_RAW_ZIP) as zf:
+            zf.extractall(extract_dir)
+
+    shp_path = _extract_gshhg_f_l1(extract_dir)
+    if shp_path is None:
+        return False
+
+    polygons: list[Polygon] = []
+    reader = shapefile.Reader(str(shp_path))
+    for shp in reader.shapes():
+        xmin, ymin, xmax, ymax = shp.bbox
+        if xmax < 6.0 or xmin > 15.0 or ymax < 37.0 or ymin > 44.5:
+            continue
+        geom = shape(shp.__geo_interface__)
+        if not geom.is_valid:
+            geom = geom.buffer(0)
+        polygons.extend(_clip_to_domain(geom))
+    if not polygons:
+        return False
+    _write_geojson(GSHHG_CLIPPED_CACHE, polygons, "gshhg-f-l1-clipped")
+    return True
+
+
+def _build_natural_earth_10m_clipped_cache() -> bool:
+    if NATURAL_EARTH_CLIPPED.exists():
+        return True
+    if not NATURAL_EARTH_RAW.exists():
+        if not _download_once(NATURAL_EARTH_10M_URL, NATURAL_EARTH_RAW):
+            return False
+    polygons = _load_geojson_polygons(NATURAL_EARTH_RAW)
+    if not polygons:
+        return False
+    _write_geojson(NATURAL_EARTH_CLIPPED, polygons, "natural-earth-10m-clipped")
+    return True
+
+
+def _load_land_polygons() -> tuple[list[Polygon], str, str]:
+    if OSM_CLIPPED_REPO_PATH.exists():
+        polygons = _load_geojson_polygons(OSM_CLIPPED_REPO_PATH)
         if polygons:
-            return polygons, str(candidate)
-    return [], None
+            return polygons, str(OSM_CLIPPED_REPO_PATH), "OSM land-polygons-complete-4326 (ODbL)"
+
+    if _build_gshhg_clipped_cache():
+        polygons = _load_geojson_polygons(GSHHG_CLIPPED_CACHE)
+        if polygons:
+            return polygons, str(GSHHG_CLIPPED_CACHE), "GSHHG 2.3.7 full (f), level 1"
+
+    if _build_natural_earth_10m_clipped_cache():
+        polygons = _load_geojson_polygons(NATURAL_EARTH_CLIPPED)
+        if polygons:
+            return polygons, str(NATURAL_EARTH_CLIPPED), "Natural Earth 10m physical land"
+
+    raise RuntimeError("No coastline dataset available (OSM/GSHHG/NE-10m).")
 
 
 def _ensure_land_index() -> tuple[list[Polygon], list, STRtree]:
-    global _LAND_POLYGONS, _LAND_PREPARED, _LAND_INDEX, _LAND_SOURCE
+    global _LAND_POLYGONS, _LAND_PREPARED, _LAND_INDEX, _LAND_SOURCE, _LAND_SCALE
     if _LAND_POLYGONS is None or _LAND_PREPARED is None or _LAND_INDEX is None:
-        polygons, source = _load_external_polygons()
-        if not polygons:
-            polygons = _fallback_polygons()
-            source = "fallback-polygons"
+        polygons, source, scale = _load_land_polygons()
+        polygon_count = len(polygons)
+        if polygon_count <= MIN_DOMAIN_POLYGON_COUNT:
+            raise AssertionError(
+                "Loaded coastline is too coarse for race geometry: "
+                f"polygon_count={polygon_count} (must exceed {MIN_DOMAIN_POLYGON_COUNT})."
+            )
         _LAND_POLYGONS = polygons
         _LAND_SOURCE = source
+        _LAND_SCALE = scale
         _LAND_PREPARED = [prep(poly) for poly in polygons]
         _LAND_INDEX = STRtree(polygons)
+        LOGGER.warning(
+            "Loaded coastline source=%s scale=%s polygon_count=%d",
+            _LAND_SOURCE,
+            _LAND_SCALE,
+            polygon_count,
+        )
     return _LAND_POLYGONS, _LAND_PREPARED, _LAND_INDEX
 
 
 def coastline_info() -> dict[str, object]:
     """Return runtime coastline source metadata."""
     polygons, _, _ = _ensure_land_index()
-    return {"source": _LAND_SOURCE, "polygon_count": len(polygons)}
+    return {
+        "source": _LAND_SOURCE,
+        "scale": _LAND_SCALE,
+        "polygon_count": len(polygons),
+    }
+
+
+def polygon_count_in_bbox(
+    *, lon_min: float, lon_max: float, lat_min: float, lat_max: float
+) -> int:
+    """Count coastline polygons intersecting the given bounding box."""
+    polygons, prepared, index = _ensure_land_index()
+    query = box(lon_min, lat_min, lon_max, lat_max)
+    idxs = index.query(query, predicate="intersects")
+    total = 0
+    for idx in idxs:
+        if prepared[int(idx)].intersects(query):
+            total += 1
+    return total
 
 
 def _buffer_nm_to_degrees(safety_buffer_nm: float, ref_lat_deg: float) -> float:
@@ -178,7 +230,7 @@ def _buffer_nm_to_degrees(safety_buffer_nm: float, ref_lat_deg: float) -> float:
 
 
 def _point_on_land(lat: float, lon: float) -> bool:
-    polygons, prepared, index = _ensure_land_index()
+    _, prepared, index = _ensure_land_index()
     point = Point(float(lon), float(lat))
     candidate_idx = index.query(point, predicate="intersects")
     for idx in candidate_idx:
