@@ -489,6 +489,12 @@
         if (!zr) {
           return [];
         }
+        const embeddedForZoom = Array.isArray(m.embedded_tiles)
+          ? m.embedded_tiles.filter((t) => Number(t.z) === zoom)
+          : [];
+        const embeddedByKey = new Map(
+          embeddedForZoom.map((t) => [`${t.x}/${t.y}`, t.source_data_uri])
+        );
         const images = [];
         for (let x = zr.x_min; x <= zr.x_max; x++) {
           for (let y = zr.y_min; y <= zr.y_max; y++) {
@@ -496,8 +502,12 @@
             const lonRight = tileXToLon(x + 1, zoom);
             const latTop = tileYToLat(y, zoom);
             const latBottom = tileYToLat(y + 1, zoom);
+            const sourceData = embeddedByKey.get(`${x}/${y}`);
+            if (!sourceData) {
+              continue;
+            }
             images.push({
-              source: `./tiles/openseamap/${zoom}/${x}/${y}.png`,
+              source: sourceData,
               xref: "x",
               yref: "y",
               x: lonLeft,

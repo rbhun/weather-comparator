@@ -7,6 +7,7 @@ import json
 import math
 import shutil
 import time
+import base64
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -126,6 +127,19 @@ def write_manifest(root: Path, downloaded: list[dict]) -> dict:
         }
 
     total_bytes = directory_size(root)
+    embedded_tiles: list[dict] = []
+    for row in existing:
+        tile_path = root / str(row["z"]) / str(row["x"]) / f"{row['y']}.png"
+        data_uri = "data:image/png;base64," + base64.b64encode(tile_path.read_bytes()).decode("ascii")
+        embedded_tiles.append(
+            {
+                "z": int(row["z"]),
+                "x": int(row["x"]),
+                "y": int(row["y"]),
+                "source_data_uri": data_uri,
+            }
+        )
+
     manifest = {
         "name": "OpenSeaMap seamark chart layer",
         "attribution": "OpenStreetMap contributors, ODbL",
@@ -136,6 +150,7 @@ def write_manifest(root: Path, downloaded: list[dict]) -> dict:
         "total_bytes": total_bytes,
         "tile_count": len(existing),
         "tile_url_template": "tiles/openseamap/{z}/{x}/{y}.png",
+        "embedded_tiles": embedded_tiles,
     }
     (root.parent / "openseamap_manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n",
