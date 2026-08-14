@@ -72,8 +72,15 @@ def main() -> int:
         if any(month < 1 or month > 12 for month in month_filter):
             parser.error("--month-filter only accepts month numbers 1-12")
 
+    api_key = os.getenv("OPENMETEO_API_KEY")
+    if not api_key or not api_key.strip():
+        raise RuntimeError(
+            "OPENMETEO_API_KEY is not set. This command refuses to run against "
+            "public unauthenticated endpoints."
+        )
+
     fetcher = OpenMeteoFetcher(
-        api_key=os.getenv("OPENMETEO_API_KEY"),
+        api_key=api_key,
         cache_root=Path(args.cache_root),
         output_root=Path(args.wind_root),
         max_workers=args.max_workers,

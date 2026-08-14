@@ -36,6 +36,7 @@ DEFAULT_MODELS_PATH = Path("config/models.yaml")
 DEFAULT_CACHE_ROOT = Path("data/cache/openmeteo")
 DEFAULT_WIND_ROOT = Path("data/wind")
 DEFAULT_LOG_ROOT = Path("data/wind/logs")
+DEFAULT_CHECKPOINT_ROOT = Path("data/wind/checkpoints")
 
 
 @dataclass(frozen=True)
@@ -67,9 +68,11 @@ class FetchSummary:
     output_path: str
     endpoint: str
     wall_seconds: float
-    days_total: int
-    days_fetched: int
-    days_resumed: int
+    periods_total: int
+    periods_fetched: int
+    periods_resumed: int
+    checkpoint_tasks_total: int
+    checkpoint_tasks_done: int
     request_count: int
     cache_hits: int
     cache_misses: int
@@ -88,7 +91,7 @@ class ModeConfig:
 MODE_CONFIG: dict[str, ModeConfig] = {
     "analysis": ModeConfig(
         mode="analysis",
-        endpoint="https://historical-forecast-api.open-meteo.com/v1/forecast",
+        endpoint="https://archive-api.open-meteo.com/v1/archive",
         candidates=(
             "ecmwf_ifs",
             "ecmwf_ifs025",
@@ -195,6 +198,11 @@ class OpenMeteoFetcher:
         inter_day_delay_seconds: float = 0.0,
         min_request_interval_seconds: float = 1.0,
     ) -> None:
+        if not api_key or not api_key.strip():
+            raise RuntimeError(
+                "OPENMETEO_API_KEY is required. Refusing to use unauthenticated "
+                "public endpoints for this pipeline."
+            )
         self.api_key = api_key
         self.cache = DiskRequestCache(cache_root)
         self.output_root = output_root
@@ -339,65 +347,79 @@ class OpenMeteoFetcher:
         output_path: Path,
         month_filter: set[int] | None,
     ) -> FetchSummary:
-        lat = cfg.latitudes()
-        lon = cfg.longitudes()
-        all_points = _grid_points(lat, lon)
+        lat_axis = cfg.latitudes()
+        lon_axis = cfg.longitudes()
+        all_points = _grid_points(lat_axis, lon_axis)
         point_batches = list(_chunked(all_points, self.batch_size))
+        periods = self._build_periods(mode_cfg.mode, start, end, month_filter)
+        existing_periods = self._existing_periods(mode_cfg.mode, output_path)
 
-        existing_days = self._existing_days(output_path)
-        scheduled_days = list(_iter_days(start, end, month_filter=month_filter))
-        days_total = len(scheduled_days)
-        days_resumed = 0
-        days_fetched = 0
+        checkpoint_path = self._checkpoint_path(
+            mode=mode_cfg.mode,
+            model=model,
+            start=start,
+            end=end,
+            month_filter=month_filter,
+        )
+        checkpoint = self._load_checkpoint(checkpoint_path)
+        task_total = len(point_batches) * len(periods)
+        task_done = 0
+        periods_resumed = 0
+        periods_fetched = 0
         cells_fetched = 0
         cells_missing = 0
 
         print(
             "[fetch] "
-            f"mode={mode_cfg.mode} model={model} days={days_total} "
-            f"grid_points={len(all_points)} batches_per_day={len(point_batches)}"
-            ,
+            f"mode={mode_cfg.mode} model={model} periods={len(periods)} "
+            f"grid_points={len(all_points)} batches_per_period={len(point_batches)} "
+            f"checkpoint={checkpoint_path}",
             flush=True,
         )
-        for day_start in scheduled_days:
-            if day_start in existing_days:
-                days_resumed += 1
-                print(
-                    f"[fetch] resume-skip {day_start.isoformat()} (already in store)",
-                    flush=True,
-                )
+
+        for period_id, period_start, period_end in periods:
+            if period_id in checkpoint["periods_written"] or period_id in existing_periods:
+                checkpoint["periods_written"].add(period_id)
+                periods_resumed += 1
+                task_done += len(point_batches)
+                print(f"[fetch] resume-skip period={period_id} (already written)", flush=True)
                 continue
 
-            day_end = day_start
-            day_started_at = time.time()
-            day_ds, fetched, missing = self._fetch_day_dataset(
+            period_started_at = time.time()
+            period_ds, period_cells_fetched, period_cells_missing = self._fetch_period_dataset(
                 endpoint=endpoint,
                 model=model,
-                day_start=day_start,
-                day_end=day_end,
-                lat_axis=lat,
-                lon_axis=lon,
+                period_start=period_start,
+                period_end=period_end,
+                lat_axis=lat_axis,
+                lon_axis=lon_axis,
                 point_batches=point_batches,
                 source_attr=self._source_attr(mode_cfg.mode, model),
+                checkpoint=checkpoint,
+                checkpoint_path=checkpoint_path,
+                period_id=period_id,
             )
-            self._append_day(output_path, day_ds)
-            days_fetched += 1
-            cells_fetched += fetched
-            cells_missing += missing
-            day_elapsed = time.time() - day_started_at
+            self._append_period(output_path, period_ds)
+            checkpoint["periods_written"].add(period_id)
+            self._save_checkpoint(checkpoint_path, checkpoint)
+
+            periods_fetched += 1
+            task_done += len(point_batches)
+            cells_fetched += period_cells_fetched
+            cells_missing += period_cells_missing
+            elapsed = time.time() - period_started_at
             total_req = max(1, self.request_count)
             cache_ratio = self.cache_hits / total_req
             print(
                 "[fetch] "
-                f"fetched {day_start.isoformat()} in {day_elapsed:.1f}s "
-                f"fetched_cells={fetched} missing_cells={missing} "
-                f"requests={self.request_count} cache_hit_ratio={cache_ratio:.3f}"
-                ,
+                f"fetched period={period_id} in {elapsed:.1f}s fetched_cells={period_cells_fetched} "
+                f"missing_cells={period_cells_missing} requests={self.request_count} "
+                f"cache_hit_ratio={cache_ratio:.3f}",
                 flush=True,
             )
-            if self.inter_day_delay_seconds > 0:
-                time.sleep(self.inter_day_delay_seconds)
 
+        # Ensure task_done reflects checkpoint even if we resumed from a prior run.
+        task_done = len(checkpoint["completed_tasks"])
         return FetchSummary(
             source=mode_cfg.mode,
             mode=mode_cfg.mode,
@@ -407,9 +429,11 @@ class OpenMeteoFetcher:
             output_path=str(output_path),
             endpoint=endpoint,
             wall_seconds=0.0,
-            days_total=days_total,
-            days_fetched=days_fetched,
-            days_resumed=days_resumed,
+            periods_total=len(periods),
+            periods_fetched=periods_fetched,
+            periods_resumed=periods_resumed,
+            checkpoint_tasks_total=task_total,
+            checkpoint_tasks_done=task_done,
             request_count=self.request_count,
             cache_hits=self.cache_hits,
             cache_misses=self.cache_misses,
@@ -417,70 +441,84 @@ class OpenMeteoFetcher:
             cells_missing=cells_missing,
         )
 
-    def _fetch_day_dataset(
+    def _fetch_period_dataset(
         self,
         endpoint: str,
         model: str,
-        day_start: dt.date,
-        day_end: dt.date,
+        period_start: dt.date,
+        period_end: dt.date,
         lat_axis: np.ndarray,
         lon_axis: np.ndarray,
         point_batches: list[list[tuple[int, int, float, float]]],
         source_attr: str,
+        checkpoint: dict[str, set[str]],
+        checkpoint_path: Path,
+        period_id: str,
     ) -> tuple[xr.Dataset, int, int]:
-        day_t0 = pd.Timestamp(day_start, tz="UTC")
-        times = pd.date_range(day_t0, day_t0 + pd.Timedelta(hours=23), freq="h")
+        period_t0 = pd.Timestamp(period_start, tz="UTC")
+        period_t1 = pd.Timestamp(period_end, tz="UTC") + pd.Timedelta(hours=23)
+        times = pd.date_range(period_t0, period_t1, freq="h")
         n_time = len(times)
 
         u10 = np.full((n_time, lat_axis.size, lon_axis.size), np.nan, dtype=np.float32)
         v10 = np.full((n_time, lat_axis.size, lon_axis.size), np.nan, dtype=np.float32)
 
-        futures: list[concurrent.futures.Future[list[dict[str, Any]]]] = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as pool:
-            for batch in point_batches:
-                futures.append(
-                    pool.submit(
-                        self._fetch_batch_resilient,
-                        endpoint,
-                        model,
-                        day_start,
-                        day_end,
-                        batch,
+            future_map: dict[
+                concurrent.futures.Future[list[dict[str, Any]]],
+                tuple[int, list[tuple[int, int, float, float]]],
+            ] = {}
+            for batch_index, batch in enumerate(point_batches):
+                task_id = _task_id(period_id=period_id, batch_index=batch_index)
+                if task_id in checkpoint["completed_tasks"]:
+                    cached_payloads = self._fetch_batch_resilient(
+                        endpoint=endpoint,
+                        model=model,
+                        period_start=period_start,
+                        period_end=period_end,
+                        batch=batch,
+                        allow_network=False,
                     )
-                )
-            for future in concurrent.futures.as_completed(futures):
-                payloads = future.result()
-                for payload in payloads:
-                    responses = _extract_responses(payload)
-                    for response in responses:
-                        lat_v = float(response.get("latitude"))
-                        lon_v = float(response.get("longitude"))
-                        lat_idx = int(
-                            round((lat_v - float(lat_axis[0])) / float(lat_axis[1] - lat_axis[0]))
-                        )
-                        lon_idx = int(
-                            round((lon_v - float(lon_axis[0])) / float(lon_axis[1] - lon_axis[0]))
-                        )
-                        if lat_idx < 0 or lat_idx >= lat_axis.size:
-                            continue
-                        if lon_idx < 0 or lon_idx >= lon_axis.size:
-                            continue
+                    self._apply_payloads_to_arrays(
+                        payloads=cached_payloads,
+                        lat_axis=lat_axis,
+                        lon_axis=lon_axis,
+                        u10=u10,
+                        v10=v10,
+                        n_time=n_time,
+                    )
+                    continue
 
-                        hourly = response.get("hourly") or {}
-                        speed = np.asarray(hourly.get("wind_speed_10m", []), dtype=float)
-                        direction = np.asarray(hourly.get("wind_direction_10m", []), dtype=float)
-                        if speed.size == 0 or direction.size == 0:
-                            continue
-                        n = min(n_time, speed.size, direction.size)
-                        u10_vals, v10_vals = _wind_speed_dir_to_uv(speed[:n], direction[:n])
-                        u10[:n, lat_idx, lon_idx] = u10_vals.astype(np.float32)
-                        v10[:n, lat_idx, lon_idx] = v10_vals.astype(np.float32)
+                future = pool.submit(
+                    self._fetch_batch_resilient,
+                    endpoint,
+                    model,
+                    period_start,
+                    period_end,
+                    batch,
+                    True,
+                )
+                future_map[future] = (batch_index, batch)
+
+            for future in concurrent.futures.as_completed(future_map):
+                batch_index, _batch = future_map[future]
+                payloads = future.result()
+                self._apply_payloads_to_arrays(
+                    payloads=payloads,
+                    lat_axis=lat_axis,
+                    lon_axis=lon_axis,
+                    u10=u10,
+                    v10=v10,
+                    n_time=n_time,
+                )
+                task_id = _task_id(period_id=period_id, batch_index=batch_index)
+                checkpoint["completed_tasks"].add(task_id)
+                self._save_checkpoint(checkpoint_path, checkpoint)
 
         finite = np.isfinite(u10) & np.isfinite(v10)
         cells_fetched = int(np.count_nonzero(finite))
         cells_total = int(np.prod(u10.shape))
         cells_missing = cells_total - cells_fetched
-
         ds = xr.Dataset(
             data_vars={
                 "u10": (("time", "lat", "lon"), u10),
@@ -500,13 +538,47 @@ class OpenMeteoFetcher:
         )
         return ds, cells_fetched, cells_missing
 
+    def _apply_payloads_to_arrays(
+        self,
+        payloads: list[dict[str, Any]],
+        lat_axis: np.ndarray,
+        lon_axis: np.ndarray,
+        u10: np.ndarray,
+        v10: np.ndarray,
+        n_time: int,
+    ) -> None:
+        lat_step = float(lat_axis[1] - lat_axis[0]) if len(lat_axis) > 1 else 1.0
+        lon_step = float(lon_axis[1] - lon_axis[0]) if len(lon_axis) > 1 else 1.0
+        for payload in payloads:
+            responses = _extract_responses(payload)
+            for response in responses:
+                lat_v = float(response.get("latitude"))
+                lon_v = float(response.get("longitude"))
+                lat_idx = int(round((lat_v - float(lat_axis[0])) / lat_step))
+                lon_idx = int(round((lon_v - float(lon_axis[0])) / lon_step))
+                if lat_idx < 0 or lat_idx >= lat_axis.size:
+                    continue
+                if lon_idx < 0 or lon_idx >= lon_axis.size:
+                    continue
+
+                hourly = response.get("hourly") or {}
+                speed = np.asarray(hourly.get("wind_speed_10m", []), dtype=float)
+                direction = np.asarray(hourly.get("wind_direction_10m", []), dtype=float)
+                if speed.size == 0 or direction.size == 0:
+                    continue
+                n = min(n_time, speed.size, direction.size)
+                u10_vals, v10_vals = _wind_speed_dir_to_uv(speed[:n], direction[:n])
+                u10[:n, lat_idx, lon_idx] = u10_vals.astype(np.float32)
+                v10[:n, lat_idx, lon_idx] = v10_vals.astype(np.float32)
+
     def _fetch_batch(
         self,
         endpoint: str,
         model: str,
-        day_start: dt.date,
-        day_end: dt.date,
+        period_start: dt.date,
+        period_end: dt.date,
         batch: list[tuple[int, int, float, float]],
+        allow_network: bool,
     ) -> dict[str, Any]:
         # Jitter reduces synchronized bursts against the API.
         time.sleep(random.uniform(0.0, 0.25))
@@ -515,22 +587,23 @@ class OpenMeteoFetcher:
         params = {
             "latitude": latitudes,
             "longitude": longitudes,
-            "start_date": day_start.isoformat(),
-            "end_date": day_end.isoformat(),
+            "start_date": period_start.isoformat(),
+            "end_date": period_end.isoformat(),
             "hourly": "wind_speed_10m,wind_direction_10m",
             "wind_speed_unit": "ms",
             "timezone": "UTC",
             "models": model,
         }
-        return self._get_json(endpoint=endpoint, params=params)
+        return self._get_json(endpoint=endpoint, params=params, allow_network=allow_network)
 
     def _fetch_batch_resilient(
         self,
         endpoint: str,
         model: str,
-        day_start: dt.date,
-        day_end: dt.date,
+        period_start: dt.date,
+        period_end: dt.date,
         batch: list[tuple[int, int, float, float]],
+        allow_network: bool = True,
     ) -> list[dict[str, Any]]:
         pending = [batch]
         payloads: list[dict[str, Any]] = []
@@ -541,9 +614,10 @@ class OpenMeteoFetcher:
                     self._fetch_batch(
                         endpoint=endpoint,
                         model=model,
-                        day_start=day_start,
-                        day_end=day_end,
+                        period_start=period_start,
+                        period_end=period_end,
                         batch=current,
+                        allow_network=allow_network,
                     )
                 )
             except requests.HTTPError as exc:
@@ -560,18 +634,22 @@ class OpenMeteoFetcher:
                 raise
         return payloads
 
-    def _get_json(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
+    def _get_json(self, endpoint: str, params: dict[str, Any], allow_network: bool = True) -> dict[str, Any]:
         cache_key_params = dict(params)
-        cache_key_params["_auth"] = "key" if self.api_key else "anon"
+        cache_key_params["_auth"] = "key"
         cached = self.cache.get(endpoint, cache_key_params)
         if cached is not None:
             self.cache_hits += 1
             self.request_count += 1
             return cached
+        if not allow_network:
+            raise RuntimeError(
+                "Checkpoint indicates task complete, but no cached payload exists for "
+                f"params={params}"
+            )
 
         request_params = dict(params)
-        if self.api_key:
-            request_params["apikey"] = self.api_key
+        request_params["apikey"] = self.api_key
 
         transient_statuses = {429, 500, 502, 503, 504}
         last_exc: Exception | None = None
@@ -598,7 +676,10 @@ class OpenMeteoFetcher:
                 last_exc = exc
                 status = exc.response.status_code if exc.response is not None else None
                 if status not in transient_statuses:
-                    raise
+                    reason = _response_reason(exc.response)
+                    raise RuntimeError(
+                        f"Open-Meteo request failed with status {status}: {reason}"
+                    ) from None
                 delay = float(2**attempt)
                 if status == 429:
                     delay = max(delay, 10.0)
@@ -657,7 +738,15 @@ class OpenMeteoFetcher:
                 raise
 
         assert last_exc is not None
-        raise last_exc
+        if isinstance(last_exc, requests.HTTPError):
+            status = last_exc.response.status_code if last_exc.response is not None else "unknown"
+            reason = _response_reason(last_exc.response)
+            raise RuntimeError(
+                f"Open-Meteo request failed after retries with status {status}: {reason}"
+            ) from None
+        raise RuntimeError(
+            f"Open-Meteo request failed after retries: {type(last_exc).__name__}"
+        ) from None
 
     def _wait_for_request_slot(self) -> None:
         if self.min_request_interval_seconds <= 0:
@@ -669,33 +758,35 @@ class OpenMeteoFetcher:
                 time.sleep(self.min_request_interval_seconds - elapsed)
             self._last_request_at = time.monotonic()
 
-    def _existing_days(self, path: Path) -> set[dt.date]:
+    def _existing_periods(self, mode: str, path: Path) -> set[str]:
         if not path.exists():
             return set()
         ds = xr.open_zarr(path)
         try:
             values = pd.to_datetime(ds["time"].values, utc=True)
-            return {ts.date() for ts in values}
+            if mode == "analysis":
+                return {str(int(ts.year)) for ts in values if int(ts.month) == 8}
+            return {ts.date().isoformat() for ts in values}
         finally:
             ds.close()
 
-    def _append_day(self, path: Path, day_ds: xr.Dataset) -> None:
-        time_chunk = min(720, day_ds.sizes["time"])
-        lat_chunk = min(32, day_ds.sizes["lat"])
-        lon_chunk = min(40, day_ds.sizes["lon"])
+    def _append_period(self, path: Path, period_ds: xr.Dataset) -> None:
+        time_chunk = min(720, period_ds.sizes["time"])
+        lat_chunk = min(32, period_ds.sizes["lat"])
+        lon_chunk = min(40, period_ds.sizes["lon"])
         encoding = {
             "u10": {"chunks": (time_chunk, lat_chunk, lon_chunk)},
             "v10": {"chunks": (time_chunk, lat_chunk, lon_chunk)},
         }
         if not path.exists():
-            day_ds.to_zarr(path, mode="w", encoding=encoding, consolidated=True, zarr_version=2)
+            period_ds.to_zarr(path, mode="w", encoding=encoding, consolidated=True, zarr_format=2)
             return
-        day_ds.to_zarr(
+        period_ds.to_zarr(
             path,
             mode="a",
             append_dim="time",
             consolidated=True,
-            zarr_version=2,
+            zarr_format=2,
         )
 
     def _select_primary_model(self, mode: str, models: list[str]) -> str:
@@ -714,20 +805,21 @@ class OpenMeteoFetcher:
         return f"forecast:{model}:live"
 
     def _endpoint_for_mode(self, mode_cfg: ModeConfig) -> str:
-        if self.api_key:
-            if "historical-forecast-api" in mode_cfg.endpoint:
-                return mode_cfg.endpoint.replace(
-                    "historical-forecast-api",
-                    "customer-historical-weather-api",
-                )
-            if "previous-runs-api" in mode_cfg.endpoint:
-                return mode_cfg.endpoint.replace(
-                    "previous-runs-api",
-                    "customer-previous-runs-api",
-                )
-            if "api.open-meteo.com" in mode_cfg.endpoint:
-                return mode_cfg.endpoint.replace("api.open-meteo.com", "customer-api.open-meteo.com")
-        return mode_cfg.endpoint
+        if "archive-api" in mode_cfg.endpoint:
+            return mode_cfg.endpoint.replace("archive-api", "customer-archive-api")
+        if "historical-forecast-api" in mode_cfg.endpoint:
+            return mode_cfg.endpoint.replace(
+                "historical-forecast-api",
+                "customer-historical-forecast-api",
+            )
+        if "previous-runs-api" in mode_cfg.endpoint:
+            return mode_cfg.endpoint.replace(
+                "previous-runs-api",
+                "customer-previous-runs-api",
+            )
+        if "api.open-meteo.com" in mode_cfg.endpoint:
+            return mode_cfg.endpoint.replace("api.open-meteo.com", "customer-api.open-meteo.com")
+        raise RuntimeError(f"Unsupported Open-Meteo endpoint: {mode_cfg.endpoint}")
 
     def _write_models_yaml(self, mode: str, endpoint: str, models: list[str]) -> None:
         DEFAULT_MODELS_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -753,6 +845,48 @@ class OpenMeteoFetcher:
         if isinstance(models, list):
             return [str(v) for v in models]
         return []
+
+    def _checkpoint_path(
+        self,
+        mode: str,
+        model: str,
+        start: dt.date,
+        end: dt.date,
+        month_filter: set[int] | None,
+    ) -> Path:
+        DEFAULT_CHECKPOINT_ROOT.mkdir(parents=True, exist_ok=True)
+        mf = "all" if month_filter is None else "-".join(str(m) for m in sorted(month_filter))
+        filename = f"{mode}_{model}_{start.isoformat()}_{end.isoformat()}_{mf}.json"
+        return DEFAULT_CHECKPOINT_ROOT / filename
+
+    def _load_checkpoint(self, path: Path) -> dict[str, set[str]]:
+        if not path.exists():
+            return {"completed_tasks": set(), "periods_written": set()}
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+        return {
+            "completed_tasks": set(str(v) for v in parsed.get("completed_tasks", [])),
+            "periods_written": set(str(v) for v in parsed.get("periods_written", [])),
+        }
+
+    def _save_checkpoint(self, path: Path, checkpoint: dict[str, set[str]]) -> None:
+        serialized = {
+            "completed_tasks": sorted(checkpoint["completed_tasks"]),
+            "periods_written": sorted(checkpoint["periods_written"]),
+            "updated_utc": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
+        }
+        path.write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+
+    def _build_periods(
+        self,
+        mode: str,
+        start: dt.date,
+        end: dt.date,
+        month_filter: set[int] | None,
+    ) -> list[tuple[str, dt.date, dt.date]]:
+        if mode == "analysis":
+            year_periods = _build_year_periods(start=start, end=end, month_filter=month_filter)
+            return [(str(year), period_start, period_end) for year, period_start, period_end in year_periods]
+        return [(day.isoformat(), day, day) for day in _iter_days(start, end, month_filter)]
 
 
 def fetch_wind(source: str, start: dt.date, end: dt.date, cfg: Domain) -> Path:
@@ -793,6 +927,43 @@ def _iter_days(start: dt.date, end: dt.date, month_filter: set[int] | None) -> I
         if month_filter is None or current.month in month_filter:
             yield current
         current += dt.timedelta(days=1)
+
+
+def _build_year_periods(
+    start: dt.date,
+    end: dt.date,
+    month_filter: set[int] | None,
+) -> list[tuple[int, dt.date, dt.date]]:
+    periods: list[tuple[int, dt.date, dt.date]] = []
+    years = range(start.year, end.year + 1)
+    for year in years:
+        august_start = dt.date(year, 8, 1)
+        august_end = dt.date(year, 8, 31)
+        if month_filter is not None and 8 not in month_filter:
+            continue
+        if august_end < start or august_start > end:
+            continue
+        period_start = max(start, august_start)
+        period_end = min(end, august_end)
+        periods.append((year, period_start, period_end))
+    return periods
+
+
+def _task_id(period_id: str, batch_index: int) -> str:
+    return f"{period_id}:{batch_index}"
+
+
+def _response_reason(response: requests.Response | None) -> str:
+    if response is None:
+        return "no response body"
+    try:
+        payload = response.json()
+    except ValueError:
+        return "unparseable response body"
+    reason = payload.get("reason")
+    if reason is None:
+        return "no reason provided"
+    return str(reason)
 
 
 def _canonicalize(value: Any) -> Any:
