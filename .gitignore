@@ -5,6 +5,7 @@ data/**
 !data/.gitkeep
 .env
 dashboard/data.json
+!dashboard/data.json
 
 # Python caches and local envs
 __pycache__/
