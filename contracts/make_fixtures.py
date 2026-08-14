@@ -31,6 +31,17 @@ FIXTURES_DIR = ROOT / "contracts" / "fixtures"
 FIXED_SEED = 20260814
 
 
+def _assert_within_fixtures(path: Path) -> Path:
+    """Guard against accidental writes outside contracts/fixtures/."""
+    fixtures_root = FIXTURES_DIR.resolve()
+    target = path.resolve()
+    if not target.is_relative_to(fixtures_root):
+        raise AssertionError(
+            f"Refusing to write outside fixtures directory: {target} (root {fixtures_root})"
+        )
+    return target
+
+
 def _grid(min_v: float, max_v: float, step: float) -> np.ndarray:
     count = int(round((max_v - min_v) / step)) + 1
     return np.round(np.linspace(min_v, max_v, count), 6)
@@ -308,9 +319,10 @@ def _payload_from_climatology(climo: xr.Dataset) -> dict[str, object]:
 
 
 def main() -> None:
+    _assert_within_fixtures(FIXTURES_DIR)
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
     wind = _generate_wind_fixture()
-    wind_path = FIXTURES_DIR / "wind_small.zarr"
+    wind_path = _assert_within_fixtures(FIXTURES_DIR / "wind_small.zarr")
     if wind_path.exists():
         import shutil
 
@@ -318,7 +330,7 @@ def main() -> None:
     wind.to_zarr(wind_path, mode="w", consolidated=True, zarr_format=2)
 
     polar = _generate_polar_fixture()
-    polar_path = FIXTURES_DIR / "polar_52ft.pol"
+    polar_path = _assert_within_fixtures(FIXTURES_DIR / "polar_52ft.pol")
     with polar_path.open("w", encoding="utf-8") as f:
         f.write("TWA\t" + "\t".join(str(int(v)) for v in polar.tws_kt) + "\n")
         for i, twa in enumerate(polar.twa_deg):
@@ -326,16 +338,16 @@ def main() -> None:
             f.write("\t".join(row) + "\n")
 
     climo = _climatology_from_wind(wind)
-    climo_path = FIXTURES_DIR / "climatology_small.nc"
+    climo_path = _assert_within_fixtures(FIXTURES_DIR / "climatology_small.nc")
     climo.to_netcdf(climo_path)
 
     payload = _payload_from_climatology(climo)
-    data_json_path = FIXTURES_DIR / "data.json"
+    data_json_path = _assert_within_fixtures(FIXTURES_DIR / "data.json")
     with data_json_path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, ensure_ascii=True)
         f.write("\n")
 
-    readme_path = FIXTURES_DIR / "README.md"
+    readme_path = _assert_within_fixtures(FIXTURES_DIR / "README.md")
     readme_path.write_text(
         "# Contract fixtures (committed on purpose)\n\n"
         "These files are intentionally committed so every module can develop in\n"
