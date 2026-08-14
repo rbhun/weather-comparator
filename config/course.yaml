@@ -8,7 +8,7 @@ gate:
 finish:
   lat: 43.73
   lon: 7.42
-start_time_utc: "2026-08-18T09:55:00Z"
+start_time_utc: "2026-08-18T10:00:00Z"
 climatology:
   months: [8]
   years: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
