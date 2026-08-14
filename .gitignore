@@ -1,0 +1,9 @@
+# Runtime outputs and local secrets
+data/**
+.env
+__pycache__/
+*.py[cod]
+dashboard/data.json
+
+# Keep committed fixtures: deleting them blocks five parallel agents
+!contracts/fixtures/**

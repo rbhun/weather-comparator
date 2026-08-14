@@ -1,0 +1,15 @@
+start:
+  lat: 38.20
+  lon: 13.32
+gate:
+  lat: 41.13
+  lon: 9.55
+  tolerance_nm: 2.0
+finish:
+  lat: 43.73
+  lon: 7.42
+start_time_utc: "2026-08-18T09:55:00Z"
+climatology:
+  months: [8]
+  years: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+display_timezone: "Europe/Rome"

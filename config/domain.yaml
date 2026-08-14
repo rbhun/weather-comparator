@@ -1,0 +1,9 @@
+lat:
+  min: 37.5
+  max: 44.0
+lon:
+  min: 6.5
+  max: 14.5
+resolution: 0.1
+fixture_resolution: 0.25
+fixture_days: 30
