@@ -5,3 +5,23 @@ analysis:
   - ecmwf_ifs025
   - ecmwf_ifs04
   updated_utc: '2026-08-14T16:22:55+00:00'
+live:
+  endpoint: https://customer-api.open-meteo.com/v1/forecast
+  models:
+  - ecmwf_ifs
+  - ecmwf_aifs025
+  - gfs_global
+  - icon_global
+  - gem_global
+  - arpege_europe
+  updated_utc: '2026-08-14T17:51:23+00:00'
+previous_runs:
+  endpoint: https://previous-runs-api.open-meteo.com/v1/forecast
+  models:
+  - ecmwf_ifs
+  - ecmwf_aifs025
+  - gfs_global
+  - icon_global
+  - gem_global
+  - arpege_europe
+  updated_utc: '2026-08-14T17:51:14+00:00'

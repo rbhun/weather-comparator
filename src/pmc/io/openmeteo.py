@@ -33,6 +33,7 @@ DEFAULT_DOMAIN = {
 
 DEFAULT_DOMAIN_PATH = Path("config/domain.yaml")
 DEFAULT_MODELS_PATH = Path("config/models.yaml")
+DEFAULT_ENDPOINTS_PATH = Path("config/openmeteo_endpoints.yaml")
 DEFAULT_CACHE_ROOT = Path("data/cache/openmeteo")
 DEFAULT_WIND_ROOT = Path("data/wind")
 DEFAULT_LOG_ROOT = Path("data/wind/logs")
@@ -86,6 +87,12 @@ class ModeConfig:
     endpoint: str
     candidates: tuple[str, ...]
     source_label: str
+
+
+@dataclass(frozen=True)
+class EndpointConfig:
+    endpoint: str
+    auth_mode: str
 
 
 MODE_CONFIG: dict[str, ModeConfig] = {
@@ -198,11 +205,6 @@ class OpenMeteoFetcher:
         inter_day_delay_seconds: float = 0.0,
         min_request_interval_seconds: float = 1.0,
     ) -> None:
-        if not api_key or not api_key.strip():
-            raise RuntimeError(
-                "OPENMETEO_API_KEY is required. Refusing to use unauthenticated "
-                "public endpoints for this pipeline."
-            )
         self.api_key = api_key
         self.cache = DiskRequestCache(cache_root)
         self.output_root = output_root
@@ -215,6 +217,8 @@ class OpenMeteoFetcher:
         self.session = requests.Session()
         self._request_lock = threading.Lock()
         self._last_request_at = 0.0
+        self._auth_mode = "none"
+        self._send_api_key = False
 
         self.cache_hits = 0
         self.cache_misses = 0
@@ -242,11 +246,18 @@ class OpenMeteoFetcher:
 
         mode_cfg = MODE_CONFIG[source]
         mode = mode_cfg.mode
-        endpoint = self._endpoint_for_mode(mode_cfg)
+        endpoint_cfg = self._endpoint_config_for_mode(mode)
+        endpoint = endpoint_cfg.endpoint
+        self._auth_mode = endpoint_cfg.auth_mode
+        self._send_api_key = self._resolve_auth_mode(endpoint_cfg.auth_mode)
+        print(
+            f"[fetch] endpoint={endpoint} auth_mode={self._auth_mode}",
+            flush=True,
+        )
 
         discovered = self._load_cached_models(mode)
         if not discovered or refresh_models:
-            discovered = self.discover_models(mode, start, end, mode_cfg, cfg)
+            discovered = self.discover_models(mode, start, end, mode_cfg, cfg, endpoint=endpoint)
         else:
             print(
                 f"[fetch] using cached discovered models for {mode}: {discovered}",
@@ -293,10 +304,9 @@ class OpenMeteoFetcher:
         end: dt.date,
         mode_cfg: ModeConfig,
         cfg: Domain,
+        endpoint: str,
     ) -> list[str]:
         """Probe candidate models and persist survivors to config/models.yaml."""
-
-        endpoint = self._endpoint_for_mode(mode_cfg)
         sample_start = max(start, end - dt.timedelta(days=2))
         sample_end = sample_start + dt.timedelta(days=1)
         if sample_end > end:
@@ -322,6 +332,8 @@ class OpenMeteoFetcher:
             except requests.RequestException:
                 continue
             except ValueError:
+                continue
+            except RuntimeError:
                 continue
 
             if _has_hourly_values(payload):
@@ -636,7 +648,7 @@ class OpenMeteoFetcher:
 
     def _get_json(self, endpoint: str, params: dict[str, Any], allow_network: bool = True) -> dict[str, Any]:
         cache_key_params = dict(params)
-        cache_key_params["_auth"] = "key"
+        cache_key_params["_auth"] = self._auth_mode
         cached = self.cache.get(endpoint, cache_key_params)
         if cached is not None:
             self.cache_hits += 1
@@ -649,7 +661,8 @@ class OpenMeteoFetcher:
             )
 
         request_params = dict(params)
-        request_params["apikey"] = self.api_key
+        if self._send_api_key:
+            request_params["apikey"] = self.api_key
 
         transient_statuses = {429, 500, 502, 503, 504}
         last_exc: Exception | None = None
@@ -804,22 +817,43 @@ class OpenMeteoFetcher:
             return f"forecast:{model}:lead1-7d"
         return f"forecast:{model}:live"
 
-    def _endpoint_for_mode(self, mode_cfg: ModeConfig) -> str:
-        if "archive-api" in mode_cfg.endpoint:
-            return mode_cfg.endpoint.replace("archive-api", "customer-archive-api")
-        if "historical-forecast-api" in mode_cfg.endpoint:
-            return mode_cfg.endpoint.replace(
-                "historical-forecast-api",
-                "customer-historical-forecast-api",
+    def _endpoint_config_for_mode(self, mode: str) -> EndpointConfig:
+        if not DEFAULT_ENDPOINTS_PATH.exists():
+            raise RuntimeError(
+                f"Endpoint config is required at {DEFAULT_ENDPOINTS_PATH}. "
+                "Refusing implicit endpoint fallback."
             )
-        if "previous-runs-api" in mode_cfg.endpoint:
-            return mode_cfg.endpoint.replace(
-                "previous-runs-api",
-                "customer-previous-runs-api",
+        parsed = yaml.safe_load(DEFAULT_ENDPOINTS_PATH.read_text(encoding="utf-8")) or {}
+        modes_cfg = parsed.get("modes") or {}
+        mode_cfg = modes_cfg.get(mode) or {}
+        endpoint = str(mode_cfg.get("endpoint", "")).strip()
+        auth_mode = str(mode_cfg.get("auth_mode", "")).strip()
+
+        if not endpoint or not auth_mode:
+            raise RuntimeError(
+                f"Mode '{mode}' must define both endpoint and auth_mode in "
+                f"{DEFAULT_ENDPOINTS_PATH}."
             )
-        if "api.open-meteo.com" in mode_cfg.endpoint:
-            return mode_cfg.endpoint.replace("api.open-meteo.com", "customer-api.open-meteo.com")
-        raise RuntimeError(f"Unsupported Open-Meteo endpoint: {mode_cfg.endpoint}")
+        if auth_mode not in {"none", "require_key", "use_key_if_present"}:
+            raise RuntimeError(
+                f"Invalid auth_mode '{auth_mode}' for mode '{mode}' in "
+                f"{DEFAULT_ENDPOINTS_PATH}"
+            )
+        return EndpointConfig(endpoint=endpoint, auth_mode=auth_mode)
+
+    def _resolve_auth_mode(self, auth_mode: str) -> bool:
+        if auth_mode == "none":
+            return False
+        if auth_mode == "use_key_if_present":
+            return bool(self.api_key and self.api_key.strip())
+        if auth_mode == "require_key":
+            if not self.api_key or not self.api_key.strip():
+                raise RuntimeError(
+                    "OPENMETEO_API_KEY is required by auth_mode=require_key "
+                    "for the selected endpoint."
+                )
+            return True
+        raise RuntimeError(f"Unsupported auth_mode '{auth_mode}'")
 
     def _write_models_yaml(self, mode: str, endpoint: str, models: list[str]) -> None:
         DEFAULT_MODELS_PATH.parent.mkdir(parents=True, exist_ok=True)
