@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import sys
 from datetime import timedelta
 from pathlib import Path
@@ -13,8 +14,28 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from contracts.schemas import Route, load_course, load_routes  # noqa: E402
 from pmc.follow import follow  # noqa: E402
-from pmc.geo import crosses_land  # noqa: E402
+from pmc.geo import coastline_info, crosses_land, polygon_count_in_bbox  # noqa: E402
 from pmc.polar import load_polar  # noqa: E402
+
+
+def test_coastline_is_high_resolution_and_loaded() -> None:
+    info = coastline_info()
+    assert info["polygon_count"] > 200
+    assert "land-polygons-complete-4326-clipped.geojson" in str(info["source"])
+
+
+def test_maddalena_archipelago_resolved_as_many_islands() -> None:
+    count = polygon_count_in_bbox(lon_min=9.0, lon_max=9.5, lat_min=41.1, lat_max=41.35)
+    assert count > 20
+
+
+def test_capo_testa_west_three_nm_vs_east_one_nm() -> None:
+    capo_lat, capo_lon = 41.24, 9.14
+    nm_per_deg_lon = 60.0 * math.cos(math.radians(capo_lat))
+    west_lon = capo_lon - (3.0 / nm_per_deg_lon)
+    east_lon = capo_lon + (1.0 / nm_per_deg_lon)
+    assert not crosses_land(41.14, west_lon, 41.34, west_lon)
+    assert crosses_land(41.14, east_lon, 41.34, east_lon)
 
 
 def test_gate_to_monaco_crosses_corsica() -> None:
