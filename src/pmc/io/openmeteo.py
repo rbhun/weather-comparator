@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime as dt
+import email.utils
 import hashlib
 import json
 import random
@@ -219,6 +220,7 @@ class OpenMeteoFetcher:
         self.session = requests.Session()
         self._request_lock = threading.Lock()
         self._last_request_at = 0.0
+        self._rate_limit_hold_until = 0.0
         self._auth_mode = "none"
         self._send_api_key = False
 
@@ -764,12 +766,33 @@ class OpenMeteoFetcher:
                 retry_after = None
                 if exc.response is not None:
                     retry_after = exc.response.headers.get("Retry-After")
-                if retry_after:
+                retry_after_seconds = _parse_retry_after_seconds(retry_after)
+                if retry_after_seconds is not None:
+                    delay = max(delay, retry_after_seconds)
+                elif status == 429 and exc.response is not None:
                     try:
-                        delay = max(delay, float(retry_after))
+                        body = exc.response.json()
                     except ValueError:
-                        pass
-                delay = min(delay, 60.0)
+                        body = {}
+                    reason = str(body.get("reason", "")).lower()
+                    if "one minute" in reason or "next minute" in reason or "minutely" in reason:
+                        now_utc = dt.datetime.now(dt.timezone.utc)
+                        next_minute = (
+                            now_utc.replace(second=0, microsecond=0)
+                            + dt.timedelta(minutes=1)
+                        )
+                        until_minute = (next_minute - now_utc).total_seconds() + 2.0
+                        delay = max(delay, until_minute)
+                    if "next hour" in reason or "hourly" in reason:
+                        now_utc = dt.datetime.now(dt.timezone.utc)
+                        next_hour = (
+                            now_utc.replace(minute=0, second=0, microsecond=0)
+                            + dt.timedelta(hours=1)
+                        )
+                        until_hour = (next_hour - now_utc).total_seconds() + 2.0
+                        delay = max(delay, until_hour)
+                if status == 429:
+                    self._set_rate_limit_hold(delay)
                 delay += random.uniform(0.0, 0.5)
                 print(
                     "[fetch] retry "
@@ -806,14 +829,23 @@ class OpenMeteoFetcher:
         ) from None
 
     def _wait_for_request_slot(self) -> None:
-        if self.min_request_interval_seconds <= 0:
-            return
         with self._request_lock:
-            now = time.monotonic()
-            elapsed = now - self._last_request_at
-            if elapsed < self.min_request_interval_seconds:
-                time.sleep(self.min_request_interval_seconds - elapsed)
+            while True:
+                now = time.monotonic()
+                elapsed = now - self._last_request_at
+                interval_wait = max(0.0, self.min_request_interval_seconds - elapsed)
+                hold_wait = max(0.0, self._rate_limit_hold_until - now)
+                wait_seconds = max(interval_wait, hold_wait)
+                if wait_seconds <= 0:
+                    break
+                time.sleep(wait_seconds)
             self._last_request_at = time.monotonic()
+
+    def _set_rate_limit_hold(self, delay_seconds: float) -> None:
+        with self._request_lock:
+            hold_until = time.monotonic() + max(0.0, delay_seconds)
+            if hold_until > self._rate_limit_hold_until:
+                self._rate_limit_hold_until = hold_until
 
     def _existing_periods(self, mode: str, path: Path) -> set[str]:
         if not path.exists():
@@ -1054,6 +1086,27 @@ def _response_reason(response: requests.Response | None) -> str:
     if reason is None:
         return "no reason provided"
     return str(reason)
+
+
+def _parse_retry_after_seconds(value: str | None) -> float | None:
+    if value is None:
+        return None
+    raw = value.strip()
+    if not raw:
+        return None
+    try:
+        seconds = float(raw)
+        return max(0.0, seconds)
+    except ValueError:
+        pass
+    try:
+        retry_at = email.utils.parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
+        return None
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=dt.timezone.utc)
+    now = dt.datetime.now(dt.timezone.utc)
+    return max(0.0, (retry_at - now).total_seconds())
 
 
 def _canonicalize(value: Any) -> Any:
