@@ -17,25 +17,36 @@ def climatology(wind: xr.Dataset, months: list[int]) -> xr.Dataset:
     selected = wind.sel(time=month_mask)
     tws = np.hypot(selected["u10"], selected["v10"]) * MS_TO_KT
 
-    grouped_uv = selected.groupby("time.hour")
     grouped_tws = tws.groupby("time.hour")
 
-    n_samples = grouped_uv["u10"].count(dim="time").astype(np.int32)
+    n_samples = selected["u10"].groupby("time.hour").count(dim="time").astype(np.int32)
     mean_tws = grouped_tws.mean(dim="time", skipna=True).astype(np.float32)
-    vector_mean_u = grouped_uv["u10"].mean(dim="time", skipna=True).astype(np.float32)
-    vector_mean_v = grouped_uv["v10"].mean(dim="time", skipna=True).astype(np.float32)
-    p_below_5 = (grouped_tws < 5.0).mean(dim="time", skipna=True).astype(np.float32)
-    p_below_8 = (grouped_tws < 8.0).mean(dim="time", skipna=True).astype(np.float32)
-    p_above_20 = (grouped_tws > 20.0).mean(dim="time", skipna=True).astype(np.float32)
+    vector_mean_u = (
+        selected["u10"].groupby("time.hour").mean(dim="time", skipna=True).astype(np.float32)
+    )
+    vector_mean_v = (
+        selected["v10"].groupby("time.hour").mean(dim="time", skipna=True).astype(np.float32)
+    )
+    p_below_5 = ((tws < 5.0).groupby("time.hour").mean(dim="time", skipna=True)).astype(
+        np.float32
+    )
+    p_below_8 = ((tws < 8.0).groupby("time.hour").mean(dim="time", skipna=True)).astype(
+        np.float32
+    )
+    p_above_20 = (
+        (tws > 20.0).groupby("time.hour").mean(dim="time", skipna=True)
+    ).astype(np.float32)
 
-    const = xr.apply_ufunc(
-        directional_constancy,
-        grouped_uv["u10"],
-        grouped_uv["v10"],
-        input_core_dims=[["time"], ["time"]],
-        output_core_dims=[[]],
-        vectorize=True,
-    ).transpose("hour", "lat", "lon")
+    const_rows = []
+    for hr in range(24):
+        u_hr = selected["u10"].where(selected["time"].dt.hour == hr, drop=True).values
+        v_hr = selected["v10"].where(selected["time"].dt.hour == hr, drop=True).values
+        const_rows.append(directional_constancy(u_hr, v_hr))
+    const = xr.DataArray(
+        np.stack(const_rows, axis=0),
+        coords={"hour": np.arange(24), "lat": selected["lat"], "lon": selected["lon"]},
+        dims=("hour", "lat", "lon"),
+    )
 
     climo = xr.Dataset(
         data_vars={

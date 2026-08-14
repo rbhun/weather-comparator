@@ -155,7 +155,7 @@ def main() -> int:
             )
         payload_path = ROOT / "dashboard" / "data.json"
         meta = {
-            "generated_utc": pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "generated_utc": pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ"),
             "display_timezone": course.display_timezone,
             "course": {
                 "start": [course.start[0], course.start[1]],

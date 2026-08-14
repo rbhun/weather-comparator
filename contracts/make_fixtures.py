@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from numcodecs import Blosc
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from contracts.schemas import (
     MS_TO_KT,
@@ -24,7 +27,6 @@ from contracts.schemas import (
     validate_wind_store,
 )
 
-ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = ROOT / "contracts" / "fixtures"
 FIXED_SEED = 20260814
 
@@ -135,25 +137,25 @@ def _climatology_from_wind(wind: xr.Dataset) -> xr.Dataset:
         tws_kt, coords=wind["u10"].coords, dims=wind["u10"].dims, name="tws_kt"
     )
 
-    grouped = wind.groupby("time.hour")
     tws_grouped = tws.groupby("time.hour")
-    n_samples = grouped["u10"].count(dim="time")
+    n_samples = wind["u10"].groupby("time.hour").count(dim="time")
     mean_tws = tws_grouped.mean(dim="time", skipna=True)
-    mean_u = grouped["u10"].mean(dim="time", skipna=True)
-    mean_v = grouped["v10"].mean(dim="time", skipna=True)
-    p_below_5 = (tws_grouped < 5.0).mean(dim="time", skipna=True)
-    p_below_8 = (tws_grouped < 8.0).mean(dim="time", skipna=True)
-    p_above_20 = (tws_grouped > 20.0).mean(dim="time", skipna=True)
+    mean_u = wind["u10"].groupby("time.hour").mean(dim="time", skipna=True)
+    mean_v = wind["v10"].groupby("time.hour").mean(dim="time", skipna=True)
+    p_below_5 = (tws < 5.0).groupby("time.hour").mean(dim="time", skipna=True)
+    p_below_8 = (tws < 8.0).groupby("time.hour").mean(dim="time", skipna=True)
+    p_above_20 = (tws > 20.0).groupby("time.hour").mean(dim="time", skipna=True)
 
-    const = xr.apply_ufunc(
-        directional_constancy,
-        grouped["u10"],
-        grouped["v10"],
-        input_core_dims=[["time"], ["time"]],
-        output_core_dims=[[]],
-        vectorize=True,
+    const_rows = []
+    for hr in range(24):
+        u_hr = wind["u10"].where(wind["time"].dt.hour == hr, drop=True).values
+        v_hr = wind["v10"].where(wind["time"].dt.hour == hr, drop=True).values
+        const_rows.append(directional_constancy(u_hr, v_hr))
+    const = xr.DataArray(
+        np.stack(const_rows, axis=0),
+        coords={"hour": np.arange(24), "lat": wind["lat"], "lon": wind["lon"]},
+        dims=("hour", "lat", "lon"),
     )
-    const = const.transpose("hour", "lat", "lon")
 
     climo = xr.Dataset(
         data_vars={
@@ -313,11 +315,7 @@ def main() -> None:
         import shutil
 
         shutil.rmtree(wind_path)
-    encoding = {
-        "u10": {"compressor": Blosc(cname="zstd", clevel=5, shuffle=2)},
-        "v10": {"compressor": Blosc(cname="zstd", clevel=5, shuffle=2)},
-    }
-    wind.to_zarr(wind_path, mode="w", consolidated=True, encoding=encoding)
+    wind.to_zarr(wind_path, mode="w", consolidated=True, zarr_format=2)
 
     polar = _generate_polar_fixture()
     polar_path = FIXTURES_DIR / "polar_52ft.pol"

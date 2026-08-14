@@ -179,8 +179,11 @@ class FollowResult:
     max_stall_hours: float
 
     def as_row(self) -> dict[str, Any]:
+        ts = pd.Timestamp(self.start_time)
+        if ts.tzinfo is not None:
+            ts = ts.tz_convert("UTC").tz_localize(None)
         return {
-            "start_time": np.datetime64(self.start_time),
+            "start_time": np.datetime64(ts.to_datetime64()),
             "route_id": self.route_id,
             "elapsed_hours": np.float32(self.elapsed_hours),
             "distance_nm": np.float32(self.distance_nm),
@@ -311,9 +314,15 @@ def directional_constancy(u10_ms: Any, v10_ms: Any) -> np.ndarray:
     """Return directional constancy = |vector-mean| / mean speed."""
     u_arr = np.asarray(u10_ms, dtype=float)
     v_arr = np.asarray(v10_ms, dtype=float)
-    mean_u = np.nanmean(u_arr, axis=0)
-    mean_v = np.nanmean(v_arr, axis=0)
-    mean_speed = np.nanmean(np.hypot(u_arr, v_arr), axis=0)
+    valid = np.isfinite(u_arr) & np.isfinite(v_arr)
+    count = valid.sum(axis=0)
+    safe_count = np.where(count == 0, 1, count)
+    mean_u = np.sum(np.where(valid, u_arr, 0.0), axis=0) / safe_count
+    mean_v = np.sum(np.where(valid, v_arr, 0.0), axis=0) / safe_count
+    mean_speed = np.sum(np.where(valid, np.hypot(u_arr, v_arr), 0.0), axis=0) / safe_count
+    mean_u = np.where(count == 0, np.nan, mean_u)
+    mean_v = np.where(count == 0, np.nan, mean_v)
+    mean_speed = np.where(count == 0, np.nan, mean_speed)
     with np.errstate(invalid="ignore", divide="ignore"):
         constancy = np.hypot(mean_u, mean_v) / mean_speed
     return np.where(np.isfinite(constancy), np.clip(constancy, 0.0, 1.0), np.nan)
