@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PMC 2026 - Weather Decision Dashboard</title>
     <script src="./vendor/plotly.min.js"></script>
+    <script src="./tiles/openseamap_manifest.js"></script>
     <style>
       :root {
         --bg: #0b1020;
@@ -228,6 +229,17 @@
       .hidden {
         display: none !important;
       }
+
+      .chart-note {
+        margin-top: 0.65rem;
+        border: 1px solid var(--panel-border);
+        border-left: 4px solid #8bb6ff;
+        border-radius: 0.6rem;
+        padding: 0.55rem 0.65rem;
+        background: #101832;
+        font-size: 0.93rem;
+        color: #d8e5ff;
+      }
     </style>
   </head>
   <body>
@@ -255,6 +267,9 @@
           <label for="hour-slider" id="hour-label">Hour:</label>
           <input id="hour-slider" type="range" min="0" max="23" step="1" value="0" />
         </div>
+        <p id="chart-layer-note" class="chart-note">
+          Chart layer is OpenSeaMap, crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL.
+        </p>
         <div id="map-plot" class="plot" aria-label="Calm risk map"></div>
       </section>
 
@@ -339,6 +354,7 @@
         hourLabel: document.getElementById("hour-label"),
         modeLocal: document.getElementById("mode-local"),
         modeUtc: document.getElementById("mode-utc"),
+        chartLayerNote: document.getElementById("chart-layer-note"),
         mapPlot: document.getElementById("map-plot"),
         routePlot: document.getElementById("route-plot"),
         routeSummary: document.getElementById("route-summary"),
@@ -452,6 +468,57 @@
         els.hourLabel.textContent = `Hour: ${hourLabel(state.selectedHour)} (from UTC hour ${state.selectedHour})`;
       }
 
+      function tileXToLon(x, z) {
+        return (x / Math.pow(2, z)) * 360 - 180;
+      }
+
+      function tileYToLat(y, z) {
+        const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, z);
+        return (180 / Math.PI) * Math.atan(Math.sinh(n));
+      }
+
+      function buildOpenSeaMapImages() {
+        const m = window.OPEN_SEA_MAP_MANIFEST || null;
+        if (!m || !Array.isArray(m.included_zooms) || m.included_zooms.length === 0) {
+          els.chartLayerNote.textContent =
+            "Chart layer is OpenSeaMap, crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. (No local tiles found.)";
+          return [];
+        }
+        const zoom = Math.max(...m.included_zooms.map((v) => Number(v)));
+        const zr = m.zoom_ranges && m.zoom_ranges[String(zoom)];
+        if (!zr) {
+          return [];
+        }
+        const images = [];
+        for (let x = zr.x_min; x <= zr.x_max; x++) {
+          for (let y = zr.y_min; y <= zr.y_max; y++) {
+            const lonLeft = tileXToLon(x, zoom);
+            const lonRight = tileXToLon(x + 1, zoom);
+            const latTop = tileYToLat(y, zoom);
+            const latBottom = tileYToLat(y + 1, zoom);
+            images.push({
+              source: `./tiles/openseamap/${zoom}/${x}/${y}.png`,
+              xref: "x",
+              yref: "y",
+              x: lonLeft,
+              y: latTop,
+              sizex: lonRight - lonLeft,
+              sizey: latTop - latBottom,
+              sizing: "stretch",
+              opacity: 0.45,
+              layer: "below",
+              xanchor: "left",
+              yanchor: "top",
+            });
+          }
+        }
+        const mb = (Number(m.total_bytes) || 0) / (1024 * 1024);
+        els.chartLayerNote.textContent =
+          "Chart layer is OpenSeaMap, crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. "
+          + `Cached offline tiles: z${m.included_zooms.join(", z")} (${mb.toFixed(2)} MB).`;
+        return images;
+      }
+
       function renderCalmMap() {
         const byHour = getByHour(state.selectedHour) || state.payload.climatology.by_hour[0];
         const z = byHour.p_below_5kt;
@@ -485,6 +552,7 @@
             zmax: 1,
             colorscale: "Cividis",
             colorbar: { title: "P(<5 kt)" },
+            opacity: 0.74,
             hoverinfo: "skip",
           },
           ...routeTraces,
@@ -503,8 +571,17 @@
         const layout = {
           ...plotLayoutBase,
           title: `Calm risk at ${hourLabel(state.selectedHour)}`,
-          xaxis: { title: "Longitude (deg E)", zeroline: false },
-          yaxis: { title: "Latitude (deg N)", zeroline: false },
+          xaxis: {
+            title: "Longitude (deg E)",
+            zeroline: false,
+            range: [Math.min(...lon), Math.max(...lon)],
+          },
+          yaxis: {
+            title: "Latitude (deg N)",
+            zeroline: false,
+            range: [Math.min(...lat), Math.max(...lat)],
+          },
+          images: buildOpenSeaMapImages(),
         };
         Plotly.react(els.mapPlot, traces, layout, { displayModeBar: false, responsive: true });
       }

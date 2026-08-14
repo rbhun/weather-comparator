@@ -6,6 +6,8 @@ Offline tactical dashboard for PMC-2026.
 
 - Renders a single-file HTML dashboard from `dashboard/data.json`.
 - Shows calm-risk heatmap (`p_below_5kt`) with route overlays.
+- Renders a pre-cached OpenSeaMap chart underlay beneath calm-risk heatmap
+  using local raster tiles in `dashboard/tiles/` (no network needed at render time).
 - Shows route distributions and head-to-head margins with percentiles.
 - Shows click-to-inspect point detail by hour.
 - Shows model-skill table with clearly marked `reference_biased` rows.
@@ -27,7 +29,17 @@ Offline tactical dashboard for PMC-2026.
 
 2. Open `dashboard/index.html` directly from the filesystem (no server).
 
-3. If your browser blocks direct `file://` fetch for `data.json`, use the
+3. (Optional) Refresh the offline chart-tile cache:
+
+   ```bash
+   python3 /workspace/dashboard/fetch_openseamap_tiles.py
+   ```
+
+   - Downloads OpenSeaMap tiles for lon `6.5..14.5`, lat `37.5..44.0` at zoom 7-9.
+   - Enforces a 30 MB cap for `dashboard/tiles/openseamap/` by dropping the
+     highest zoom level(s) first if needed.
+
+4. If your browser blocks direct `file://` fetch for `data.json`, use the
    built-in file picker shown on the page to load the same local `data.json`.
 
 ## What it gets wrong / current limitations
@@ -41,3 +53,5 @@ Offline tactical dashboard for PMC-2026.
   message instead of inventing values.
 - This is a tactical comparison dashboard, not a deterministic forecast tool.
   Elapsed-time outputs inherit polar uncertainty below 8 kt TWS.
+- The chart underlay is crowd-sourced seamark information and is explicitly
+  not suitable for navigation.
