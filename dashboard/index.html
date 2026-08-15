@@ -787,7 +787,8 @@
 
       #results-map {
         width: 100%;
-        min-height: 620px;
+        min-height: 0;
+        height: 420px;
       }
 
       .results-table-wrap {
@@ -953,21 +954,6 @@
         <p class="subnote">
           Actual YB tracks from previous Palermo–Montecarlo editions. Absolute rank is uncorrected elapsed time (line honours). Class rank is as YB published it — handicap classes are corrected.
         </p>
-        <div class="filter-row">
-          <span class="hour-kicker">Years</span>
-          <div id="year-toggles" class="chip-row"></div>
-          <button id="years-all" class="ghost-btn" type="button">All years</button>
-          <button id="years-none" class="ghost-btn" type="button">None</button>
-        </div>
-        <div id="class-filters"></div>
-        <div class="filter-row">
-          <button id="filter-top3-abs" class="ghost-btn" type="button" aria-pressed="true">Top 3 absolute</button>
-          <button id="filter-top3-class" class="ghost-btn" type="button" aria-pressed="false">Top 3 per class</button>
-          <button id="filter-year-weather" class="ghost-btn" type="button" aria-pressed="false">Year weather</button>
-          <label class="help" for="weather-year">Weather year</label>
-          <select id="weather-year"></select>
-        </div>
-        <p id="results-note" class="subnote"></p>
         <div class="plot-wrap">
           <div class="zoom-toolbar" aria-label="Results map tools">
             <button type="button" data-results-act="in" title="Zoom in">+</button>
@@ -985,6 +971,21 @@
           </button>
         </div>
         <div id="results-legend" class="chip-row" style="margin-top:0.55rem"></div>
+        <p id="results-note" class="subnote"></p>
+        <div class="filter-row">
+          <span class="hour-kicker">Years</span>
+          <div id="year-toggles" class="chip-row"></div>
+          <button id="years-all" class="ghost-btn" type="button">All years</button>
+          <button id="years-none" class="ghost-btn" type="button">None</button>
+        </div>
+        <div id="class-filters"></div>
+        <div class="filter-row">
+          <button id="filter-top3-abs" class="ghost-btn" type="button" aria-pressed="true">Top 3 absolute</button>
+          <button id="filter-top3-class" class="ghost-btn" type="button" aria-pressed="false">Top 3 per class</button>
+          <button id="filter-year-weather" class="ghost-btn" type="button" aria-pressed="false">Year weather</button>
+          <label class="help" for="weather-year">Weather year</label>
+          <select id="weather-year"></select>
+        </div>
         <div id="results-table" class="results-table-wrap"></div>
       </section>
     </main>
@@ -1266,6 +1267,13 @@
         state.mapRange = { x: xa.range.slice(), y: ya.range.slice() };
       }
 
+      function rememberResultsRange(gd) {
+        const xa = gd && gd._fullLayout && gd._fullLayout.xaxis;
+        const ya = gd && gd._fullLayout && gd._fullLayout.yaxis;
+        if (!xa || !ya || !xa.range || !ya.range) return;
+        state.resultsRange = { x: xa.range.slice(), y: ya.range.slice() };
+      }
+
       function bindMapHit(hit) {
         let down = null;
         hit.addEventListener("pointerdown", (ev) => {
@@ -1366,27 +1374,68 @@
         };
       }
 
-      function syncMapPlotSize() {
-        const el = els.mapPlot;
-        if (!el || !state.payload || !state.payload.climatology) return;
-        const lat = state.payload.climatology.grid.lat.map(Number);
-        const lon = state.payload.climatology.grid.lon.map(Number);
-        if (!lat.length || !lon.length) return;
-        const xRange = (state.mapRange && state.mapRange.x) || [Math.min(...lon), Math.max(...lon)];
-        const yRange = (state.mapRange && state.mapRange.y) || [Math.min(...lat), Math.max(...lat)];
-        const lonSpan = Math.abs(xRange[1] - xRange[0]) || 1;
-        const latSpan = Math.abs(yRange[1] - yRange[0]) || 1;
-        const width = el.clientWidth || (el.parentElement && el.parentElement.clientWidth) || 0;
+      function mapViewRanges(rangeState) {
+        const lat = (state.payload.climatology.grid.lat || []).map(Number);
+        const lon = (state.payload.climatology.grid.lon || []).map(Number);
+        if (!lat.length || !lon.length) return null;
+        const xRange = (rangeState && rangeState.x) || [Math.min(...lon), Math.max(...lon)];
+        const yRange = (rangeState && rangeState.y) || [Math.min(...lat), Math.max(...lat)];
+        return {
+          xRange,
+          yRange,
+          lonSpan: Math.abs(xRange[1] - xRange[0]) || 1,
+          latSpan: Math.abs(yRange[1] - yRange[0]) || 1,
+        };
+      }
+
+      function syncMapPlotSize(el, rangeState) {
+        const target = el || els.mapPlot;
+        if (!target || !state.payload || !state.payload.climatology) return;
+        const view = mapViewRanges(rangeState || (target === els.resultsMap ? state.resultsRange : state.mapRange));
+        if (!view) return;
+        const width = target.clientWidth || (target.parentElement && target.parentElement.clientWidth) || 0;
         if (width < 40) return;
-        // Keep 1° lon ≈ 1° lat on screen; size height so the plot fills the card width.
+        // Keep 1° lon = 1° lat on screen so the chart cannot stretch.
         const marginL = 34;
         const marginR = 46;
         const marginT = 28;
         const marginB = 36;
         const plotW = Math.max(80, width - marginL - marginR);
-        const plotH = plotW * (latSpan / lonSpan);
+        const plotH = plotW * (view.latSpan / view.lonSpan);
         const totalH = Math.round(plotH + marginT + marginB);
-        el.style.height = `${Math.max(260, totalH)}px`;
+        target.style.height = `${Math.max(260, totalH)}px`;
+      }
+
+      function mapEqualAspectLayout(title, xRange, yRange) {
+        return {
+          title: typeof title === "string"
+            ? { text: title, font: { size: 13, color: "#d8e5ff" }, x: 0, xanchor: "left" }
+            : title,
+          margin: { l: 34, r: 46, t: 28, b: 36 },
+          autosize: true,
+          xaxis: {
+            title: {
+              text: "Lon °E",
+              font: { size: 10, color: "#9eb0d6" },
+              standoff: 2,
+            },
+            zeroline: false,
+            range: xRange,
+            constrain: "domain",
+            tickfont: { size: 11 },
+            automargin: false,
+          },
+          yaxis: {
+            title: { text: "" },
+            zeroline: false,
+            range: yRange,
+            scaleanchor: "x",
+            scaleratio: 1,
+            constrain: "domain",
+            tickfont: { size: 11 },
+            automargin: false,
+          },
+        };
       }
 
       function formatTimestamp(isoUtc) {
@@ -2485,7 +2534,10 @@
         if (weather) {
           renderCalmMap();
         } else {
-          renderResultsPage();
+          requestAnimationFrame(() => {
+            renderResultsPage();
+            if (els.resultsMap && els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
+          });
         }
       }
 
@@ -2601,24 +2653,32 @@
           showlegend: false,
           visible: state.showResultsRhumbline,
         });
-        const xRange = (state.resultsRange && state.resultsRange.x) || [Math.min(...lon), Math.max(...lon)];
-        const yRange = (state.resultsRange && state.resultsRange.y) || [Math.min(...lat), Math.max(...lat)];
+        const view = mapViewRanges(state.resultsRange) || {
+          xRange: [Math.min(...lon), Math.max(...lon)],
+          yRange: [Math.min(...lat), Math.max(...lat)],
+        };
         const title = state.showYearWeather && weather && weather.available
           ? `YB tracks + ${state.weatherYear} race-window wind`
           : "YB tracks";
+        syncMapPlotSize(els.resultsMap, state.resultsRange);
         applyPlot(
           els.resultsMap,
           traces,
           {
             ...plotLayoutBase,
-            title,
-            xaxis: { title: "Longitude (deg E)", zeroline: false, range: xRange },
-            yaxis: { title: "Latitude (deg N)", zeroline: false, range: yRange },
+            ...mapEqualAspectLayout(title, view.xRange, view.yRange),
             images: getMapImages(),
             showlegend: false,
           },
           {}
         );
+        if (els.resultsMap.on && !els.resultsMap._pmcRelayoutBound) {
+          els.resultsMap._pmcRelayoutBound = true;
+          els.resultsMap.on("plotly_relayout", () => {
+            rememberResultsRange(els.resultsMap);
+            syncMapPlotSize(els.resultsMap, state.resultsRange);
+          });
+        }
       }
 
       function renderResultsLegendAndTable() {
@@ -2767,9 +2827,15 @@
               resetPlot(els.resultsMap);
             } else if (act === "in") {
               zoomPlot(els.resultsMap, 0.7);
+              rememberResultsRange(els.resultsMap);
             } else if (act === "out") {
               zoomPlot(els.resultsMap, 1 / 0.7);
+              rememberResultsRange(els.resultsMap);
             }
+            requestAnimationFrame(() => {
+              syncMapPlotSize(els.resultsMap, state.resultsRange);
+              if (els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
+            });
           }
         });
         els.hourSlider.oninput = () => {
@@ -2942,10 +3008,14 @@
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
               if (!state.payload) return;
-              syncMapPlotSize();
+              syncMapPlotSize(els.mapPlot, state.mapRange);
               if (els.mapPlot && els.mapPlot.data) {
                 Plotly.Plots.resize(els.mapPlot);
                 syncMapHitLayer();
+              }
+              if (els.resultsMap) {
+                syncMapPlotSize(els.resultsMap, state.resultsRange);
+                if (els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
               }
             }, 120);
           });
