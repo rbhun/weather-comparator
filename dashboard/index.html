@@ -1039,7 +1039,7 @@
 
       <section class="card">
         <h2>4) Cross-shore transects</h2>
-        <p class="subnote">Mean wind vs offshore distance, by hour.</p>
+        <p class="subnote">Mean wind vs offshore distance, by hour (IFS 9 km climatology).</p>
         <div id="transect-controls" class="controls hidden">
           <label for="transect-select">Transect</label>
           <select id="transect-select"></select>
@@ -1047,6 +1047,7 @@
         <div class="plot-wrap">
           <div id="transect-plot" class="plot short"></div>
         </div>
+        <p id="transect-resolution-note" class="help hidden" role="status"></p>
         <p id="transect-empty" class="help hidden">
           Transect data is not present in this payload. The dashboard can render it when a `transects` section is included in data.json.
         </p>
@@ -1401,6 +1402,7 @@
         transectControls: document.getElementById("transect-controls"),
         transectSelect: document.getElementById("transect-select"),
         transectPlot: document.getElementById("transect-plot"),
+        transectResolutionNote: document.getElementById("transect-resolution-note"),
         transectEmpty: document.getElementById("transect-empty"),
         skillBiasBanner: document.getElementById("skill-bias-banner"),
         skillMeta: document.getElementById("skill-meta"),
@@ -2666,11 +2668,22 @@
             if (!dist || !byHour) return null;
             return {
               name: t.name || t.id || "transect",
+              id: t.id || null,
               distance_nm: dist.map(asNum),
               by_hour: byHour,
+              below_model_resolution_nm: asNum(t.below_model_resolution_nm),
+              resolution_note: t.resolution_note || null,
             };
           })
           .filter(Boolean);
+      }
+
+      function defaultBelowResolutionNm() {
+        // IFS analysis ~9 km ≈ 4.9 nm; nearshore samples inside ~10 nm collapse to one cell.
+        const meta = (state.payload && state.payload.meta) || {};
+        const explicit = asNum(meta.transect_below_model_resolution_nm);
+        if (explicit != null) return explicit;
+        return 10;
       }
 
       function renderTransects() {
@@ -2678,6 +2691,10 @@
         if (transects.length === 0) {
           els.transectControls.classList.add("hidden");
           els.transectEmpty.classList.remove("hidden");
+          if (els.transectResolutionNote) {
+            els.transectResolutionNote.classList.add("hidden");
+            els.transectResolutionNote.textContent = "";
+          }
           Plotly.purge(els.transectPlot);
           els.transectPlot._pmcHome = null;
           els.transectPlot.innerHTML = "";
@@ -2693,15 +2710,67 @@
         const draw = () => {
           const idx = Number(els.transectSelect.value || 0);
           const t = transects[idx];
+          const floorNm =
+            asNum(t.below_model_resolution_nm) != null
+              ? asNum(t.below_model_resolution_nm)
+              : defaultBelowResolutionNm();
+          const dists = t.distance_nm;
+          const maskY = (vals) =>
+            dists.map((d, i) => {
+              const x = asNum(d);
+              const y = asNum(vals[i]);
+              if (x == null || y == null) return null;
+              if (floorNm != null && x < floorNm) return null;
+              return y;
+            });
           const traces = t.by_hour.map((row) => ({
             type: "scatter",
             mode: "lines",
-            x: t.distance_nm,
-            y: Array.isArray(row.mean_tws_kt) ? row.mean_tws_kt.map(asNum) : [],
+            x: dists,
+            y: maskY(Array.isArray(row.mean_tws_kt) ? row.mean_tws_kt : []),
             name: hourLabel(Number(row.hour)),
             line: { width: Number(row.hour) === state.selectedHour ? 3 : 1.4 },
             hoverinfo: "skip",
+            connectgaps: false,
           }));
+          const shapes = [];
+          const annotations = [];
+          if (floorNm != null && floorNm > 0) {
+            const xMax = Math.max(...dists.map(asNum).filter((v) => v != null), floorNm);
+            shapes.push({
+              type: "rect",
+              xref: "x",
+              yref: "paper",
+              x0: 0,
+              x1: Math.min(floorNm, xMax),
+              y0: 0,
+              y1: 1,
+              fillcolor: "rgba(148, 163, 184, 0.18)",
+              line: { width: 0 },
+              layer: "below",
+            });
+            annotations.push({
+              xref: "x",
+              yref: "paper",
+              x: Math.min(floorNm, xMax) / 2,
+              y: 0.96,
+              text: "below model resolution",
+              showarrow: false,
+              font: { size: 12, color: "#cbd5e1" },
+              bgcolor: "rgba(19,26,45,0.75)",
+            });
+          }
+          if (els.transectResolutionNote) {
+            if (floorNm != null && floorNm > 0) {
+              els.transectResolutionNote.classList.remove("hidden");
+              els.transectResolutionNote.textContent =
+                t.resolution_note ||
+                `Shaded band (0–${floorNm} nm): below IFS 9 km model resolution — not a coastal-wind finding.`;
+            } else {
+              els.transectResolutionNote.classList.add("hidden");
+              els.transectResolutionNote.textContent = "";
+            }
+          }
           applyPlot(
             els.transectPlot,
             traces,
@@ -2710,6 +2779,8 @@
               title: `Cross-shore transect: ${t.name}`,
               xaxis: { title: "Distance offshore (nm)", automargin: true },
               yaxis: { title: "Mean wind (kt)", automargin: true },
+              shapes,
+              annotations,
               legend: {
                 orientation: "h",
                 x: 0,
