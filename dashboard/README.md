@@ -7,9 +7,11 @@ Offline tactical dashboard for PMC-2026.
 - Thin header tabs: **Historical weather**, **Settings**, and **Historical
   result** (YB tracks). The results tab is built but hidden until publish
   (`SHOW_RESULTS_TAB` in `dashboard/index.html`). The tab bar stays visible.
-- **Settings** holds the UTC/local toggle, operational warnings, and a
+- **Settings** holds the UTC/local toggle, operational warnings, visitor
+  stats (GoatCounter: count, country, phone vs desktop, revisits), and a
   read-only Historical weather block (downloaded years, area, race).
-  Selection of those fields comes later.
+  Selection of those fields comes later. Create the free GoatCounter site
+  `rbhun-pmc` once at goatcounter.com so the Settings link has data.
 - Renders a single-file HTML dashboard from `dashboard/data.json`.
 - Shows calm-risk heatmap (`p_below_5kt`) with route overlays.
 - Renders a pre-cached OpenStreetMap base map (CARTO Voyager tiles) plus an

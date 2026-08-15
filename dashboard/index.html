@@ -996,6 +996,20 @@
     <main id="page-settings" class="container hidden">
       <section id="warning-banner" class="warning-banner"></section>
       <section class="card">
+        <h2>Visitors</h2>
+        <p class="subnote">
+          Anonymous counts only: how many people opened the page, country, phone vs desktop, and whether they came back. No names, no login.
+        </p>
+        <p>
+          <a id="analytics-link" href="https://rbhun-pmc.goatcounter.com" target="_blank" rel="noopener">Open visitor stats</a>
+        </p>
+        <p class="help">
+          One-time setup: create a free GoatCounter site with code <code>rbhun-pmc</code> at
+          <a href="https://www.goatcounter.com" target="_blank" rel="noopener">goatcounter.com</a>,
+          then that link shows the numbers. Offline / <code>file://</code> opens are not counted.
+        </p>
+      </section>
+      <section class="card">
         <h2>Display time</h2>
         <p class="subnote">
           Switches every timestamp on the dashboard at once, including axis labels. Default is local time from the loaded payload.
@@ -1080,6 +1094,7 @@
       const STORAGE_NAME = "pmc.dashboard.payloadName.v2";
       // Flip to true when publishing the YB historical-result tab on Pages.
       const SHOW_RESULTS_TAB = false;
+      const GOATCOUNTER_SITE = "rbhun-pmc";
       const STORAGE_PREFER = "pmc.dashboard.preferSaved.v2";
       const plotConfig = { displayModeBar: false, responsive: true, doubleClick: "reset" };
       const threeToneScale = [
@@ -1201,6 +1216,7 @@
         settingsYears: document.getElementById("settings-years"),
         settingsYearsNote: document.getElementById("settings-years-note"),
         settingsArea: document.getElementById("settings-area"),
+        analyticsLink: document.getElementById("analytics-link"),
         yearToggles: document.getElementById("year-toggles"),
         classFilters: document.getElementById("class-filters"),
         yearsAll: document.getElementById("years-all"),
@@ -3328,7 +3344,23 @@
           `Now showing: ${sourceLabel}. A chosen file is remembered in this browser so reload keeps it.`;
       }
 
+      function initAnalytics() {
+        if (els.analyticsLink && GOATCOUNTER_SITE) {
+          els.analyticsLink.href = `https://${GOATCOUNTER_SITE}.goatcounter.com`;
+        }
+        if (!GOATCOUNTER_SITE) return;
+        if (location.protocol === "file:") return;
+        if (document.querySelector("script[data-goatcounter]")) return;
+        const script = document.createElement("script");
+        script.async = true;
+        script.defer = true;
+        script.dataset.goatcounter = `https://${GOATCOUNTER_SITE}.goatcounter.com/count`;
+        script.src = "https://gc.zgo.at/count.js";
+        document.head.appendChild(script);
+      }
+
       async function init() {
+        initAnalytics();
         bindEvents();
         const saved = loadStoredPayload();
         let preferSaved = false;
