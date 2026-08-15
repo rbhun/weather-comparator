@@ -1,11 +1,9 @@
-# Publish the offline dashboard so it can be opened from any browser.
-# Site root is the contents of dashboard/ (index.html, data.js, vendor/, tiles/).
+# Publish dashboard/ to the gh-pages branch for GitHub Pages.
 #
-# After a successful deploy the site is at:
-#   https://rbhun.github.io/weather-comparator/
-#
-# If the first run fails with "Pages site failed / Not Found", set
-# Settings → Pages → Source to "GitHub Actions" once, then re-run this workflow.
+# One-time (repo Settings → Pages):
+#   Source: Deploy from a branch
+#   Branch: gh-pages / (root)
+# Site: https://rbhun.github.io/weather-comparator/
 
 name: Deploy dashboard to GitHub Pages
 
@@ -18,9 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -28,25 +24,21 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          # Create/enable the Pages site on first run when missing.
-          enablement: true
+      - name: Prepare site directory
+        run: |
+          mkdir -p _site
+          cp -a dashboard/. _site/
+          rm -f _site/*.py _site/README.md
 
-      - name: Upload dashboard artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dashboard
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: gh-pages
+          force_orphan: true
