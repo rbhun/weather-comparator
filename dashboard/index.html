@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache" />
     <title>PMC 2026 - Weather Decision Dashboard</title>
     <script src="./vendor/plotly.min.js"></script>
     <script src="./tiles/osm_manifest.js"></script>
@@ -43,12 +44,11 @@
         border-bottom: 1px solid var(--panel-border);
         background: rgba(11, 16, 32, 0.96);
         backdrop-filter: blur(4px);
-        padding: 0.4rem 0.9rem;
+        padding: 0.4rem 0.9rem 0.5rem;
         display: flex;
-        gap: 0.8rem;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 0.45rem;
+        align-items: stretch;
       }
 
       .title-wrap h1 {
@@ -63,7 +63,8 @@
       }
 
       .app-tabs {
-        display: inline-flex;
+        display: flex;
+        width: 100%;
         gap: 0.3rem;
         border: 1px solid var(--panel-border);
         border-radius: 0.65rem;
@@ -75,11 +76,12 @@
         border: 0;
         background: transparent;
         color: var(--text);
-        padding: 0.4rem 0.85rem;
+        padding: 0.5rem 0.85rem;
         border-radius: 0.45rem;
         cursor: pointer;
         font-weight: 800;
-        font-size: 0.92rem;
+        font-size: 0.95rem;
+        flex: 1 1 0;
       }
 
       .app-tabs button.active {
