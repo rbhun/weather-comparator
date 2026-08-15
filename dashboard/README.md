@@ -4,9 +4,11 @@ Offline tactical dashboard for PMC-2026.
 
 ## What it does
 
-- Thin header tabs: **Historical weather** (existing climatology dashboard) and
-  **Historical result** (YB tracks). The results tab is built but hidden until
-  publish (`SHOW_RESULTS_TAB` in `dashboard/index.html`).
+- Thin header tabs: **Historical weather**, **Settings**, and **Historical
+  result** (YB tracks). The results tab is built but hidden until publish
+  (`SHOW_RESULTS_TAB` in `dashboard/index.html`). The tab bar stays visible.
+- **Settings** holds the UTC/local toggle and a read-only Historical weather
+  block (downloaded years, area, race). Selection of those fields comes later.
 - Renders a single-file HTML dashboard from `dashboard/data.json`.
 - Shows calm-risk heatmap (`p_below_5kt`) with route overlays.
 - Renders a pre-cached OpenStreetMap base map (CARTO Voyager tiles) plus an
@@ -17,8 +19,8 @@ Offline tactical dashboard for PMC-2026.
 - Shows model-skill table with clearly marked `reference_biased` rows.
 - Renders persistent warnings from `meta.warnings` and keeps the polar
   unvalidated warning on-screen when `polar_is_validated=false`.
-- Defaults to local display time from `meta.display_timezone`, with a global
-  UTC/local toggle that updates all visible time labels.
+- Defaults to local display time from `meta.display_timezone`, with a UTC/local
+  toggle on the Settings tab that updates all visible time labels.
 - **Historical result** (hidden on Pages until `SHOW_RESULTS_TAB` is flipped)
   overlays YB tracks from 2017–2019 and 2021–2025. Year
   and class chips filter the fleet. **Top 3 absolute** is uncorrected line
