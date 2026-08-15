@@ -321,29 +321,94 @@ def cross_track_distance_nm(
     return dxt * EARTH_RADIUS_NM
 
 
-def distance_to_land_nm(lat, lon) -> np.ndarray:
-    """Great-circle distance from point(s) to the nearest land polygon edge."""
-    from shapely.ops import nearest_points
+_DISTANCE_GRID_LAT: np.ndarray | None = None
+_DISTANCE_GRID_LON: np.ndarray | None = None
+_DISTANCE_GRID: np.ndarray | None = None
+_DISTANCE_GRID_RES = 0.1
+_DISTANCE_GRID_CACHE = REPO_ROOT / "data" / "cache" / "distance_to_land_0p1.npz"
 
-    polygons, _, index = _ensure_land_index()
+
+def distance_to_land_nm(lat, lon) -> np.ndarray:
+    """Great-circle distance from point(s) to the nearest land polygon edge.
+
+    Uses a cached domain raster (0.1°) with vectorised bilinear lookup.
+    """
     lat_arr = np.asarray(lat, dtype=float)
     lon_arr = np.asarray(lon, dtype=float)
     lat_b, lon_b = np.broadcast_arrays(lat_arr, lon_arr)
-    out = np.empty(lat_b.shape, dtype=float)
-    flat_lat = lat_b.ravel()
-    flat_lon = lon_b.ravel()
-    flat_out = out.ravel()
-    for i, (lat_v, lon_v) in enumerate(zip(flat_lat, flat_lon)):
-        point = Point(float(lon_v), float(lat_v))
-        nearest = index.nearest(point)
-        if isinstance(nearest, (list, tuple, np.ndarray)):
-            idx = int(nearest[0]) if len(nearest) else 0
-        else:
-            idx = int(nearest)
-        poly = polygons[idx]
-        if poly.contains(point) or poly.touches(point):
-            flat_out[i] = 0.0
-            continue
-        _, land_pt = nearest_points(point, poly)
-        flat_out[i] = float(haversine_nm(lat_v, lon_v, land_pt.y, land_pt.x))
-    return out
+    grid_lat, grid_lon, grid_dist = _ensure_distance_grid()
+    return _sample_distance_grid_vec(grid_lat, grid_lon, grid_dist, lat_b, lon_b)
+
+
+def _ensure_distance_grid() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    global _DISTANCE_GRID_LAT, _DISTANCE_GRID_LON, _DISTANCE_GRID
+    if _DISTANCE_GRID is not None:
+        assert _DISTANCE_GRID_LAT is not None and _DISTANCE_GRID_LON is not None
+        return _DISTANCE_GRID_LAT, _DISTANCE_GRID_LON, _DISTANCE_GRID
+
+    if _DISTANCE_GRID_CACHE.exists():
+        payload = np.load(_DISTANCE_GRID_CACHE)
+        _DISTANCE_GRID_LAT = payload["lat"]
+        _DISTANCE_GRID_LON = payload["lon"]
+        _DISTANCE_GRID = payload["dist"]
+        return _DISTANCE_GRID_LAT, _DISTANCE_GRID_LON, _DISTANCE_GRID
+
+    from shapely.ops import nearest_points
+
+    polygons, _, index = _ensure_land_index()
+    lats = np.round(np.arange(37.0, 44.5 + 1e-9, _DISTANCE_GRID_RES), 4)
+    lons = np.round(np.arange(6.0, 15.0 + 1e-9, _DISTANCE_GRID_RES), 4)
+    dist = np.empty((lats.size, lons.size), dtype=np.float32)
+    LOGGER.warning(
+        "Building distance-to-land raster %dx%d at %.2f deg (one-time)",
+        lats.size,
+        lons.size,
+        _DISTANCE_GRID_RES,
+    )
+    for i, lat_v in enumerate(lats):
+        for j, lon_v in enumerate(lons):
+            point = Point(float(lon_v), float(lat_v))
+            nearest = index.nearest(point)
+            idx = int(nearest[0]) if isinstance(nearest, (list, tuple, np.ndarray)) else int(nearest)
+            poly = polygons[idx]
+            if poly.contains(point) or poly.touches(point):
+                dist[i, j] = 0.0
+                continue
+            _, land_pt = nearest_points(point, poly)
+            dist[i, j] = float(haversine_nm(lat_v, lon_v, land_pt.y, land_pt.x))
+    _DISTANCE_GRID_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(_DISTANCE_GRID_CACHE, lat=lats, lon=lons, dist=dist)
+    _DISTANCE_GRID_LAT = lats
+    _DISTANCE_GRID_LON = lons
+    _DISTANCE_GRID = dist
+    return lats, lons, dist
+
+
+def _sample_distance_grid_vec(
+    grid_lat: np.ndarray,
+    grid_lon: np.ndarray,
+    grid_dist: np.ndarray,
+    lat: np.ndarray,
+    lon: np.ndarray,
+) -> np.ndarray:
+    lat_c = np.clip(lat, grid_lat[0], grid_lat[-1])
+    lon_c = np.clip(lon, grid_lon[0], grid_lon[-1])
+    i1 = np.searchsorted(grid_lat, lat_c, side="right")
+    j1 = np.searchsorted(grid_lon, lon_c, side="right")
+    i0 = np.clip(i1 - 1, 0, grid_lat.size - 1)
+    j0 = np.clip(j1 - 1, 0, grid_lon.size - 1)
+    i1 = np.clip(np.maximum(i1, i0 + 1), 0, grid_lat.size - 1)
+    j1 = np.clip(np.maximum(j1, j0 + 1), 0, grid_lon.size - 1)
+    lat0 = grid_lat[i0]
+    lat1 = grid_lat[i1]
+    lon0 = grid_lon[j0]
+    lon1 = grid_lon[j1]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        wa = np.where(lat1 == lat0, 0.0, (lat_c - lat0) / (lat1 - lat0))
+        wb = np.where(lon1 == lon0, 0.0, (lon_c - lon0) / (lon1 - lon0))
+    return (
+        (1 - wa) * (1 - wb) * grid_dist[i0, j0]
+        + wa * (1 - wb) * grid_dist[i1, j0]
+        + (1 - wa) * wb * grid_dist[i0, j1]
+        + wa * wb * grid_dist[i1, j1]
+    )

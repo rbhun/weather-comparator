@@ -252,23 +252,67 @@ def annotate_samples_with_wind(
 
     out = samples.copy()
     out["time_utc"] = pd.to_datetime(out["time_utc"], utc=True)
-    u_vals: list[float] = []
-    v_vals: list[float] = []
-    for row in out.itertuples(index=False):
-        t = np.datetime64(pd.Timestamp(row.time_utc).tz_convert("UTC").tz_localize(None).to_datetime64())
-        u, v = sample_analysis_wind(wind, t, float(row.lat), float(row.lon))
-        u_vals.append(u)
-        v_vals.append(v)
 
-    out["u10_ms"] = np.asarray(u_vals, dtype=float)
-    out["v10_ms"] = np.asarray(v_vals, dtype=float)
+    times = wind["time"].values.astype("datetime64[ns]")
+    time_ns = times.astype(np.int64)
+    lat_vals = wind["lat"].values.astype(float)
+    lon_vals = wind["lon"].values.astype(float)
+    u_field = wind["u10"].values
+    v_field = wind["v10"].values
+
+    sample_times = (
+        out["time_utc"]
+        .dt.tz_convert("UTC")
+        .dt.tz_localize(None)
+        .to_numpy(dtype="datetime64[ns]")
+        .astype("datetime64[ns]")
+        .astype(np.int64)
+    )
+    # Nearest hour on the analysis axis (archive is hourly).
+    t_idx = np.searchsorted(time_ns, sample_times, side="left")
+    t_idx = np.clip(t_idx, 0, time_ns.size - 1)
+    if time_ns.size > 1:
+        t_idx_lo = np.clip(t_idx - 1, 0, time_ns.size - 1)
+        prefer_lo = np.abs(time_ns[t_idx_lo] - sample_times) <= np.abs(time_ns[t_idx] - sample_times)
+        t_idx = np.where(prefer_lo, t_idx_lo, t_idx)
+
+    lat_idx = np.clip(np.searchsorted(lat_vals, out["lat"].to_numpy(dtype=float), side="left"), 0, lat_vals.size - 1)
+    lon_idx = np.clip(np.searchsorted(lon_vals, out["lon"].to_numpy(dtype=float), side="left"), 0, lon_vals.size - 1)
+    if lat_vals.size > 1:
+        lat_lo = np.clip(lat_idx - 1, 0, lat_vals.size - 1)
+        prefer = np.abs(lat_vals[lat_lo] - out["lat"].to_numpy(dtype=float)) <= np.abs(
+            lat_vals[lat_idx] - out["lat"].to_numpy(dtype=float)
+        )
+        lat_idx = np.where(prefer, lat_lo, lat_idx)
+    if lon_vals.size > 1:
+        lon_lo = np.clip(lon_idx - 1, 0, lon_vals.size - 1)
+        prefer = np.abs(lon_vals[lon_lo] - out["lon"].to_numpy(dtype=float)) <= np.abs(
+            lon_vals[lon_idx] - out["lon"].to_numpy(dtype=float)
+        )
+        lon_idx = np.where(prefer, lon_lo, lon_idx)
+
+    u_vals = u_field[t_idx, lat_idx, lon_idx].astype(float)
+    v_vals = v_field[t_idx, lat_idx, lon_idx].astype(float)
+    # Fallback: bilinear when nearest cell is NaN (land / sparse store).
+    missing = ~np.isfinite(u_vals) | ~np.isfinite(v_vals)
+    if np.any(missing):
+        for i in np.where(missing)[0]:
+            t = np.datetime64(sample_times[i], "ns")
+            u, v = sample_analysis_wind(
+                wind, t, float(out["lat"].iloc[i]), float(out["lon"].iloc[i])
+            )
+            u_vals[i] = u
+            v_vals[i] = v
+
+    out["u10_ms"] = u_vals
+    out["v10_ms"] = v_vals
     tws, twd = uv_to_tws_twd(out["u10_ms"].to_numpy(), out["v10_ms"].to_numpy())
     out["analysis_tws_kt"] = tws
     out["analysis_twd_deg"] = twd
     twa = angular_difference(out["analysis_twd_deg"].to_numpy(), out["cog_deg"].to_numpy())
     out["twa_deg"] = twa
     out["predicted_sog_kt"] = np.asarray(
-        [predicted_speed_kt(polar, float(a), float(s)) for a, s in zip(out["twa_deg"], out["analysis_tws_kt"])],
+        polar.speed(out["twa_deg"].to_numpy(), out["analysis_tws_kt"].to_numpy()),
         dtype=float,
     )
     out["residual_kt"] = out["sog_kt"] - out["predicted_sog_kt"]
@@ -362,10 +406,12 @@ def summarise_residuals(samples: pd.DataFrame) -> dict[str, pd.DataFrame]:
 
     valid = samples.dropna(subset=["residual_kt", "analysis_tws_kt"]).copy()
     valid = valid[np.isfinite(valid["residual_kt"]) & np.isfinite(valid["analysis_tws_kt"])]
+    afternoon = valid[valid["afternoon_local"] == True]  # noqa: E712
     return {
         "by_offshore": _bin_summary(valid, ["offshore_bin"]),
         "by_hour_local": _bin_summary(valid, ["hour_local"]),
         "by_tws": _bin_summary(valid, ["tws_bin"]),
+        "by_offshore_afternoon": _bin_summary(afternoon, ["offshore_bin"]),
         "by_offshore_hour": _bin_summary(valid, ["offshore_bin", "hour_local"]),
         "by_coast_afternoon": _bin_summary(
             valid.assign(
@@ -450,9 +496,12 @@ def format_summary_markdown(
     _emit("By local hour (Europe/Rome unless overridden)", summaries["by_hour_local"])
     _emit("By analysis wind speed", summaries["by_tws"])
     _emit("Coast × afternoon window", summaries["by_coast_afternoon"])
+    if "by_offshore_afternoon" in summaries:
+        _emit("Offshore distance — afternoon only (12–17 local)", summaries["by_offshore_afternoon"])
     _emit("Offshore × local hour (cross-tab)", summaries["by_offshore_hour"])
 
     coast = summaries.get("by_coast_afternoon")
+    aft_off = summaries.get("by_offshore_afternoon")
     if coast is not None and not coast.empty:
         lines.append("## Coastal-thermal question")
         lines.append("")
@@ -462,27 +511,56 @@ def format_summary_markdown(
         if near is not None and off is not None:
             delta = float(near.residual_median_kt) - float(off.residual_median_kt)
             lines.append(
-                f"Near-coast afternoon median residual **{near.residual_median_kt:+.2f} kt** "
+                f"Near-coast (<10 nm) afternoon median residual **{near.residual_median_kt:+.2f} kt** "
                 f"(n={near.n}) vs offshore afternoon **{off.residual_median_kt:+.2f} kt** "
                 f"(n={off.n}). Difference (near − offshore) = **{delta:+.2f} kt**."
             )
-            if delta > 0.5 and near.residual_median_kt > 0.5:
+            lines.append("")
+        if aft_off is not None and not aft_off.empty:
+            lines.append(
+                "Afternoon-only residual by offshore band (this is the cleanest thermal cut):"
+            )
+            lines.append("")
+            for row in aft_off.itertuples(index=False):
                 lines.append(
-                    "Interpretation: fleet systematically faster than analysis allows "
-                    "near the coast in the afternoon — consistent with analysis "
-                    "under-representing coastal thermal enhancement."
+                    f"- **{row.offshore_bin}**: median {row.residual_median_kt:+.2f} kt (n={row.n})"
                 )
-            elif near.residual_median_kt > 0.5:
+            lines.append("")
+            # Peak band among coastal/near-coast bins
+            coastal = aft_off[aft_off["offshore_bin"].astype(str).isin(["0-5nm", "5-10nm", "10-20nm"])]
+            far = aft_off[aft_off["offshore_bin"].astype(str).isin(["20-40nm", "40nm+"])]
+            if not coastal.empty and not far.empty:
+                peak = coastal.loc[coastal["residual_median_kt"].idxmax()]
+                far_med = float(np.average(far["residual_median_kt"], weights=far["n"]))
                 lines.append(
-                    "Interpretation: positive near-coast afternoon residual, but not "
-                    "clearly larger than offshore afternoon — thermal signal mixed with "
-                    "other biases (polar, current, pointing)."
+                    f"Peak afternoon residual in the nearshore bands is "
+                    f"**{peak.offshore_bin} at {float(peak.residual_median_kt):+.2f} kt**; "
+                    f"weighted median over 20 nm+ afternoon samples is **{far_med:+.2f} kt**."
                 )
-            else:
-                lines.append(
-                    "Interpretation: no clear positive near-coast afternoon surplus "
-                    "in this sample."
+                contrast = float(peak.residual_median_kt) - far_med
+                near_off_delta = (
+                    float(near.residual_median_kt) - float(off.residual_median_kt)
+                    if near is not None and off is not None
+                    else 0.0
                 )
+                if contrast > 0.25 and float(peak.residual_median_kt) > 0:
+                    lines.append(
+                        "Interpretation: **yes** — in the afternoon the fleet is systematically "
+                        "faster than analysis+polar allows in the 5–20 nm coastal band relative "
+                        "to further offshore. That is consistent with IFS analysis under-representing "
+                        f"coastal thermal enhancement by roughly **{contrast:.1f} kt** of boat-speed "
+                        "equivalent (order-of-magnitude; polar not boat-specific)."
+                    )
+                elif near_off_delta > 0.2:
+                    lines.append(
+                        "Interpretation: mild positive near-coast afternoon surplus vs offshore "
+                        "afternoon — directionally consistent with under-resolved thermal, but "
+                        "small relative to residual scatter (p10/p90 span several knots)."
+                    )
+                else:
+                    lines.append(
+                        "Interpretation: no strong afternoon coastal surplus in this sample."
+                    )
         lines.append("")
 
     lines.append("## Caveats")

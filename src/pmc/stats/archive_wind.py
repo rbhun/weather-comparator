@@ -6,9 +6,9 @@ import hashlib
 import json
 import os
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -22,7 +22,7 @@ from pmc.io.units import assert_hourly_units, extract_responses
 ARCHIVE_CUSTOMER = "https://customer-archive-api.open-meteo.com/v1/archive"
 ARCHIVE_PUBLIC = "https://archive-api.open-meteo.com/v1/archive"
 DEFAULT_CACHE = Path("data/cache/yb_wind_check_archive")
-MS_TO_KT = 1.9438445
+BATCH_SIZE = 40
 
 
 def _api_key() -> str | None:
@@ -38,7 +38,7 @@ def _api_key() -> str | None:
     return None
 
 
-def _http_get_json(url: str, timeout: int = 90) -> dict[str, Any]:
+def _http_get_json(url: str, timeout: int = 120) -> Any:
     req = Request(url, headers={"User-Agent": "pmc-yb-wind-check/0.1"})
     last: Exception | None = None
     for attempt in range(5):
@@ -48,33 +48,46 @@ def _http_get_json(url: str, timeout: int = 90) -> dict[str, Any]:
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
             last = exc
             if isinstance(exc, HTTPError) and exc.code in {400, 404}:
-                raise
+                body = ""
+                try:
+                    body = exc.read().decode("utf-8", errors="replace")[:240]
+                except Exception:
+                    pass
+                raise RuntimeError(f"Open-Meteo HTTP {exc.code}: {body}") from exc
             time.sleep(1.5 * (2**attempt))
     raise RuntimeError(f"Open-Meteo archive failed: {last}") from last
 
 
-def fetch_point_series(
-    lat: float,
-    lon: float,
+def _cache_path(cache_root: Path, model: str, start: date, end: date, points: Sequence[tuple[float, float]]) -> Path:
+    digest = hashlib.sha1(
+        (
+            f"{model}|{start.isoformat()}|{end.isoformat()}|"
+            + ";".join(f"{lat:.2f},{lon:.2f}" for lat, lon in points)
+        ).encode()
+    ).hexdigest()
+    return cache_root / f"batch_{digest}.json"
+
+
+def fetch_batch_series(
+    points: Sequence[tuple[float, float]],
     start: date,
     end: date,
     *,
     cache_root: Path = DEFAULT_CACHE,
     model: str = "ecmwf_ifs",
-) -> pd.DataFrame:
-    """Hourly u/v (m/s) for one grid point; disk-cached by request params."""
+) -> list[pd.DataFrame]:
+    """Hourly u/v (m/s) for a batch of lat/lon points; disk-cached."""
 
+    if not points:
+        return []
     cache_root.mkdir(parents=True, exist_ok=True)
-    key = hashlib.sha1(
-        f"{model}|{lat:.2f}|{lon:.2f}|{start.isoformat()}|{end.isoformat()}".encode()
-    ).hexdigest()
-    cache_path = cache_root / f"{key}.json"
+    cache_path = _cache_path(cache_root, model, start, end, points)
     if cache_path.exists():
         payload = json.loads(cache_path.read_text(encoding="utf-8"))
     else:
         params = {
-            "latitude": f"{lat:.4f}",
-            "longitude": f"{lon:.4f}",
+            "latitude": ",".join(f"{lat:.4f}" for lat, _ in points),
+            "longitude": ",".join(f"{lon:.4f}" for _, lon in points),
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
             "hourly": "wind_u_component_10m,wind_v_component_10m",
@@ -94,30 +107,40 @@ def fetch_point_series(
                 "wind_u_component_10m": "m/s",
                 "wind_v_component_10m": "m/s",
             },
-            context=f"yb_wind_check {lat},{lon}",
+            context=f"yb_wind_check batch n={len(points)}",
         )
         cache_path.write_text(json.dumps(payload), encoding="utf-8")
-        time.sleep(0.15)
+        time.sleep(0.25)
 
     responses = extract_responses(payload)
-    if not responses:
-        raise RuntimeError(f"No hourly payload for {lat},{lon}")
-    hourly = responses[0].get("hourly") or {}
-    times = hourly.get("time") or []
-    u = hourly.get("wind_u_component_10m") or []
-    v = hourly.get("wind_v_component_10m") or []
-    if not times or len(times) != len(u) or len(times) != len(v):
-        raise RuntimeError(f"Malformed hourly series for {lat},{lon}")
-    frame = pd.DataFrame(
-        {
-            "time": pd.to_datetime(times, utc=True).tz_localize(None),
-            "u10": np.asarray(u, dtype=float),
-            "v10": np.asarray(v, dtype=float),
-        }
-    )
-    frame["lat"] = float(lat)
-    frame["lon"] = float(lon)
-    return frame
+    if len(responses) != len(points):
+        # Single-point responses sometimes unwrap to one dict.
+        if len(points) == 1 and len(responses) == 1:
+            pass
+        else:
+            raise RuntimeError(
+                f"Expected {len(points)} archive responses, got {len(responses)}"
+            )
+
+    frames: list[pd.DataFrame] = []
+    for (lat, lon), response in zip(points, responses):
+        hourly = response.get("hourly") or {}
+        times = hourly.get("time") or []
+        u = hourly.get("wind_u_component_10m") or []
+        v = hourly.get("wind_v_component_10m") or []
+        if not times or len(times) != len(u) or len(times) != len(v):
+            raise RuntimeError(f"Malformed hourly series for {lat},{lon}")
+        frame = pd.DataFrame(
+            {
+                "time": pd.to_datetime(times, utc=True).tz_localize(None),
+                "u10": np.asarray(u, dtype=float),
+                "v10": np.asarray(v, dtype=float),
+            }
+        )
+        frame["lat"] = float(lat)
+        frame["lon"] = float(lon)
+        frames.append(frame)
+    return frames
 
 
 def build_wind_dataset_for_samples(
@@ -127,8 +150,9 @@ def build_wind_dataset_for_samples(
     cache_root: Path = DEFAULT_CACHE,
     model: str = "ecmwf_ifs",
     pad_days: int = 0,
+    batch_size: int = BATCH_SIZE,
 ) -> xr.Dataset:
-    """Build a C1-like zarr-compatible Dataset covering sample cells/times."""
+    """Build a C1-like Dataset covering sample cells/times via batched archive pulls."""
 
     if samples.empty:
         raise ValueError("No samples to fetch wind for")
@@ -137,44 +161,63 @@ def build_wind_dataset_for_samples(
     frame["time_utc"] = pd.to_datetime(frame["time_utc"], utc=True)
     frame["lat_r"] = (np.round(frame["lat"] / resolution) * resolution).astype(float)
     frame["lon_r"] = (np.round(frame["lon"] / resolution) * resolution).astype(float)
+    frame["year"] = frame["time_utc"].dt.year
 
-    cells = frame.groupby(["lat_r", "lon_r"], as_index=False).agg(
-        t_min=("time_utc", "min"),
-        t_max=("time_utc", "max"),
-    )
     series_list: list[pd.DataFrame] = []
-    for row in cells.itertuples(index=False):
-        start = (row.t_min.tz_convert("UTC") - pd.Timedelta(days=pad_days)).date()
-        end = (row.t_max.tz_convert("UTC") + pd.Timedelta(days=pad_days)).date()
-        series_list.append(
-            fetch_point_series(
-                float(row.lat_r),
-                float(row.lon_r),
-                start,
-                end,
-                cache_root=cache_root,
-                model=model,
-            )
+    for year, year_frame in frame.groupby("year"):
+        t_min = year_frame["time_utc"].min().tz_convert("UTC") - pd.Timedelta(days=pad_days)
+        t_max = year_frame["time_utc"].max().tz_convert("UTC") + pd.Timedelta(days=pad_days)
+        start = t_min.date()
+        end = t_max.date()
+        if end < start:
+            end = start
+        # Cap absurd windows
+        if (end - start).days > 14:
+            end = start + timedelta(days=14)
+
+        cells = (
+            year_frame.groupby(["lat_r", "lon_r"], as_index=False)
+            .size()
+            .loc[:, ["lat_r", "lon_r"]]
         )
+        points = [(float(r.lat_r), float(r.lon_r)) for r in cells.itertuples(index=False)]
         print(
-            f"[archive] {row.lat_r:.2f},{row.lon_r:.2f} {start}→{end}",
+            f"[archive] year={year} window={start}→{end} cells={len(points)}",
             flush=True,
         )
+        for offset in range(0, len(points), batch_size):
+            batch = points[offset : offset + batch_size]
+            print(
+                f"[archive]   batch {offset // batch_size + 1}/"
+                f"{(len(points) + batch_size - 1) // batch_size} n={len(batch)}",
+                flush=True,
+            )
+            series_list.extend(
+                fetch_batch_series(
+                    batch,
+                    start,
+                    end,
+                    cache_root=cache_root,
+                    model=model,
+                )
+            )
 
     all_series = pd.concat(series_list, ignore_index=True)
-    lats = np.array(sorted(all_series["lat"].unique()), dtype=np.float32)
-    lons = np.array(sorted(all_series["lon"].unique()), dtype=np.float32)
+    all_series["lat"] = all_series["lat"].astype(float).round(4)
+    all_series["lon"] = all_series["lon"].astype(float).round(4)
+    lats = np.array(sorted(all_series["lat"].unique()), dtype=np.float64)
+    lons = np.array(sorted(all_series["lon"].unique()), dtype=np.float64)
     times = np.array(sorted(all_series["time"].unique()), dtype="datetime64[ns]")
-    lat_index = {float(v): i for i, v in enumerate(lats)}
-    lon_index = {float(v): i for i, v in enumerate(lons)}
+    lat_index = {round(float(v), 4): i for i, v in enumerate(lats)}
+    lon_index = {round(float(v), 4): i for i, v in enumerate(lons)}
     time_index = {np.datetime64(t, "ns"): i for i, t in enumerate(times)}
 
     u10 = np.full((times.size, lats.size, lons.size), np.nan, dtype=np.float32)
     v10 = np.full((times.size, lats.size, lons.size), np.nan, dtype=np.float32)
     for row in all_series.itertuples(index=False):
         ti = time_index[np.datetime64(row.time, "ns")]
-        i = lat_index[float(row.lat)]
-        j = lon_index[float(row.lon)]
+        i = lat_index[round(float(row.lat), 4)]
+        j = lon_index[round(float(row.lon), 4)]
         u10[ti, i, j] = row.u10
         v10[ti, i, j] = row.v10
 
@@ -183,7 +226,11 @@ def build_wind_dataset_for_samples(
             "u10": (("time", "lat", "lon"), u10),
             "v10": (("time", "lat", "lon"), v10),
         },
-        coords={"time": times, "lat": lats, "lon": lons},
+        coords={
+            "time": times,
+            "lat": lats.astype(np.float32),
+            "lon": lons.astype(np.float32),
+        },
         attrs={
             "source": f"ifs_analysis_archive:{model}",
             "fetched_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

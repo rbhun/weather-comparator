@@ -1,0 +1,26 @@
+{
+  "generated_utc": "2026-08-15T15:45:52Z",
+  "years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_boats": 353,
+  "n_samples": 95634,
+  "n_residuals": 95634,
+  "polar": "polar_55ft_generic",
+  "polar_path": "contracts/fixtures/polar_55ft_generic.pol",
+  "polar_is_validated": false,
+  "wind": "data/yb_wind_check/analysis_samples.zarr",
+  "wind_source": "ifs_analysis_archive:ecmwf_ifs",
+  "interval_min": 20,
+  "display_timezone": "Europe/Rome",
+  "warnings": [
+    "Using fabricated/generic polar \u2014 residuals inherit polar bias; do not treat magnitudes as calibrated without boat.pol."
+  ]
+}

@@ -65,6 +65,7 @@ def _resolve_polar(path: Path | None) -> Path:
     candidates.extend(
         [
             ROOT / "config" / "polar" / "boat.pol",
+            ROOT / "contracts" / "fixtures" / "polar_55ft_generic.pol",
             ROOT / "contracts" / "fixtures" / "polar_52ft.pol",
         ]
     )
