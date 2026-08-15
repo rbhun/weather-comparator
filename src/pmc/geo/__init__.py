@@ -319,3 +319,31 @@ def cross_track_distance_nm(
     )
     dxt = math.asin(math.sin(d13) * math.sin(theta13 - theta12))
     return dxt * EARTH_RADIUS_NM
+
+
+def distance_to_land_nm(lat, lon) -> np.ndarray:
+    """Great-circle distance from point(s) to the nearest land polygon edge."""
+    from shapely.ops import nearest_points
+
+    polygons, _, index = _ensure_land_index()
+    lat_arr = np.asarray(lat, dtype=float)
+    lon_arr = np.asarray(lon, dtype=float)
+    lat_b, lon_b = np.broadcast_arrays(lat_arr, lon_arr)
+    out = np.empty(lat_b.shape, dtype=float)
+    flat_lat = lat_b.ravel()
+    flat_lon = lon_b.ravel()
+    flat_out = out.ravel()
+    for i, (lat_v, lon_v) in enumerate(zip(flat_lat, flat_lon)):
+        point = Point(float(lon_v), float(lat_v))
+        nearest = index.nearest(point)
+        if isinstance(nearest, (list, tuple, np.ndarray)):
+            idx = int(nearest[0]) if len(nearest) else 0
+        else:
+            idx = int(nearest)
+        poly = polygons[idx]
+        if poly.contains(point) or poly.touches(point):
+            flat_out[i] = 0.0
+            continue
+        _, land_pt = nearest_points(point, poly)
+        flat_out[i] = float(haversine_nm(lat_v, lon_v, land_pt.y, land_pt.x))
+    return out

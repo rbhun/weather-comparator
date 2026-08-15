@@ -79,6 +79,7 @@ class Boat:
     classes: list[ClassResult] = field(default_factory=list)
     lon: list[float] = field(default_factory=list)
     lat: list[float] = field(default_factory=list)
+    times: list[str] = field(default_factory=list)
 
 
 def _http_get(url: str, dest: Path | None = None, timeout: int = 120) -> bytes:
@@ -262,28 +263,55 @@ def _elapsed_label(seconds: int) -> str:
     return f"{hours}h {minutes:02d}m"
 
 
-def attach_tracks(boats: dict[str, Boat], tracks: dict[str, tuple[list[str], list[float], list[float]]]) -> None:
+def _match_track(
+    boats_key: str, tracks: dict[str, tuple[list[str], list[float], list[float]]]
+) -> tuple[list[str], list[float], list[float]] | None:
+    payload = tracks.get(boats_key)
+    if payload is not None:
+        return payload
+    compact = re.sub(r"[^A-Z0-9]", "", boats_key)
+    for tkey, value in tracks.items():
+        if re.sub(r"[^A-Z0-9]", "", tkey) == compact:
+            return value
+    return None
+
+
+def _normalise_iso_z(value: str) -> str:
+    text = value.strip()
+    if text.endswith("Z"):
+        return text
+    return text.replace("Z", "") + "Z"
+
+
+def attach_tracks(
+    boats: dict[str, Boat],
+    tracks: dict[str, tuple[list[str], list[float], list[float]]],
+    *,
+    max_points: int | None = 140,
+) -> None:
+    """Attach KML tracks to boats.
+
+    ``max_points=None`` keeps the full-resolution track (needed for SOG/COG
+    analysis). The dashboard path keeps the default downsample.
+    """
+
     for key, boat in boats.items():
-        payload = tracks.get(key)
-        if payload is None:
-            # tolerate minor punctuation differences
-            compact = re.sub(r"[^A-Z0-9]", "", key)
-            for tkey, value in tracks.items():
-                if re.sub(r"[^A-Z0-9]", "", tkey) == compact:
-                    payload = value
-                    break
+        payload = _match_track(key, tracks)
         if payload is None:
             continue
         times, lons, lats = payload
-        lons, lats, times = downsample_track(lons, lats, times)
+        if max_points is not None:
+            lons, lats, times = downsample_track(lons, lats, times, max_points=max_points)
+        else:
+            lons = [round(v, 5) for v in lons]
+            lats = [round(v, 5) for v in lats]
         boat.lon = lons
         boat.lat = lats
-        if times:
-            boat.start_utc = times[0].replace("Z", "") + "Z" if not times[0].endswith("Z") else times[0]
+        if times and len(times) == len(lons):
+            boat.times = [_normalise_iso_z(t) for t in times]
+            boat.start_utc = boat.times[0]
             if boat.finished:
-                boat.finish_utc = boat.finish_utc or (
-                    times[-1].replace("Z", "") + "Z" if not times[-1].endswith("Z") else times[-1]
-                )
+                boat.finish_utc = boat.finish_utc or boat.times[-1]
             if boat.start_utc and boat.finish_utc:
                 start = _parse_iso(boat.start_utc)
                 finish = _parse_iso(boat.finish_utc)
@@ -311,16 +339,31 @@ def assign_elapsed_class_ranks(boats: list[Boat]) -> None:
                     item.elapsed_rank = index
 
 
-def load_edition(year: int, cache_root: Path = DEFAULT_CACHE) -> list[Boat]:
+def load_edition(
+    year: int,
+    cache_root: Path = DEFAULT_CACHE,
+    *,
+    max_points: int | None = 140,
+) -> list[Boat]:
     folder = cache_root / f"pm{year}"
     csv_text = (folder / "leaderboard.csv").read_text(encoding="utf-8", errors="replace")
     boats = parse_leaderboard_csv(csv_text, year)
     kml_path = folder / "tracks.kml"
     if kml_path.exists():
-        attach_tracks(boats, parse_kml_tracks(kml_path.read_bytes()))
+        attach_tracks(
+            boats,
+            parse_kml_tracks(kml_path.read_bytes()),
+            max_points=max_points,
+        )
     ranked = [boat for boat in boats.values() if boat.lon]
     assign_elapsed_class_ranks(ranked)
     return ranked
+
+
+def load_edition_full_tracks(year: int, cache_root: Path = DEFAULT_CACHE) -> list[Boat]:
+    """Load an edition with full-resolution timed tracks for analysis."""
+
+    return load_edition(year, cache_root=cache_root, max_points=None)
 
 
 def build_overlay(years: tuple[int, ...] = DEFAULT_YEARS, cache_root: Path = DEFAULT_CACHE) -> dict[str, Any]:
