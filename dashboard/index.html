@@ -48,6 +48,7 @@
         gap: 0.8rem;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
       }
 
       .title-wrap h1 {
@@ -86,6 +87,47 @@
         color: #041638;
       }
 
+      .settings-dl {
+        display: grid;
+        gap: 0.85rem;
+        margin: 0.85rem 0 0;
+      }
+
+      .settings-dl > div {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.65rem 0.75rem;
+        background: #101732;
+      }
+
+      .settings-dl dt {
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
+      }
+
+      .settings-dl dd {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 650;
+      }
+
+      .settings-dl .help {
+        margin-top: 0.35rem;
+        font-weight: 500;
+      }
+
+      .settings-marks {
+        margin: 0.35rem 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.25rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
       .time-toggle {
         display: inline-flex;
         gap: 0.35rem;
@@ -93,6 +135,7 @@
         border-radius: 0.7rem;
         padding: 0.35rem;
         background: #0f1629;
+        margin-top: 0.75rem;
       }
 
       .time-toggle button {
@@ -740,6 +783,10 @@
         opacity: 0.45;
       }
 
+      .chip.static {
+        cursor: default;
+      }
+
       .filter-row {
         display: flex;
         flex-wrap: wrap;
@@ -803,14 +850,11 @@
         <h1>PMC 2026</h1>
         <p id="generated-time">Generated: loading...</p>
       </div>
-      <nav id="app-tabs" class="app-tabs hidden" role="tablist" aria-label="Dashboard pages">
+      <nav id="app-tabs" class="app-tabs" role="tablist" aria-label="Dashboard pages">
         <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
-        <button id="tab-results" type="button" role="tab" aria-selected="false">Historical result</button>
+        <button id="tab-results" type="button" role="tab" aria-selected="false" class="hidden">Historical result</button>
+        <button id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
       </nav>
-      <div class="time-toggle" role="group" aria-label="Time display mode">
-        <button id="mode-local" class="active" type="button">Local time</button>
-        <button id="mode-utc" type="button">UTC</button>
-      </div>
     </header>
 
     <main id="page-weather" class="container">
@@ -945,6 +989,43 @@
           <input id="data-file-input" type="file" accept=".json,application/json" />
           <button id="use-bundled" type="button">Use bundled data</button>
         </div>
+      </section>
+    </main>
+
+    <main id="page-settings" class="container hidden">
+      <section class="card">
+        <h2>Display time</h2>
+        <p class="subnote">
+          Switches every timestamp on the dashboard at once, including axis labels. Default is local time from the loaded payload.
+        </p>
+        <div class="time-toggle" role="group" aria-label="Time display mode">
+          <button id="mode-local" class="active" type="button">Local time</button>
+          <button id="mode-utc" type="button">UTC</button>
+        </div>
+        <p id="settings-timezone" class="help"></p>
+      </section>
+      <section class="card">
+        <h2>Historical weather</h2>
+        <p class="subnote">
+          Dataset currently loaded. This is display only — year, area, and race selection will come later.
+        </p>
+        <dl class="settings-dl">
+          <div>
+            <dt>Race</dt>
+            <dd id="settings-race">—</dd>
+          </div>
+          <div>
+            <dt>Years</dt>
+            <dd>
+              <div id="settings-years" class="chip-row"></div>
+              <p id="settings-years-note" class="help"></p>
+            </dd>
+          </div>
+          <div>
+            <dt>Area</dt>
+            <dd id="settings-area">—</dd>
+          </div>
+        </dl>
       </section>
     </main>
 
@@ -1109,8 +1190,15 @@
         appTabs: document.getElementById("app-tabs"),
         tabWeather: document.getElementById("tab-weather"),
         tabResults: document.getElementById("tab-results"),
+        tabSettings: document.getElementById("tab-settings"),
         pageWeather: document.getElementById("page-weather"),
         pageResults: document.getElementById("page-results"),
+        pageSettings: document.getElementById("page-settings"),
+        settingsTimezone: document.getElementById("settings-timezone"),
+        settingsRace: document.getElementById("settings-race"),
+        settingsYears: document.getElementById("settings-years"),
+        settingsYearsNote: document.getElementById("settings-years-note"),
+        settingsArea: document.getElementById("settings-area"),
         yearToggles: document.getElementById("year-toggles"),
         classFilters: document.getElementById("class-filters"),
         yearsAll: document.getElementById("years-all"),
@@ -2476,8 +2564,80 @@
 
       function updateTimeModeButtons() {
         const local = state.timeMode === "local";
-        els.modeLocal.classList.toggle("active", local);
-        els.modeUtc.classList.toggle("active", !local);
+        if (els.modeLocal) els.modeLocal.classList.toggle("active", local);
+        if (els.modeUtc) els.modeUtc.classList.toggle("active", !local);
+      }
+
+      function fmtLat(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "—";
+        return `${Math.abs(n).toFixed(2)}°${n >= 0 ? "N" : "S"}`;
+      }
+
+      function fmtLon(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "—";
+        return `${Math.abs(n).toFixed(2)}°${n >= 0 ? "E" : "W"}`;
+      }
+
+      function climatologyYears(payload) {
+        const warnings = (payload && payload.meta && payload.meta.warnings) || [];
+        for (let i = 0; i < warnings.length; i += 1) {
+          const match = String(warnings[i]).match(/years present[^:]*:\s*([0-9, ]+)/i);
+          if (match) {
+            return match[1].split(/,\s*/).map(Number).filter((year) => year > 1900);
+          }
+        }
+        const listed = payload && payload.meta && payload.meta.climatology_years;
+        return Array.isArray(listed) ? listed.map(Number).filter((year) => year > 1900) : [];
+      }
+
+      function renderSettingsPage() {
+        const payload = state.payload;
+        const tz = (payload && payload.meta && payload.meta.display_timezone) || "UTC";
+        const modeLabel = state.timeMode === "utc" ? "UTC" : `Local (${tz})`;
+        if (els.settingsTimezone) {
+          els.settingsTimezone.textContent = `Current mode: ${modeLabel}.`;
+        }
+        const course = (payload && payload.meta && payload.meta.course) || {};
+        const marks = [
+          ["Start", "Palermo", course.start],
+          ["Gate", "Porto Cervo", course.gate],
+          ["Finish", "Monaco", course.finish],
+        ].filter((row) => row[2] && row[2][0] != null && row[2][1] != null);
+        if (els.settingsRace) {
+          const list = marks
+            .map((row) => `<li>${row[0]} · ${row[1]} · ${fmtLat(row[2][0])} ${fmtLon(row[2][1])}</li>`)
+            .join("");
+          els.settingsRace.innerHTML = `
+            Palermo–Montecarlo
+            ${list ? `<ul class="settings-marks">${list}</ul>` : `<p class="help">Course marks are not in this payload.</p>`}
+          `;
+        }
+        const years = climatologyYears(payload);
+        if (els.settingsYears) {
+          els.settingsYears.innerHTML = years.length
+            ? years.map((year) => `<span class="chip on static">${year}</span>`).join("")
+            : `<span class="help">Years are not listed in this payload.</span>`;
+        }
+        if (els.settingsYearsNote) {
+          els.settingsYearsNote.textContent = years.length
+            ? `August climatology, ${years.length} year${years.length === 1 ? "" : "s"} downloaded.`
+            : "";
+        }
+        if (els.settingsArea) {
+          const lat = payload && payload.climatology && payload.climatology.grid && payload.climatology.grid.lat;
+          const lon = payload && payload.climatology && payload.climatology.grid && payload.climatology.grid.lon;
+          if (lat && lat.length && lon && lon.length) {
+            const dlat = lat.length > 1 ? Math.abs(Number(lat[1]) - Number(lat[0])) : null;
+            const step = dlat != null && Number.isFinite(dlat) ? ` · ${dlat.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}° grid` : "";
+            els.settingsArea.textContent =
+              `${fmtLat(Math.min(...lat.map(Number)))}–${fmtLat(Math.max(...lat.map(Number)))}, ` +
+              `${fmtLon(Math.min(...lon.map(Number)))}–${fmtLon(Math.max(...lon.map(Number)))}${step}`;
+          } else {
+            els.settingsArea.textContent = "Grid bounds are not in this payload.";
+          }
+        }
       }
 
       function ybData() {
@@ -2558,27 +2718,33 @@
       }
 
       function setPage(page) {
-        if (!SHOW_RESULTS_TAB) page = "weather";
+        if (page === "results" && !SHOW_RESULTS_TAB) page = "weather";
         state.page = page;
-        const weather = page === "weather";
-        if (els.appTabs) els.appTabs.classList.toggle("hidden", !SHOW_RESULTS_TAB);
-        if (els.pageWeather) els.pageWeather.classList.toggle("hidden", !weather);
-        if (els.pageResults) els.pageResults.classList.toggle("hidden", weather);
+        if (els.tabResults) els.tabResults.classList.toggle("hidden", !SHOW_RESULTS_TAB);
+        if (els.pageWeather) els.pageWeather.classList.toggle("hidden", page !== "weather");
+        if (els.pageResults) els.pageResults.classList.toggle("hidden", page !== "results");
+        if (els.pageSettings) els.pageSettings.classList.toggle("hidden", page !== "settings");
         if (els.tabWeather) {
-          els.tabWeather.classList.toggle("active", weather);
-          els.tabWeather.setAttribute("aria-selected", weather ? "true" : "false");
+          els.tabWeather.classList.toggle("active", page === "weather");
+          els.tabWeather.setAttribute("aria-selected", page === "weather" ? "true" : "false");
         }
         if (els.tabResults) {
-          els.tabResults.classList.toggle("active", !weather);
-          els.tabResults.setAttribute("aria-selected", weather ? "false" : "true");
+          els.tabResults.classList.toggle("active", page === "results");
+          els.tabResults.setAttribute("aria-selected", page === "results" ? "true" : "false");
         }
-        if (weather) {
+        if (els.tabSettings) {
+          els.tabSettings.classList.toggle("active", page === "settings");
+          els.tabSettings.setAttribute("aria-selected", page === "settings" ? "true" : "false");
+        }
+        if (page === "weather") {
           renderCalmMap();
-        } else {
+        } else if (page === "results") {
           requestAnimationFrame(() => {
             renderResultsPage();
             if (els.resultsMap && els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
           });
+        } else if (page === "settings") {
+          renderSettingsPage();
         }
       }
 
@@ -2788,14 +2954,16 @@
         renderTransects();
         renderSkillTable();
         if (state.page === "results") renderResultsPage();
+        if (state.page === "settings") renderSettingsPage();
       }
 
       function bindEvents() {
         if (state.eventsBound) return;
         state.eventsBound = true;
         bindMapClick();
-        if (els.appTabs) els.appTabs.classList.toggle("hidden", !SHOW_RESULTS_TAB);
+        if (els.tabResults) els.tabResults.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.tabWeather) els.tabWeather.onclick = () => setPage("weather");
+        if (els.tabSettings) els.tabSettings.onclick = () => setPage("settings");
         if (els.tabResults) {
           els.tabResults.onclick = () => {
             if (SHOW_RESULTS_TAB) setPage("results");
@@ -2898,16 +3066,20 @@
             renderCalmMap();
           };
         }
-        els.modeLocal.onclick = () => {
-          state.timeMode = "local";
-          updateTimeModeButtons();
-          renderAll();
-        };
-        els.modeUtc.onclick = () => {
-          state.timeMode = "utc";
-          updateTimeModeButtons();
-          renderAll();
-        };
+        if (els.modeLocal) {
+          els.modeLocal.onclick = () => {
+            state.timeMode = "local";
+            updateTimeModeButtons();
+            renderAll();
+          };
+        }
+        if (els.modeUtc) {
+          els.modeUtc.onclick = () => {
+            state.timeMode = "utc";
+            updateTimeModeButtons();
+            renderAll();
+          };
+        }
         document.addEventListener("click", (ev) => {
           const btn = ev.target.closest(".zoom-toolbar button");
           if (btn) {
