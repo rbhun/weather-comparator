@@ -1,0 +1,158 @@
+{
+  "tyrrhenian_afternoon_leader_split": [
+    {
+      "offshore_bin": "0-5nm",
+      "n": 1941,
+      "n_behind": 1801,
+      "n_leaders": 140,
+      "frac_behind": 0.928,
+      "resid_all": -0.11,
+      "resid_behind": -0.19,
+      "resid_leaders": 1.19,
+      "sog_leaders": 7.18,
+      "pred_leaders": 6.12,
+      "tws_leaders": 6.53
+    },
+    {
+      "offshore_bin": "5-10nm",
+      "n": 1517,
+      "n_behind": 1419,
+      "n_leaders": 98,
+      "frac_behind": 0.935,
+      "resid_all": 0.95,
+      "resid_behind": 0.81,
+      "resid_leaders": 3.06,
+      "sog_leaders": 9.46,
+      "pred_leaders": 6.67,
+      "tws_leaders": 9.59
+    },
+    {
+      "offshore_bin": "10-20nm",
+      "n": 2641,
+      "n_behind": 2454,
+      "n_leaders": 187,
+      "frac_behind": 0.929,
+      "resid_all": 1.04,
+      "resid_behind": 0.89,
+      "resid_leaders": 4.35,
+      "sog_leaders": 9.93,
+      "pred_leaders": 6.2,
+      "tws_leaders": 6.74
+    },
+    {
+      "offshore_bin": "20-40nm",
+      "n": 250,
+      "n_behind": 156,
+      "n_leaders": 94,
+      "frac_behind": 0.624,
+      "resid_all": 1.45,
+      "resid_behind": 0.88,
+      "resid_leaders": 3.11,
+      "sog_leaders": 9.04,
+      "pred_leaders": 6.01,
+      "tws_leaders": 6.03
+    },
+    {
+      "offshore_bin": "40nm+",
+      "n": 3477,
+      "n_behind": 2987,
+      "n_leaders": 490,
+      "frac_behind": 0.859,
+      "resid_all": -0.78,
+      "resid_behind": -0.9,
+      "resid_leaders": -0.07,
+      "sog_leaders": 5.86,
+      "pred_leaders": 5.44,
+      "tws_leaders": 5.8
+    }
+  ],
+  "tyrrhenian_afternoon_top25_split": [
+    {
+      "offshore_bin": "0-5nm",
+      "n": 1941,
+      "frac_behind_top25": 0.753,
+      "resid_behind_top25": -0.46,
+      "resid_top25": 0.84
+    },
+    {
+      "offshore_bin": "5-10nm",
+      "n": 1517,
+      "frac_behind_top25": 0.746,
+      "resid_behind_top25": 0.5,
+      "resid_top25": 2.02
+    },
+    {
+      "offshore_bin": "10-20nm",
+      "n": 2641,
+      "frac_behind_top25": 0.73,
+      "resid_behind_top25": 0.64,
+      "resid_top25": 2.59
+    },
+    {
+      "offshore_bin": "20-40nm",
+      "n": 250,
+      "frac_behind_top25": 0.332,
+      "resid_behind_top25": 0.59,
+      "resid_top25": 2.09
+    },
+    {
+      "offshore_bin": "40nm+",
+      "n": 3477,
+      "frac_behind_top25": 0.72,
+      "resid_behind_top25": -1.05,
+      "resid_top25": -0.07
+    }
+  ],
+  "sardinia_east_afternoon_leaders_only": [
+    {
+      "offshore_bin": "0-5nm",
+      "n": 570,
+      "residual_median_kt": 1.61,
+      "residual_p10_kt": -2.46,
+      "residual_p90_kt": 5.77,
+      "sog_median_kt": 6.87,
+      "predicted_median_kt": 5.7,
+      "analysis_tws_median_kt": 6.34
+    },
+    {
+      "offshore_bin": "5-10nm",
+      "n": 298,
+      "residual_median_kt": 0.62,
+      "residual_p10_kt": -2.13,
+      "residual_p90_kt": 4.31,
+      "sog_median_kt": 7.16,
+      "predicted_median_kt": 6.17,
+      "analysis_tws_median_kt": 7.1
+    },
+    {
+      "offshore_bin": "10-20nm",
+      "n": 373,
+      "residual_median_kt": -0.28,
+      "residual_p10_kt": -2.73,
+      "residual_p90_kt": 4.12,
+      "sog_median_kt": 7.32,
+      "predicted_median_kt": 6.86,
+      "analysis_tws_median_kt": 8.7
+    },
+    {
+      "offshore_bin": "20-40nm",
+      "n": 249,
+      "residual_median_kt": 0.73,
+      "residual_p10_kt": -3.13,
+      "residual_p90_kt": 5.24,
+      "sog_median_kt": 7.45,
+      "predicted_median_kt": 7.19,
+      "analysis_tws_median_kt": 8.76
+    },
+    {
+      "offshore_bin": "40nm+",
+      "n": 127,
+      "residual_median_kt": 1.49,
+      "residual_p10_kt": -1.75,
+      "residual_p90_kt": 4.12,
+      "sog_median_kt": 6.53,
+      "predicted_median_kt": 5.23,
+      "analysis_tws_median_kt": 4.92
+    }
+  ]
+}
