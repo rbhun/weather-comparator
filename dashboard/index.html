@@ -860,7 +860,6 @@
     </header>
 
     <main id="page-weather" class="container">
-      <section id="warning-banner" class="warning-banner"></section>
       <section id="status" class="status">Loading dashboard/data.json...</section>
 
       <section id="calm-risk-map" class="card">
@@ -995,6 +994,7 @@
     </main>
 
     <main id="page-settings" class="container hidden">
+      <section id="warning-banner" class="warning-banner"></section>
       <section class="card">
         <h2>Display time</h2>
         <p class="subnote">
@@ -1697,16 +1697,33 @@
         ];
       }
 
+      function isStaleWarning(text) {
+        const value = String(text).toLowerCase();
+        return (
+          value.includes("years present")
+          || value.includes("wind cube")
+          || value.includes("leg 1 is mostly upwind")
+          || value.includes("leg-1 comparisons")
+          || value.includes("shift-playing")
+        );
+      }
+
       function buildWarnings(meta) {
-        const warnings = Array.isArray(meta.warnings) ? meta.warnings.slice() : [];
-        if (meta.polar_is_validated === false) {
-          const txt = "Polar below 8 kt is unvalidated. Treat elapsed times as relative comparison, not absolute forecast.";
-          if (!warnings.some((w) => String(w).toLowerCase().includes("unvalidated"))) {
-            warnings.unshift(txt);
+        const viz = "Data here is not guaranteed. It is for visualization and comparison only — not as the sole basis for a race decision.";
+        const incoming = Array.isArray(meta && meta.warnings) ? meta.warnings : [];
+        const warnings = incoming.filter((w) => !isStaleWarning(w));
+        if (!warnings.some((w) => String(w).toLowerCase().includes("not guaranteed"))) {
+          warnings.unshift(viz);
+        }
+        if (meta && meta.polar_is_validated === false) {
+          const txt = "Polar is a VPP table, not measured, and is unvalidated below 8 kt. Elapsed times are relative comparisons, not predictions.";
+          if (!warnings.some((w) => String(w).toLowerCase().includes("polar"))) {
+            warnings.push(txt);
           }
         }
+        if (!els.warningBanner) return;
         const lis = warnings.map((w) => `<li>${String(w)}</li>`).join("");
-        els.warningBanner.innerHTML = `<strong>Persistent operational warnings</strong><ul>${lis || "<li>None supplied.</li>"}</ul>`;
+        els.warningBanner.innerHTML = `<strong>Operational warnings</strong><ul>${lis}</ul>`;
       }
 
       function getByHour(hour) {
@@ -2583,6 +2600,10 @@
       }
 
       function climatologyYears(payload) {
+        const listed = payload && payload.meta && payload.meta.climatology_years;
+        if (Array.isArray(listed) && listed.length) {
+          return listed.map(Number).filter((year) => year > 1900);
+        }
         const warnings = (payload && payload.meta && payload.meta.warnings) || [];
         for (let i = 0; i < warnings.length; i += 1) {
           const match = String(warnings[i]).match(/years present[^:]*:\s*([0-9, ]+)/i);
@@ -2590,8 +2611,7 @@
             return match[1].split(/,\s*/).map(Number).filter((year) => year > 1900);
           }
         }
-        const listed = payload && payload.meta && payload.meta.climatology_years;
-        return Array.isArray(listed) ? listed.map(Number).filter((year) => year > 1900) : [];
+        return [];
       }
 
       function renderSettingsPage() {
