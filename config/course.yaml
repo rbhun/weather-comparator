@@ -13,4 +13,4 @@ climatology:
   months: [8]
   years: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 display_timezone: "Europe/Rome"
-polar_path: "config/polar/chocolate3.pol"
+polar_path: "config/polar/boat.pol"

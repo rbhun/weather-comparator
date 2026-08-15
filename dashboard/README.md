@@ -27,6 +27,29 @@ Offline tactical dashboard for PMC-2026.
 
 ## How to run
 
+### From anywhere (GitHub Pages)
+
+After Pages is enabled (Settings → Pages → Source: **GitHub Actions**), every
+push to `main` that touches `dashboard/` publishes the site to:
+
+**https://rbhun.github.io/weather-comparator/**
+
+You can also trigger a publish manually: Actions → **Deploy dashboard to GitHub
+Pages** → Run workflow.
+
+The published site is a normal HTTPS URL — open it on a phone, tablet, or any
+laptop. Offline `file://` use below still works for race-day with no network.
+
+Caveats:
+
+- This repo is **private**. GitHub Pages on private repos needs Pro/Team (or
+  make the repo public). The Pages URL itself is typically **public** once
+  published — do not put secrets in `data.json`.
+- First enable requires a one-time Pages source selection; the workflow cannot
+  turn Pages on by itself.
+
+### Local / offline (`file://`)
+
 1. Prepare payload:
 
    ```bash
