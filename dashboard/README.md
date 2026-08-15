@@ -19,9 +19,10 @@ Offline tactical dashboard for PMC-2026.
   UTC/local toggle that updates all visible time labels.
 - **Historical result** overlays YB tracks from 2017–2019 and 2021–2025. Year
   and class chips filter the fleet. **Top 3 absolute** is uncorrected line
-  honours; **Top 3 per class** uses the YB class rank (handicap classes are
-  corrected). **Year weather** paints that edition's race-window mean 10 m
-  wind from Open-Meteo IFS analysis when the overlay includes a `weather`
+  honours; **Top 3 per class** is the three fastest uncorrected elapsed times
+  in each selected class (clock time, not IRC/ORC handicap). **Year weather**
+  paints that edition's race-window mean 10 m wind from Open-Meteo IFS analysis
+  when the overlay includes a `weather`
   block. Rebuild tracks with `scripts/fetch_yb_tracks.py` and weather with
   `scripts/fetch_yb_year_weather.py`.
 

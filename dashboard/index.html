@@ -952,7 +952,7 @@
       <section class="card">
         <h2>Historical result</h2>
         <p class="subnote">
-          Actual YB tracks from previous Palermo–Montecarlo editions. Absolute rank is uncorrected elapsed time (line honours). Class rank is as YB published it — handicap classes are corrected.
+          Actual YB tracks from previous Palermo–Montecarlo editions. Both filters use uncorrected clock time: who got to Monaco first. Top 3 absolute is line honours. Top 3 per class is the three fastest elapsed times inside each selected class — not the handicap (corrected-time) winner.
         </p>
         <div class="plot-wrap">
           <div class="zoom-toolbar" aria-label="Results map tools">
@@ -2495,6 +2495,39 @@
         }
       }
 
+      function classElapsedRanks(edition) {
+        if (edition._elapsedRanks) return edition._elapsedRanks;
+        const ranks = {};
+        const classIds = new Set();
+        (edition.boats || []).forEach((boat) => {
+          (boat.classes || []).forEach((cls) => classIds.add(cls.id));
+        });
+        classIds.forEach((classId) => {
+          const peers = (edition.boats || []).filter((boat) => (
+            boat.finished
+            && boat.elapsed_s != null
+            && (boat.classes || []).some((cls) => cls.id === classId)
+          ));
+          peers.sort((a, b) => (
+            (a.elapsed_s - b.elapsed_s)
+            || (a.absolute_rank || 99) - (b.absolute_rank || 99)
+            || String(a.name).localeCompare(String(b.name))
+          ));
+          ranks[classId] = {};
+          peers.forEach((boat, index) => {
+            ranks[classId][boat.id] = index + 1;
+          });
+        });
+        edition._elapsedRanks = ranks;
+        return ranks;
+      }
+
+      function classElapsedRank(edition, boat, cls) {
+        if (cls && cls.elapsed_rank != null) return cls.elapsed_rank;
+        const byClass = classElapsedRanks(edition)[cls.id] || {};
+        return byClass[boat.id] || null;
+      }
+
       function visibleResultBoats() {
         ensureResultsState();
         const rows = [];
@@ -2504,7 +2537,10 @@
             const selectedClasses = (boat.classes || []).filter((cls) => state.classOn[ed.year][cls.id]);
             if (!selectedClasses.length) return;
             const topAbs = Boolean(boat.finished && boat.absolute_rank && boat.absolute_rank <= 3);
-            const topClass = selectedClasses.some((cls) => cls.finished && cls.rank && cls.rank <= 3);
+            const topClass = selectedClasses.some((cls) => {
+              const rank = classElapsedRank(ed, boat, cls);
+              return Boolean(boat.finished && rank && rank <= 3);
+            });
             if (state.top3Abs && state.top3Class) {
               if (!topAbs && !topClass) return;
             } else if (state.top3Abs && !topAbs) {
@@ -2708,7 +2744,10 @@
           .sort((a, b) => a.edition.year - b.edition.year || (a.boat.absolute_rank || 99) - (b.boat.absolute_rank || 99))
           .map((row) => {
             const classes = row.classes
-              .map((cls) => `${cls.name}${cls.rank ? " #" + cls.rank : ""}`)
+              .map((cls) => {
+                const rank = classElapsedRank(row.edition, row.boat, cls);
+                return `${cls.name}${rank ? " #" + rank : ""}`;
+              })
               .join(", ");
             return `<tr>
               <td>${row.edition.year}</td>
