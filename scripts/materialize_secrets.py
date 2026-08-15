@@ -3,7 +3,7 @@
 
 Reads:
   OPENMETEO_API_KEY  -> .env (if missing)
-  CHOCOLATE3_POLAR   -> config/polar/chocolate3.pol (if missing)
+  BOAT_POLAR         -> config/polar/boat.pol (if missing)
 
 Does not overwrite existing files. Safe to run on every agent boot.
 """
@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+POLAR_PATH = ROOT / "config/polar/boat.pol"
 
 
 def _write_if_missing(path: Path, content: str, label: str) -> None:
@@ -33,11 +34,11 @@ def main() -> int:
     else:
         print("OPENMETEO_API_KEY not set; skip .env")
 
-    polar = os.getenv("CHOCOLATE3_POLAR")
-    if polar and polar.strip():
-        _write_if_missing(ROOT / "config/polar/chocolate3.pol", polar, "Chocolate3 polar")
+    polar = (os.getenv("BOAT_POLAR") or "").strip()
+    if polar:
+        _write_if_missing(POLAR_PATH, polar, "boat polar")
     else:
-        print("CHOCOLATE3_POLAR not set; skip polar file")
+        print("BOAT_POLAR not set; skip polar file")
 
     return 0
 

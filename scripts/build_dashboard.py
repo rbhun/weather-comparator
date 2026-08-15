@@ -321,7 +321,7 @@ def _format_transects_for_dashboard(transects: pd.DataFrame) -> list[dict[str, A
 def main() -> int:
     wind_path = ROOT / "data/wind/analysis-august.zarr"
     live_wind_path = _find_live_wind_store()
-    polar_path = ROOT / "config/polar/chocolate3.pol"
+    polar_path = ROOT / "config/polar/boat.pol"
     course_path = ROOT / "config/course.yaml"
     routes_path = ROOT / "config/routes.yaml"
     output_path = ROOT / "dashboard/data.json"
@@ -469,7 +469,7 @@ def main() -> int:
                 "gate": [course.gate[0], course.gate[1]],
                 "finish": [course.finish[0], course.finish[1]],
             },
-            "polar_name": "Chocolate3",
+            "polar_name": "boat_vpp",
             "polar_is_validated": False,
             "warnings": [
                 WARNING_TEXT,
