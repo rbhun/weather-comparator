@@ -8,7 +8,7 @@
     <script src="./tiles/osm_manifest.js"></script>
     <script src="./tiles/openseamap_manifest.js"></script>
     <script src="./tiles/land.js"></script>
-    <script src="./data.js?v=layout-rework"></script>
+    <script src="./data.js?v=map-aspect"></script>
     <style>
       :root {
         --bg: #0b1020;
@@ -190,7 +190,8 @@
 
       #map-plot {
         width: 100%;
-        min-height: 620px;
+        min-height: 0;
+        height: 420px;
       }
 
       .plot.short {
@@ -799,11 +800,6 @@
           <select id="transect-select"></select>
         </div>
         <div class="plot-wrap">
-          <div class="zoom-toolbar" aria-label="Transect plot zoom">
-            <button type="button" data-act="in" title="Zoom in">+</button>
-            <button type="button" data-act="out" title="Zoom out">−</button>
-            <button type="button" data-act="all" title="Show all">A</button>
-          </div>
           <div id="transect-plot" class="plot short"></div>
         </div>
         <p id="transect-empty" class="help hidden">
@@ -1145,6 +1141,52 @@
           timeZoneName: "short",
         });
         return `${p.hour}:${p.minute} ${p.timeZoneName}`;
+      }
+
+      function formatClockNoZone(dateUtc, timeZone) {
+        const p = formatParts(dateUtc, timeZone, {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `${p.hour}:${p.minute}`;
+      }
+
+      function hourAxisLabel(utcHour) {
+        const date = hourDate(utcHour);
+        if (state.timeMode === "utc") return formatClockNoZone(date, "UTC");
+        const tz = (state.payload && state.payload.meta.display_timezone) || "Europe/Rome";
+        return formatClockNoZone(date, tz);
+      }
+
+      function hourAxisTicks(hours) {
+        const vals = hours.filter((hr) => Number(hr) % 3 === 0);
+        return {
+          tickvals: vals,
+          ticktext: vals.map((hr) => hourAxisLabel(hr)),
+        };
+      }
+
+      function syncMapPlotSize() {
+        const el = els.mapPlot;
+        if (!el || !state.payload || !state.payload.climatology) return;
+        const lat = state.payload.climatology.grid.lat.map(Number);
+        const lon = state.payload.climatology.grid.lon.map(Number);
+        if (!lat.length || !lon.length) return;
+        const xRange = (state.mapRange && state.mapRange.x) || [Math.min(...lon), Math.max(...lon)];
+        const yRange = (state.mapRange && state.mapRange.y) || [Math.min(...lat), Math.max(...lat)];
+        const lonSpan = Math.abs(xRange[1] - xRange[0]) || 1;
+        const latSpan = Math.abs(yRange[1] - yRange[0]) || 1;
+        const width = el.clientWidth || (el.parentElement && el.parentElement.clientWidth) || 0;
+        if (width < 40) return;
+        // Keep 1° lon ≈ 1° lat on screen; size height so the plot fills the card width.
+        const marginL = 58;
+        const marginR = 78;
+        const marginT = 48;
+        const marginB = 52;
+        const plotW = Math.max(80, width - marginL - marginR);
+        const plotH = plotW * (latSpan / lonSpan);
+        const totalH = Math.round(plotH + marginT + marginB);
+        el.style.height = `${Math.max(240, totalH)}px`;
       }
 
       function formatTimestamp(isoUtc) {
@@ -1707,18 +1749,25 @@
             : `Mean wind (kt) at ${hourLabel(state.selectedHour)}`;
         const xRange = (state.mapRange && state.mapRange.x) || [Math.min(...lon), Math.max(...lon)];
         const yRange = (state.mapRange && state.mapRange.y) || [Math.min(...lat), Math.max(...lat)];
+        syncMapPlotSize();
         const layout = {
           ...plotLayoutBase,
           title: layerTitle,
+          margin: { ...plotLayoutBase.margin, l: 58, r: 78, t: 48, b: 52 },
+          autosize: true,
           xaxis: {
             title: "Longitude (deg E)",
             zeroline: false,
             range: xRange,
+            constrain: "domain",
           },
           yaxis: {
             title: "Latitude (deg N)",
             zeroline: false,
             range: yRange,
+            scaleanchor: "x",
+            scaleratio: 1,
+            constrain: "domain",
           },
           images: getMapImages(),
           showlegend: false,
@@ -1885,7 +1934,7 @@
         `;
 
         const xHours = state.payload.climatology.by_hour.map((row) => Number(row.hour));
-        const ticktext = xHours.map((hr) => hourLabel(hr));
+        const hourTicks = hourAxisTicks(xHours);
         const meanSeries = getCellSeries("mean_tws_kt");
         const p5Series = getCellSeries("p_below_5kt").map((v) => (v == null ? null : v * 100));
         const dconstSeries = getCellSeries("directional_const");
@@ -1948,11 +1997,30 @@
           {
             ...plotLayoutBase,
             title: "By-hour wind, direction (arrows = toward), and calm probability",
-            xaxis: { title: "Hour of day", tickvals: xHours, ticktext, tickangle: -30 },
-            yaxis: { title: "Mean wind (kt)" },
-            yaxis2: { title: "P(<5 kt) %", overlaying: "y", side: "right", range: [0, 100] },
-            legend: { orientation: "h" },
-            margin: { ...plotLayoutBase.margin, t: 50, b: 80 },
+            xaxis: {
+              title: "Hour of day",
+              tickvals: hourTicks.tickvals,
+              ticktext: hourTicks.ticktext,
+              tickangle: 0,
+              automargin: true,
+            },
+            yaxis: { title: "Mean wind (kt)", automargin: true },
+            yaxis2: {
+              title: "P(<5 kt) %",
+              overlaying: "y",
+              side: "right",
+              range: [0, 100],
+              automargin: true,
+            },
+            legend: {
+              orientation: "h",
+              x: 0,
+              xanchor: "left",
+              y: 1.14,
+              yanchor: "bottom",
+              bgcolor: "rgba(19,26,45,0.92)",
+            },
+            margin: { ...plotLayoutBase.margin, t: 78, b: 48, r: 56 },
           },
           { noZoom: true }
         );
@@ -2080,10 +2148,20 @@
             {
               ...plotLayoutBase,
               title: `Cross-shore transect: ${t.name}`,
-              xaxis: { title: "Distance offshore (nm)" },
-              yaxis: { title: "Mean wind (kt)" },
-              legend: { font: { size: 11 } },
-            }
+              xaxis: { title: "Distance offshore (nm)", automargin: true },
+              yaxis: { title: "Mean wind (kt)", automargin: true },
+              legend: {
+                orientation: "h",
+                x: 0,
+                xanchor: "left",
+                y: 1.12,
+                yanchor: "bottom",
+                font: { size: 11 },
+                bgcolor: "rgba(19,26,45,0.92)",
+              },
+              margin: { ...plotLayoutBase.margin, t: 72, b: 48 },
+            },
+            { noZoom: true }
           );
         };
         els.transectSelect.onchange = draw;
@@ -2189,7 +2267,13 @@
               zoomPlot(plot, 1 / 0.7);
               if (plot === els.mapPlot) rememberMapRange(plot);
             }
-            if (plot === els.mapPlot) requestAnimationFrame(syncMapHitLayer);
+            if (plot === els.mapPlot) {
+              requestAnimationFrame(() => {
+                syncMapPlotSize();
+                Plotly.Plots.resize(els.mapPlot);
+                syncMapHitLayer();
+              });
+            }
             return;
           }
           const toggle = ev.target.closest("[data-route-toggle]");
@@ -2303,6 +2387,21 @@
         }
         updateMapToolButtons();
         updateMapKeyButtons();
+        if (!window._pmcMapResizeBound) {
+          window._pmcMapResizeBound = true;
+          let resizeTimer = null;
+          window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+              if (!state.payload) return;
+              syncMapPlotSize();
+              if (els.mapPlot && els.mapPlot.data) {
+                Plotly.Plots.resize(els.mapPlot);
+                syncMapHitLayer();
+              }
+            }, 120);
+          });
+        }
       }
 
       function persistPayload(payload, name) {
