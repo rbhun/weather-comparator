@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from pmc.io.yb import write_overlay  # noqa: E402
+from pmc.io.units import assert_hourly_units  # noqa: E402
 
 LATS = np.round(np.arange(37.5, 44.0 + 0.001, 0.25), 4)
 LONS = np.round(np.arange(6.5, 14.5 + 0.001, 0.25), 4)
@@ -74,7 +75,13 @@ def _fetch_batch(
     for attempt in range(5):
         resp = session.get(ARCHIVE, params=params, timeout=90)
         if resp.status_code == 200:
-            return resp.json()
+            payload = resp.json()
+            assert_hourly_units(
+                payload,
+                expected={"wind_speed_10m": "kn"},
+                context=f"yb_year_weather model={model}",
+            )
+            return payload
         if resp.status_code in {429, 500, 502, 503, 504}:
             time.sleep(2**attempt + 1)
             last = resp

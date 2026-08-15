@@ -25,6 +25,8 @@ import requests
 import xarray as xr
 import yaml
 
+from .units import assert_hourly_units, extract_responses
+
 
 DEFAULT_DOMAIN = {
     "lat_min": 37.5,
@@ -753,6 +755,7 @@ class OpenMeteoFetcher:
         cache_key_params["_auth"] = self._auth_mode
         cached = self.cache.get(endpoint, cache_key_params)
         if cached is not None:
+            _assert_request_units(cached, params)
             self.cache_hits += 1
             self.request_count += 1
             return cached
@@ -780,6 +783,7 @@ class OpenMeteoFetcher:
                 )
                 if response.status_code == 200:
                     payload = response.json()
+                    _assert_request_units(payload, params)
                     self.cache.put(endpoint, cache_key_params, payload)
                     self.cache_misses += 1
                     self.request_count += 1
@@ -791,6 +795,7 @@ class OpenMeteoFetcher:
                     )
                 response.raise_for_status()
                 payload = response.json()
+                _assert_request_units(payload, params)
                 self.cache.put(endpoint, cache_key_params, payload)
                 self.cache_misses += 1
                 self.request_count += 1
@@ -1200,6 +1205,33 @@ def _extract_responses(payload: dict[str, Any]) -> list[dict[str, Any]]:
     if isinstance(payload, dict):
         return [payload]
     return []
+
+
+def _assert_request_units(payload: Any, params: Mapping[str, Any]) -> None:
+    """Assert Open-Meteo hourly_units match the requested wind_speed_unit."""
+
+    speed_unit = str(params.get("wind_speed_unit", "kmh"))
+    expected_speed = {"ms": "m/s", "kn": "kn", "kmh": "km/h"}.get(speed_unit)
+    if expected_speed is None:
+        raise ValueError(f"Unsupported wind_speed_unit={speed_unit!r}")
+
+    hourly = str(params.get("hourly") or "")
+    variables = [token.strip() for token in hourly.split(",") if token.strip()]
+    expected: dict[str, str] = {}
+    for name in variables:
+        lowered = name.lower()
+        if "direction" in lowered:
+            expected[name] = "°"
+        elif "speed" in lowered or "u_component" in lowered or "v_component" in lowered:
+            expected[name] = expected_speed
+    if not expected:
+        return
+    model = params.get("models", "?")
+    assert_hourly_units(
+        payload,
+        expected=expected,
+        context=f"openmeteo model={model} wind_speed_unit={speed_unit}",
+    )
 
 
 def _has_hourly_values(payload: dict[str, Any]) -> bool:

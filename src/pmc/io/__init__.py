@@ -14,6 +14,7 @@ __all__ = [
     "Domain",
     "FetchSummary",
     "OpenMeteoFetcher",
+    "assert_hourly_units",
     "build_overlay",
     "fetch_wind",
     "fetch_year",
@@ -29,4 +30,8 @@ def __getattr__(name: str):
         from . import openmeteo
 
         return getattr(openmeteo, name)
+    if name == "assert_hourly_units":
+        from .units import assert_hourly_units
+
+        return assert_hourly_units
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
