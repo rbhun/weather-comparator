@@ -9,6 +9,7 @@
     <script src="./tiles/openseamap_manifest.js"></script>
     <script src="./tiles/land.js"></script>
     <script src="./data.js?v=layout-rework"></script>
+    <script src="./yb_results.js"></script>
     <style>
       :root {
         --bg: #0b1020;
@@ -42,22 +43,47 @@
         border-bottom: 1px solid var(--panel-border);
         background: rgba(11, 16, 32, 0.96);
         backdrop-filter: blur(4px);
-        padding: 0.8rem 1rem;
+        padding: 0.4rem 0.9rem;
         display: flex;
-        gap: 1rem;
+        gap: 0.8rem;
         align-items: center;
         justify-content: space-between;
       }
 
       .title-wrap h1 {
         margin: 0;
-        font-size: 1.35rem;
+        font-size: 1.05rem;
       }
 
       .title-wrap p {
-        margin: 0.25rem 0 0;
+        margin: 0.1rem 0 0;
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: 0.8rem;
+      }
+
+      .app-tabs {
+        display: inline-flex;
+        gap: 0.3rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.65rem;
+        padding: 0.22rem;
+        background: #0f1629;
+      }
+
+      .app-tabs button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 0.4rem 0.85rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 0.92rem;
+      }
+
+      .app-tabs button.active {
+        background: var(--accent);
+        color: #041638;
       }
 
       .time-toggle {
@@ -677,21 +703,107 @@
         text-decoration: none;
         cursor: pointer;
       }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+
+      .chip {
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        background: #101732;
+        color: var(--text);
+        padding: 0.28rem 0.7rem;
+        font-weight: 800;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+
+      .chip.on {
+        background: var(--accent);
+        color: #041638;
+        border-color: var(--accent);
+      }
+
+      .chip.off {
+        opacity: 0.45;
+      }
+
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-items: center;
+        margin-top: 0.55rem;
+      }
+
+      .filter-row .hour-kicker {
+        min-width: 4.2rem;
+      }
+
+      .class-year {
+        margin-top: 0.45rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.55rem;
+        padding: 0.45rem 0.55rem;
+        background: #101732;
+      }
+
+      .class-year h3 {
+        margin: 0 0 0.35rem;
+        font-size: 0.92rem;
+      }
+
+      .ghost-btn {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.35rem 0.7rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .ghost-btn.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .ghost-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      #results-map {
+        width: 100%;
+        min-height: 620px;
+      }
+
+      .results-table-wrap {
+        overflow-x: auto;
+        margin-top: 0.7rem;
+      }
     </style>
   </head>
   <body>
     <header class="topbar">
       <div class="title-wrap">
-        <h1>PMC 2026 - Calm Risk and Route Strategy</h1>
+        <h1>PMC 2026</h1>
         <p id="generated-time">Generated: loading...</p>
       </div>
+      <nav class="app-tabs" role="tablist" aria-label="Dashboard pages">
+        <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
+        <button id="tab-results" type="button" role="tab" aria-selected="false">Historical result</button>
+      </nav>
       <div class="time-toggle" role="group" aria-label="Time display mode">
         <button id="mode-local" class="active" type="button">Local time</button>
         <button id="mode-utc" type="button">UTC</button>
       </div>
     </header>
 
-    <main class="container">
+    <main id="page-weather" class="container">
       <section id="warning-banner" class="warning-banner"></section>
       <section id="status" class="status">Loading dashboard/data.json...</section>
 
@@ -831,6 +943,48 @@
       </section>
     </main>
 
+    <main id="page-results" class="container hidden">
+      <section class="card">
+        <h2>Historical result</h2>
+        <p class="subnote">
+          Actual YB tracks from previous Palermo–Montecarlo editions. Absolute rank is uncorrected elapsed time (line honours). Class rank is as YB published it — handicap classes are corrected.
+        </p>
+        <div class="filter-row">
+          <span class="hour-kicker">Years</span>
+          <div id="year-toggles" class="chip-row"></div>
+          <button id="years-all" class="ghost-btn" type="button">All years</button>
+          <button id="years-none" class="ghost-btn" type="button">None</button>
+        </div>
+        <div id="class-filters"></div>
+        <div class="filter-row">
+          <button id="filter-top3-abs" class="ghost-btn" type="button" aria-pressed="true">Top 3 absolute</button>
+          <button id="filter-top3-class" class="ghost-btn" type="button" aria-pressed="false">Top 3 per class</button>
+          <button id="filter-year-weather" class="ghost-btn" type="button" aria-pressed="false">Year weather</button>
+          <label class="help" for="weather-year">Weather year</label>
+          <select id="weather-year"></select>
+        </div>
+        <p id="results-note" class="subnote"></p>
+        <div class="plot-wrap">
+          <div class="zoom-toolbar" aria-label="Results map tools">
+            <button type="button" data-results-act="in" title="Zoom in">+</button>
+            <button type="button" data-results-act="out" title="Zoom out">−</button>
+            <button type="button" data-results-act="all" title="Show all">A</button>
+          </div>
+          <div id="results-map" class="plot" aria-label="Historical result map"></div>
+        </div>
+        <div class="map-key" aria-label="Results map key">
+          <button id="results-key-land" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch land"></span>Land
+          </button>
+          <button id="results-key-rhumbline" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch course"></span>Rhumbline
+          </button>
+        </div>
+        <div id="results-legend" class="chip-row" style="margin-top:0.55rem"></div>
+        <div id="results-table" class="results-table-wrap"></div>
+      </section>
+    </main>
+
     <script>
       "use strict";
 
@@ -843,6 +997,16 @@
         [0.5, "#f7f7f7"],
         [1, "#cc4c02"],
       ];
+      const YEAR_COLORS = {
+        2017: "#E69F00",
+        2018: "#56B4E9",
+        2019: "#009E73",
+        2021: "#F0E442",
+        2022: "#0072B2",
+        2023: "#D55E00",
+        2024: "#CC79A7",
+        2025: "#A0A0A0",
+      };
       const ROUTE_COLORS = [
         "#E69F00",
         "#56B4E9",
@@ -905,6 +1069,16 @@
         meanWindMax: null,
         hourPlaying: false,
         hourTimer: null,
+        page: "weather",
+        yearOn: {},
+        classOn: {},
+        top3Abs: true,
+        top3Class: false,
+        showYearWeather: false,
+        weatherYear: null,
+        resultsRange: null,
+        showResultsLand: true,
+        showResultsRhumbline: true,
       };
 
       const els = {
@@ -925,6 +1099,24 @@
         mapKeyLand: document.getElementById("map-key-land"),
         mapKeyRhumbline: document.getElementById("map-key-rhumbline"),
         mapPlot: document.getElementById("map-plot"),
+        tabWeather: document.getElementById("tab-weather"),
+        tabResults: document.getElementById("tab-results"),
+        pageWeather: document.getElementById("page-weather"),
+        pageResults: document.getElementById("page-results"),
+        yearToggles: document.getElementById("year-toggles"),
+        classFilters: document.getElementById("class-filters"),
+        yearsAll: document.getElementById("years-all"),
+        yearsNone: document.getElementById("years-none"),
+        filterTop3Abs: document.getElementById("filter-top3-abs"),
+        filterTop3Class: document.getElementById("filter-top3-class"),
+        filterYearWeather: document.getElementById("filter-year-weather"),
+        weatherYear: document.getElementById("weather-year"),
+        resultsNote: document.getElementById("results-note"),
+        resultsMap: document.getElementById("results-map"),
+        resultsKeyLand: document.getElementById("results-key-land"),
+        resultsKeyRhumbline: document.getElementById("results-key-rhumbline"),
+        resultsLegend: document.getElementById("results-legend"),
+        resultsTable: document.getElementById("results-table"),
         routePlot: document.getElementById("route-plot"),
         routeLegend: document.getElementById("route-legend"),
         routesShowAll: document.getElementById("routes-show-all"),
@@ -2132,6 +2324,254 @@
         els.modeUtc.classList.toggle("active", !local);
       }
 
+      function ybData() {
+        return window.YB_RESULTS || { editions: [] };
+      }
+
+      function ensureResultsState() {
+        const editions = ybData().editions || [];
+        editions.forEach((ed) => {
+          if (state.yearOn[ed.year] == null) state.yearOn[ed.year] = true;
+          if (!state.classOn[ed.year]) state.classOn[ed.year] = {};
+          (ed.classes || []).forEach((cls) => {
+            if (state.classOn[ed.year][cls.id] == null) state.classOn[ed.year][cls.id] = true;
+          });
+        });
+        if (state.weatherYear == null && editions.length) {
+          state.weatherYear = editions[editions.length - 1].year;
+        }
+      }
+
+      function visibleResultBoats() {
+        ensureResultsState();
+        const rows = [];
+        (ybData().editions || []).forEach((ed) => {
+          if (!state.yearOn[ed.year]) return;
+          (ed.boats || []).forEach((boat) => {
+            const selectedClasses = (boat.classes || []).filter((cls) => state.classOn[ed.year][cls.id]);
+            if (!selectedClasses.length) return;
+            const topAbs = Boolean(boat.finished && boat.absolute_rank && boat.absolute_rank <= 3);
+            const topClass = selectedClasses.some((cls) => cls.finished && cls.rank && cls.rank <= 3);
+            if (state.top3Abs && state.top3Class) {
+              if (!topAbs && !topClass) return;
+            } else if (state.top3Abs && !topAbs) {
+              return;
+            } else if (state.top3Class && !topClass) {
+              return;
+            }
+            rows.push({ edition: ed, boat, classes: selectedClasses });
+          });
+        });
+        return rows;
+      }
+
+      function setPage(page) {
+        state.page = page;
+        const weather = page === "weather";
+        if (els.pageWeather) els.pageWeather.classList.toggle("hidden", !weather);
+        if (els.pageResults) els.pageResults.classList.toggle("hidden", weather);
+        if (els.tabWeather) {
+          els.tabWeather.classList.toggle("active", weather);
+          els.tabWeather.setAttribute("aria-selected", weather ? "true" : "false");
+        }
+        if (els.tabResults) {
+          els.tabResults.classList.toggle("active", !weather);
+          els.tabResults.setAttribute("aria-selected", weather ? "false" : "true");
+        }
+        if (weather) {
+          renderCalmMap();
+        } else {
+          renderResultsPage();
+        }
+      }
+
+      function renderResultsControls() {
+        ensureResultsState();
+        const editions = ybData().editions || [];
+        if (els.yearToggles) {
+          els.yearToggles.innerHTML = editions
+            .map((ed) => {
+              const on = state.yearOn[ed.year];
+              return `<button type="button" class="chip ${on ? "on" : "off"}" data-year="${ed.year}">${ed.year}</button>`;
+            })
+            .join("");
+        }
+        if (els.classFilters) {
+          els.classFilters.innerHTML = editions
+            .filter((ed) => state.yearOn[ed.year])
+            .map((ed) => {
+              const chips = (ed.classes || [])
+                .map((cls) => {
+                  const on = state.classOn[ed.year][cls.id];
+                  return `<button type="button" class="chip ${on ? "on" : "off"}" data-year-class="${ed.year}:${cls.id}">${cls.name}</button>`;
+                })
+                .join("");
+              return `<div class="class-year"><h3>${ed.year} classes</h3><div class="chip-row">${chips}</div></div>`;
+            })
+            .join("");
+        }
+        if (els.filterTop3Abs) {
+          els.filterTop3Abs.classList.toggle("active", state.top3Abs);
+          els.filterTop3Abs.setAttribute("aria-pressed", state.top3Abs ? "true" : "false");
+        }
+        if (els.filterTop3Class) {
+          els.filterTop3Class.classList.toggle("active", state.top3Class);
+          els.filterTop3Class.setAttribute("aria-pressed", state.top3Class ? "true" : "false");
+        }
+        if (els.filterYearWeather) {
+          els.filterYearWeather.classList.toggle("active", state.showYearWeather);
+          els.filterYearWeather.setAttribute("aria-pressed", state.showYearWeather ? "true" : "false");
+        }
+        if (els.weatherYear) {
+          els.weatherYear.innerHTML = editions
+            .map((ed) => `<option value="${ed.year}">${ed.year}</option>`)
+            .join("");
+          els.weatherYear.value = String(state.weatherYear || "");
+        }
+        if (els.resultsKeyLand) {
+          els.resultsKeyLand.classList.toggle("off", !state.showResultsLand);
+          els.resultsKeyLand.setAttribute("aria-pressed", state.showResultsLand ? "true" : "false");
+        }
+        if (els.resultsKeyRhumbline) {
+          els.resultsKeyRhumbline.classList.toggle("off", !state.showResultsRhumbline);
+          els.resultsKeyRhumbline.setAttribute("aria-pressed", state.showResultsRhumbline ? "true" : "false");
+        }
+      }
+
+      function renderResultsMap() {
+        if (!els.resultsMap || !state.payload) return;
+        const rows = visibleResultBoats();
+        const course = (state.payload.meta && state.payload.meta.course) || {};
+        const lat = state.payload.climatology.grid.lat;
+        const lon = state.payload.climatology.grid.lon;
+        const weatherEd = (ybData().editions || []).find((ed) => ed.year === Number(state.weatherYear));
+        const weather = weatherEd && weatherEd.weather;
+        const traces = [];
+        if (state.showYearWeather && weather && weather.available) {
+          const field = weather.mean_tws_kt;
+          traces.push({
+            type: "heatmap",
+            z: fillEnclosedSeaHoles(field),
+            x: weather.lon,
+            y: weather.lat,
+            zmin: 0,
+            zmax: fixedMeanWindMax(),
+            colorscale: threeToneScale,
+            colorbar: { title: "Mean wind (kt)", tick0: 0, dtick: 2 },
+            zsmooth: false,
+            xgap: 1,
+            ygap: 1,
+            opacity: 0.88,
+            hoverinfo: "skip",
+            name: "Year weather",
+          });
+        }
+        if (state.showResultsLand) traces.push(...landTraces());
+        rows.forEach((row, idx) => {
+          const color = YEAR_COLORS[row.edition.year] || ROUTE_COLORS[idx % ROUTE_COLORS.length];
+          traces.push({
+            type: "scatter",
+            mode: "lines",
+            x: row.boat.lon,
+            y: row.boat.lat,
+            name: `${row.edition.year} ${row.boat.name}`,
+            line: { width: row.boat.absolute_rank && row.boat.absolute_rank <= 3 ? 3.2 : 1.8, color },
+            opacity: 0.92,
+            hoverinfo: "skip",
+            showlegend: false,
+          });
+        });
+        const keyRoute = [
+          [course.start && course.start[0], course.start && course.start[1]],
+          [course.gate && course.gate[0], course.gate && course.gate[1]],
+          [course.finish && course.finish[0], course.finish && course.finish[1]],
+        ].filter((pt) => pt[0] != null && pt[1] != null);
+        traces.push({
+          type: "scatter",
+          mode: "lines+markers",
+          x: keyRoute.map((pt) => pt[1]),
+          y: keyRoute.map((pt) => pt[0]),
+          name: "Rhumbline",
+          line: { width: 3, color: "#ffffff" },
+          marker: { size: 7, color: "#ffffff" },
+          hoverinfo: "skip",
+          showlegend: false,
+          visible: state.showResultsRhumbline,
+        });
+        const xRange = (state.resultsRange && state.resultsRange.x) || [Math.min(...lon), Math.max(...lon)];
+        const yRange = (state.resultsRange && state.resultsRange.y) || [Math.min(...lat), Math.max(...lat)];
+        const title = state.showYearWeather && weather && weather.available
+          ? `YB tracks + ${state.weatherYear} race-window wind`
+          : "YB tracks";
+        applyPlot(
+          els.resultsMap,
+          traces,
+          {
+            ...plotLayoutBase,
+            title,
+            xaxis: { title: "Longitude (deg E)", zeroline: false, range: xRange },
+            yaxis: { title: "Latitude (deg N)", zeroline: false, range: yRange },
+            images: getMapImages(),
+            showlegend: false,
+          },
+          {}
+        );
+      }
+
+      function renderResultsLegendAndTable() {
+        const rows = visibleResultBoats();
+        const years = [...new Set(rows.map((row) => row.edition.year))];
+        if (els.resultsLegend) {
+          els.resultsLegend.innerHTML = years
+            .map((year) => {
+              const color = YEAR_COLORS[year] || "#ccc";
+              return `<span class="map-key-item static"><span class="map-key-swatch" style="background:${color}"></span>${year}</span>`;
+            })
+            .join("");
+        }
+        const weatherEd = (ybData().editions || []).find((ed) => ed.year === Number(state.weatherYear));
+        const weather = weatherEd && weatherEd.weather;
+        let note = `${rows.length} tracks shown.`;
+        if (state.showYearWeather) {
+          if (weather && weather.available) {
+            note += ` Year weather: ${weather.note}`;
+          } else {
+            note += " Year weather is not loaded for this edition yet. The map still shows tracks.";
+          }
+        }
+        if (els.resultsNote) els.resultsNote.textContent = note;
+        if (!els.resultsTable) return;
+        const body = rows
+          .sort((a, b) => a.edition.year - b.edition.year || (a.boat.absolute_rank || 99) - (b.boat.absolute_rank || 99))
+          .map((row) => {
+            const classes = row.classes
+              .map((cls) => `${cls.name}${cls.rank ? " #" + cls.rank : ""}`)
+              .join(", ");
+            return `<tr>
+              <td>${row.edition.year}</td>
+              <td>${row.boat.name}</td>
+              <td>${row.boat.absolute_rank || "—"}</td>
+              <td>${row.boat.elapsed_label || "—"}</td>
+              <td>${row.boat.finished ? "Finished" : row.boat.status}</td>
+              <td>${classes}</td>
+            </tr>`;
+          })
+          .join("");
+        els.resultsTable.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Year</th><th>Boat</th><th>Abs</th><th>Elapsed</th><th>Status</th><th>Classes</th></tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>`;
+      }
+
+      function renderResultsPage() {
+        renderResultsControls();
+        renderResultsMap();
+        renderResultsLegendAndTable();
+      }
+
       function renderAll() {
         refreshTimeLabelsOnly();
         renderCalmMap();
@@ -2140,12 +2580,95 @@
         renderPointDetail();
         renderTransects();
         renderSkillTable();
+        if (state.page === "results") renderResultsPage();
       }
 
       function bindEvents() {
         if (state.eventsBound) return;
         state.eventsBound = true;
         bindMapClick();
+        if (els.tabWeather) els.tabWeather.onclick = () => setPage("weather");
+        if (els.tabResults) els.tabResults.onclick = () => setPage("results");
+        if (els.yearsAll) {
+          els.yearsAll.onclick = () => {
+            Object.keys(state.yearOn).forEach((year) => {
+              state.yearOn[year] = true;
+            });
+            renderResultsPage();
+          };
+        }
+        if (els.yearsNone) {
+          els.yearsNone.onclick = () => {
+            Object.keys(state.yearOn).forEach((year) => {
+              state.yearOn[year] = false;
+            });
+            renderResultsPage();
+          };
+        }
+        if (els.filterTop3Abs) {
+          els.filterTop3Abs.onclick = () => {
+            state.top3Abs = !state.top3Abs;
+            renderResultsPage();
+          };
+        }
+        if (els.filterTop3Class) {
+          els.filterTop3Class.onclick = () => {
+            state.top3Class = !state.top3Class;
+            renderResultsPage();
+          };
+        }
+        if (els.filterYearWeather) {
+          els.filterYearWeather.onclick = () => {
+            state.showYearWeather = !state.showYearWeather;
+            renderResultsPage();
+          };
+        }
+        if (els.weatherYear) {
+          els.weatherYear.onchange = () => {
+            state.weatherYear = Number(els.weatherYear.value);
+            renderResultsPage();
+          };
+        }
+        if (els.resultsKeyLand) {
+          els.resultsKeyLand.onclick = () => {
+            state.showResultsLand = !state.showResultsLand;
+            renderResultsPage();
+          };
+        }
+        if (els.resultsKeyRhumbline) {
+          els.resultsKeyRhumbline.onclick = () => {
+            state.showResultsRhumbline = !state.showResultsRhumbline;
+            renderResultsPage();
+          };
+        }
+        document.addEventListener("click", (ev) => {
+          const yearBtn = ev.target.closest("[data-year]");
+          if (yearBtn && yearBtn.closest("#year-toggles")) {
+            const year = Number(yearBtn.getAttribute("data-year"));
+            state.yearOn[year] = !state.yearOn[year];
+            renderResultsPage();
+            return;
+          }
+          const classBtn = ev.target.closest("[data-year-class]");
+          if (classBtn && classBtn.closest("#class-filters")) {
+            const [year, classId] = classBtn.getAttribute("data-year-class").split(":");
+            state.classOn[Number(year)][classId] = !state.classOn[Number(year)][classId];
+            renderResultsPage();
+            return;
+          }
+          const actBtn = ev.target.closest("[data-results-act]");
+          if (actBtn && els.resultsMap) {
+            const act = actBtn.getAttribute("data-results-act");
+            if (act === "all") {
+              state.resultsRange = null;
+              resetPlot(els.resultsMap);
+            } else if (act === "in") {
+              zoomPlot(els.resultsMap, 0.7);
+            } else if (act === "out") {
+              zoomPlot(els.resultsMap, 1 / 0.7);
+            }
+          }
+        });
         els.hourSlider.oninput = () => {
           stopHourPlay();
           applySelectedHour(els.hourSlider.value);
