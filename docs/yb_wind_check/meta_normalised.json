@@ -1,0 +1,23 @@
+{
+  "generated_utc": "2026-08-15T16:43:35Z",
+  "n_samples": 95634,
+  "n_boats": 353,
+  "n_boats_loa_45_60": 82,
+  "n_samples_loa_45_60": 21064,
+  "loa_resolved_boats": 144,
+  "loa_range_ft": [
+    45.0,
+    60.0
+  ],
+  "polar": "polar_55ft_generic",
+  "years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ]
+}

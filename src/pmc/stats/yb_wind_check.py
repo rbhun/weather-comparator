@@ -39,7 +39,40 @@ MAX_INTERVAL_MIN = 30
 MIN_SOG_KT = 0.3
 MAX_SOG_KT = 35.0
 AFTERNOON_HOURS_LOCAL = frozenset(range(12, 18))
+NIGHT_HOURS_LOCAL = frozenset({21, 22, 23, 0, 1, 2, 3, 4, 5})
 NEAR_COAST_NM = 10.0
+
+# Course-region boxes (exclusive priority: ligurian > sardinia_east > tyrrhenian).
+# sardinia_east: east-Sardinia approach incl. gate latitudes.
+# tyrrhenian: open Sicily→Sardinia crossing / central Tyrrhenian.
+# ligurian: Ligurian approach to Monaco.
+REGION_PRIORITY = ("ligurian", "sardinia_east", "tyrrhenian", "other")
+
+
+def assign_region(lat: float, lon: float) -> str:
+    """Assign a sample to a course region."""
+
+    if lat >= 42.5:
+        return "ligurian"
+    if 39.2 <= lat < 42.5 and lon <= 11.0:
+        return "sardinia_east"
+    if lat < 41.5 and lon > 10.5:
+        return "tyrrhenian"
+    if lat < 39.2:
+        return "tyrrhenian"
+    return "other"
+
+
+def assign_tod_band(hour_local: int) -> str:
+    """afternoon | night | other."""
+
+    h = int(hour_local)
+    if h in AFTERNOON_HOURS_LOCAL:
+        return "afternoon"
+    if h in NIGHT_HOURS_LOCAL:
+        return "night"
+    return "other"
+
 
 
 @dataclass(frozen=True)
@@ -344,31 +377,58 @@ def annotate_samples_with_wind(
         include_lowest=True,
     )
     out["afternoon_local"] = out["hour_local"].isin(AFTERNOON_HOURS_LOCAL)
+    out["tod_band"] = out["hour_local"].map(assign_tod_band)
+    out["region"] = [
+        assign_region(float(lat), float(lon))
+        for lat, lon in zip(out["lat"].to_numpy(), out["lon"].to_numpy())
+    ]
     out["near_coast"] = out["distance_offshore_nm"] < NEAR_COAST_NM
     out["polar_name"] = polar.name
     return out
 
 
-def _bin_summary(frame: pd.DataFrame, group_cols: list[str]) -> pd.DataFrame:
-    if frame.empty:
-        return pd.DataFrame(
-            columns=group_cols
-            + [
-                "n",
-                "residual_median_kt",
-                "residual_p10_kt",
-                "residual_p90_kt",
-                "sog_median_kt",
-                "predicted_median_kt",
-                "analysis_tws_median_kt",
-            ]
-        )
+def normalise_residuals_per_boat(samples: pd.DataFrame) -> pd.DataFrame:
+    """Subtract each boat×edition median residual from its samples.
+
+    Removes constant polar / size / skill offset so band contrasts are
+    within-boat only.
+    """
+
+    if samples.empty:
+        out = samples.copy()
+        out["boat_median_residual_kt"] = []
+        out["residual_norm_kt"] = []
+        return out
+    out = samples.copy()
+    med = out.groupby(["year", "boat"], sort=False)["residual_kt"].transform("median")
+    out["boat_median_residual_kt"] = med
+    out["residual_norm_kt"] = out["residual_kt"] - med
+    return out
+
+
+def _bin_summary(
+    frame: pd.DataFrame,
+    group_cols: list[str],
+    *,
+    residual_col: str = "residual_kt",
+) -> pd.DataFrame:
+    empty_cols = group_cols + [
+        "n",
+        "residual_median_kt",
+        "residual_p10_kt",
+        "residual_p90_kt",
+        "sog_median_kt",
+        "predicted_median_kt",
+        "analysis_tws_median_kt",
+    ]
+    if frame.empty or residual_col not in frame.columns:
+        return pd.DataFrame(columns=empty_cols)
     rows: list[dict[str, Any]] = []
     grouped = frame.groupby(group_cols, dropna=True, observed=True)
     for keys, chunk in grouped:
         if not isinstance(keys, tuple):
             keys = (keys,)
-        resid = chunk["residual_kt"].to_numpy(dtype=float)
+        resid = chunk[residual_col].to_numpy(dtype=float)
         resid = resid[np.isfinite(resid)]
         if resid.size == 0:
             continue
@@ -386,52 +446,84 @@ def _bin_summary(frame: pd.DataFrame, group_cols: list[str]) -> pd.DataFrame:
         )
         rows.append(row)
     if not rows:
-        return pd.DataFrame(
-            columns=group_cols
-            + [
-                "n",
-                "residual_median_kt",
-                "residual_p10_kt",
-                "residual_p90_kt",
-                "sog_median_kt",
-                "predicted_median_kt",
-                "analysis_tws_median_kt",
-            ]
-        )
+        return pd.DataFrame(columns=empty_cols)
     return pd.DataFrame(rows).sort_values(group_cols).reset_index(drop=True)
 
 
-def summarise_residuals(samples: pd.DataFrame) -> dict[str, pd.DataFrame]:
+def summarise_residuals(
+    samples: pd.DataFrame,
+    *,
+    residual_col: str = "residual_kt",
+) -> dict[str, pd.DataFrame]:
     """Median residual tables by the requested bin axes (plus key cross-tabs)."""
 
-    valid = samples.dropna(subset=["residual_kt", "analysis_tws_kt"]).copy()
-    valid = valid[np.isfinite(valid["residual_kt"]) & np.isfinite(valid["analysis_tws_kt"])]
-    afternoon = valid[valid["afternoon_local"] == True]  # noqa: E712
+    needed = [residual_col, "analysis_tws_kt"]
+    valid = samples.dropna(subset=needed).copy()
+    valid = valid[np.isfinite(valid[residual_col]) & np.isfinite(valid["analysis_tws_kt"])]
+    if "tod_band" not in valid.columns and "hour_local" in valid.columns:
+        valid["tod_band"] = valid["hour_local"].map(assign_tod_band)
+    if "region" not in valid.columns:
+        if {"lat", "lon"}.issubset(valid.columns):
+            valid["region"] = [
+                assign_region(float(a), float(b))
+                for a, b in zip(valid["lat"].to_numpy(), valid["lon"].to_numpy())
+            ]
+        else:
+            valid["region"] = "unknown"
+    if "tod_band" not in valid.columns:
+        valid["tod_band"] = "other"
+    if "near_coast" not in valid.columns:
+        valid["near_coast"] = False
+    if "offshore_bin" not in valid.columns:
+        valid["offshore_bin"] = "unknown"
+    afternoon = valid[valid["tod_band"] == "afternoon"]
+    night = valid[valid["tod_band"] == "night"]
+    region_tod = valid[valid["tod_band"].isin(["afternoon", "night"])]
     return {
-        "by_offshore": _bin_summary(valid, ["offshore_bin"]),
-        "by_hour_local": _bin_summary(valid, ["hour_local"]),
-        "by_tws": _bin_summary(valid, ["tws_bin"]),
-        "by_offshore_afternoon": _bin_summary(afternoon, ["offshore_bin"]),
-        "by_offshore_hour": _bin_summary(valid, ["offshore_bin", "hour_local"]),
+        "by_offshore": _bin_summary(valid, ["offshore_bin"], residual_col=residual_col),
+        "by_hour_local": _bin_summary(valid, ["hour_local"], residual_col=residual_col),
+        "by_tws": _bin_summary(valid, ["tws_bin"], residual_col=residual_col),
+        "by_offshore_afternoon": _bin_summary(afternoon, ["offshore_bin"], residual_col=residual_col),
+        "by_offshore_night": _bin_summary(night, ["offshore_bin"], residual_col=residual_col),
+        "by_offshore_hour": _bin_summary(
+            valid, ["offshore_bin", "hour_local"], residual_col=residual_col
+        ),
+        "by_region_offshore_afternoon": _bin_summary(
+            afternoon, ["region", "offshore_bin"], residual_col=residual_col
+        ),
+        "by_region_offshore_night": _bin_summary(
+            night, ["region", "offshore_bin"], residual_col=residual_col
+        ),
+        "by_region_tod_offshore": _bin_summary(
+            region_tod,
+            ["region", "tod_band", "offshore_bin"],
+            residual_col=residual_col,
+        ),
         "by_coast_afternoon": _bin_summary(
             valid.assign(
                 coast_window=np.where(
-                    valid["near_coast"] & valid["afternoon_local"],
+                    valid["near_coast"] & (valid["tod_band"] == "afternoon"),
                     "near_coast_afternoon",
                     np.where(
-                        (~valid["near_coast"]) & valid["afternoon_local"],
+                        (~valid["near_coast"]) & (valid["tod_band"] == "afternoon"),
                         "offshore_afternoon",
                         np.where(
-                            valid["near_coast"] & (~valid["afternoon_local"]),
-                            "near_coast_other",
-                            "offshore_other",
+                            valid["near_coast"] & (valid["tod_band"] == "night"),
+                            "near_coast_night",
+                            np.where(
+                                (~valid["near_coast"]) & (valid["tod_band"] == "night"),
+                                "offshore_night",
+                                "other",
+                            ),
                         ),
                     ),
                 )
             ),
             ["coast_window"],
+            residual_col=residual_col,
         ),
     }
+
 
 
 def load_years_full_tracks(

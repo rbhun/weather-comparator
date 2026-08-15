@@ -1,0 +1,6 @@
+offshore_bin,n,residual_median_kt,residual_p10_kt,residual_p90_kt,sog_median_kt,predicted_median_kt,analysis_tws_median_kt
+0-5nm,7267,0.2,-3.19,3.55,4.86,4.87,3.71
+10-20nm,4165,-0.22,-3.4,2.81,5.48,5.66,6.2
+20-40nm,7962,0.06,-2.93,3.09,5.58,5.65,6.49
+40nm+,11575,-0.04,-2.55,2.49,5.57,5.61,6.03
+5-10nm,3366,-0.01,-3.48,3.36,5.03,5.18,5.05

@@ -21,7 +21,9 @@ from pmc.polar import load_polar  # noqa: E402
 from pmc.stats.yb_wind_check import (  # noqa: E402
     WindCheckConfig,
     annotate_samples_with_wind,
+    assign_region,
     format_summary_markdown,
+    normalise_residuals_per_boat,
     run_wind_check,
     summarise_residuals,
     track_motion_samples,
@@ -132,7 +134,23 @@ def test_annotate_sets_twa_from_cog_and_twd() -> None:
     assert abs(float(annotated["twa_deg"].median())) == pytest.approx(90.0, abs=5.0)
 
 
-def test_summary_markdown_includes_counts() -> None:
+def test_per_boat_normalisation_zeros_boat_median() -> None:
+    frame = pd.DataFrame(
+        {
+            "year": [2024, 2024, 2025, 2025],
+            "boat": ["A", "A", "A", "A"],
+            "residual_kt": [1.0, 3.0, 10.0, 14.0],
+        }
+    )
+    out = normalise_residuals_per_boat(frame)
+    assert out.groupby(["year", "boat"])["residual_norm_kt"].median().abs().max() < 1e-9
+
+
+def test_assign_region_boxes() -> None:
+    assert assign_region(41.13, 9.8) == "sardinia_east"
+    assert assign_region(38.8, 12.0) == "tyrrhenian"
+    assert assign_region(43.5, 8.0) == "ligurian"
+
     frame = pd.DataFrame(
         {
             "offshore_bin": ["0-5nm", "0-5nm", "40nm+"],
