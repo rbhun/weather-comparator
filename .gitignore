@@ -6,11 +6,19 @@ data/**
 dashboard/data.json
 !dashboard/data.json
 
+# Secrets — never commit the real Open-Meteo key or Expedition polar
+.env
+.env.*
+!.env.example
+config/polar/**
+!config/polar/README.md
+!config/polar/.gitkeep
+
 # Python caches and local envs
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
 .venv/
-# Keep committed fixtures
+# Keep committed fixtures (fabricated polar_52ft.pol is OK to publish)
 !contracts/fixtures/**
