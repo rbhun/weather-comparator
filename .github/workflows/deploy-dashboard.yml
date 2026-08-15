@@ -1,0 +1,52 @@
+# Publish the offline dashboard so it can be opened from any browser.
+# Site root is the contents of dashboard/ (index.html, data.js, vendor/, tiles/).
+#
+# One-time setup (repo Settings → Pages):
+#   Source: GitHub Actions
+# After merge to main, the site is at:
+#   https://rbhun.github.io/weather-comparator/
+#
+# Note: this repository is private. GitHub Pages for private repos requires
+# GitHub Pro/Team/Enterprise. The published site itself is public unless you
+# restrict access via an Enterprise Pages visibility setting.
+
+name: Deploy dashboard to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dashboard/**"
+      - ".github/workflows/deploy-dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
