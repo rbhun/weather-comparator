@@ -803,7 +803,7 @@
         <h1>PMC 2026</h1>
         <p id="generated-time">Generated: loading...</p>
       </div>
-      <nav class="app-tabs" role="tablist" aria-label="Dashboard pages">
+      <nav id="app-tabs" class="app-tabs hidden" role="tablist" aria-label="Dashboard pages">
         <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
         <button id="tab-results" type="button" role="tab" aria-selected="false">Historical result</button>
       </nav>
@@ -995,6 +995,8 @@
 
       const STORAGE_PAYLOAD = "pmc.dashboard.payload.v2";
       const STORAGE_NAME = "pmc.dashboard.payloadName.v2";
+      // Flip to true when publishing the YB historical-result tab on Pages.
+      const SHOW_RESULTS_TAB = false;
       const STORAGE_PREFER = "pmc.dashboard.preferSaved.v2";
       const plotConfig = { displayModeBar: false, responsive: true, doubleClick: "reset" };
       const threeToneScale = [
@@ -1104,6 +1106,7 @@
         mapKeyLand: document.getElementById("map-key-land"),
         mapKeyRhumbline: document.getElementById("map-key-rhumbline"),
         mapPlot: document.getElementById("map-plot"),
+        appTabs: document.getElementById("app-tabs"),
         tabWeather: document.getElementById("tab-weather"),
         tabResults: document.getElementById("tab-results"),
         pageWeather: document.getElementById("page-weather"),
@@ -2555,8 +2558,10 @@
       }
 
       function setPage(page) {
+        if (!SHOW_RESULTS_TAB) page = "weather";
         state.page = page;
         const weather = page === "weather";
+        if (els.appTabs) els.appTabs.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.pageWeather) els.pageWeather.classList.toggle("hidden", !weather);
         if (els.pageResults) els.pageResults.classList.toggle("hidden", weather);
         if (els.tabWeather) {
@@ -2789,8 +2794,13 @@
         if (state.eventsBound) return;
         state.eventsBound = true;
         bindMapClick();
+        if (els.appTabs) els.appTabs.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.tabWeather) els.tabWeather.onclick = () => setPage("weather");
-        if (els.tabResults) els.tabResults.onclick = () => setPage("results");
+        if (els.tabResults) {
+          els.tabResults.onclick = () => {
+            if (SHOW_RESULTS_TAB) setPage("results");
+          };
+        }
         if (els.yearsAll) {
           els.yearsAll.onclick = () => {
             Object.keys(state.yearOn).forEach((year) => {
