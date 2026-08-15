@@ -39,9 +39,9 @@ WARNING_TEXT = (
     "VPP polars are optimistic in light air. "
     "Elapsed times are relative comparisons, not predictions."
 )
-LEG1_VM_G_CAVEAT = (
-    "Leg 1 is mostly upwind: follower uses VMG and does not model shift-playing. "
-    "Leg-1 comparisons likely undervalue larger oscillation regimes, usually the coastal side."
+VIZ_ONLY_WARNING = (
+    "Data here is not guaranteed. It is for visualization and comparison only — "
+    "not as the sole basis for a race decision."
 )
 BONIFACIO_PANEL_LABEL = (
     "Channel choice inside the Maddalena archipelago is below model resolution. "
@@ -471,10 +471,10 @@ def main() -> int:
             },
             "polar_name": "boat_vpp",
             "polar_is_validated": False,
+            "climatology_years": august_years,
             "warnings": [
+                VIZ_ONLY_WARNING,
                 WARNING_TEXT,
-                LEG1_VM_G_CAVEAT,
-                f"August years present in wind cube: {', '.join(str(y) for y in august_years)}",
             ],
         }
 
