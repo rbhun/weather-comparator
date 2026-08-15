@@ -49,6 +49,7 @@ Pages** → Run workflow.
 
 The published site is a normal HTTPS URL — open it on a phone, tablet, or any
 laptop. Offline `file://` use below still works for race-day with no network.
+Visitor counts (GoatCounter) are sent only from the online Pages URL.
 
 Caveats:
 
