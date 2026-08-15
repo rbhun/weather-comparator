@@ -289,6 +289,15 @@ def _build_hourly_climatology_at_point(
     return stats
 
 
+# IFS analysis is ~9 km; same-day AROME comparison showed Sardinia samples
+# inside ~10 nm collapse to one IFS cell. Do not present that flat as a finding.
+IFS_TRANSECT_BELOW_RESOLUTION_NM = 10.0
+IFS_TRANSECT_RESOLUTION_NOTE = (
+    "Shaded band (0–10 nm): below IFS 9 km model resolution — "
+    "inner distances sample one grid cell, not a coastal gradient."
+)
+
+
 def _format_transects_for_dashboard(transects: pd.DataFrame) -> list[dict[str, Any]]:
     if transects.empty:
         return []
@@ -313,6 +322,9 @@ def _format_transects_for_dashboard(transects: pd.DataFrame) -> list[dict[str, A
                 "name": str(group["coast_name"].iloc[0]),
                 "distance_nm": dist,
                 "by_hour": sorted(by_hour, key=lambda r: r["hour"]),
+                "below_model_resolution_nm": IFS_TRANSECT_BELOW_RESOLUTION_NM,
+                "resolution_note": IFS_TRANSECT_RESOLUTION_NOTE,
+                "source_model": "ecmwf_ifs_analysis_9km",
             }
         )
     return sorted(output, key=lambda t: t["id"])

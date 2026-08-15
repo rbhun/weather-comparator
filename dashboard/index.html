@@ -922,6 +922,39 @@
         font-variant-numeric: tabular-nums;
         font-weight: 800;
       }
+
+      .finding-card h2 {
+        font-size: 1.35rem;
+        line-height: 1.25;
+        margin-bottom: 0.4rem;
+      }
+
+      .finding-card table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.95rem;
+      }
+
+      .finding-card th,
+      .finding-card td {
+        border-bottom: 1px solid var(--panel-border);
+        padding: 0.45rem 0.5rem;
+        text-align: right;
+      }
+
+      .finding-card th:first-child,
+      .finding-card td:first-child {
+        text-align: left;
+      }
+
+      .finding-card tr.finding-all td {
+        font-weight: 800;
+      }
+
+      .finding-card .delta-neg {
+        color: #fbbf24;
+      }
     </style>
   </head>
   <body>
@@ -940,6 +973,15 @@
 
     <main id="page-weather" class="container">
       <section id="status" class="status">Loading dashboard/data.json...</section>
+
+      <section id="named-findings" class="card finding-card">
+        <h2>Finding: Sardinian east coast afternoon shadow — stand off 7.5–10 nm</h2>
+        <p id="finding-summary" class="subnote"></p>
+        <p id="finding-resolve-note" class="help" role="status"></p>
+        <p id="finding-diurnal-note" class="help"></p>
+        <div id="finding-table-wrap"></div>
+        <p id="finding-empty" class="help hidden">Finding data not present in this payload.</p>
+      </section>
 
       <section id="calm-risk-map" class="card">
         <h2>1) Wind map</h2>
@@ -1039,7 +1081,7 @@
 
       <section class="card">
         <h2>4) Cross-shore transects</h2>
-        <p class="subnote">Mean wind vs offshore distance, by hour.</p>
+        <p class="subnote">Mean wind vs offshore distance, by hour (IFS 9 km climatology).</p>
         <div id="transect-controls" class="controls hidden">
           <label for="transect-select">Transect</label>
           <select id="transect-select"></select>
@@ -1047,6 +1089,7 @@
         <div class="plot-wrap">
           <div id="transect-plot" class="plot short"></div>
         </div>
+        <p id="transect-resolution-note" class="help hidden" role="status"></p>
         <p id="transect-empty" class="help hidden">
           Transect data is not present in this payload. The dashboard can render it when a `transects` section is included in data.json.
         </p>
@@ -1342,6 +1385,12 @@
       const els = {
         status: document.getElementById("status"),
         warningBanner: document.getElementById("warning-banner"),
+        namedFindings: document.getElementById("named-findings"),
+        findingSummary: document.getElementById("finding-summary"),
+        findingResolveNote: document.getElementById("finding-resolve-note"),
+        findingDiurnalNote: document.getElementById("finding-diurnal-note"),
+        findingTableWrap: document.getElementById("finding-table-wrap"),
+        findingEmpty: document.getElementById("finding-empty"),
         generatedTime: document.getElementById("generated-time"),
         hourSlider: document.getElementById("hour-slider"),
         hourPlay: document.getElementById("hour-play"),
@@ -1401,6 +1450,7 @@
         transectControls: document.getElementById("transect-controls"),
         transectSelect: document.getElementById("transect-select"),
         transectPlot: document.getElementById("transect-plot"),
+        transectResolutionNote: document.getElementById("transect-resolution-note"),
         transectEmpty: document.getElementById("transect-empty"),
         skillBiasBanner: document.getElementById("skill-bias-banner"),
         skillMeta: document.getElementById("skill-meta"),
@@ -2666,11 +2716,98 @@
             if (!dist || !byHour) return null;
             return {
               name: t.name || t.id || "transect",
+              id: t.id || null,
               distance_nm: dist.map(asNum),
               by_hour: byHour,
+              below_model_resolution_nm: asNum(t.below_model_resolution_nm),
+              resolution_note: t.resolution_note || null,
             };
           })
           .filter(Boolean);
+      }
+
+      function renderNamedFindings() {
+        const raw =
+          (state.payload && (state.payload.findings || state.payload.named_findings)) || [];
+        const findings = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        const f =
+          findings.find((x) => x && x.id === "sardinia_e_afternoon_shadow") || findings[0] || null;
+        if (!els.namedFindings) return;
+        if (!f) {
+          els.namedFindings.classList.add("hidden");
+          if (els.findingEmpty) els.findingEmpty.classList.remove("hidden");
+          if (els.findingTableWrap) els.findingTableWrap.innerHTML = "";
+          return;
+        }
+        els.namedFindings.classList.remove("hidden");
+        if (els.findingEmpty) els.findingEmpty.classList.add("hidden");
+        const titleEl = els.namedFindings.querySelector("h2");
+        if (titleEl && f.title) titleEl.textContent = `Finding: ${f.title}`;
+        if (els.findingSummary) {
+          els.findingSummary.textContent = f.summary || f.advice || "";
+        }
+        if (els.findingResolveNote) {
+          els.findingResolveNote.textContent = f.cannot_resolve_note || "";
+        }
+        if (els.findingDiurnalNote) {
+          const d = f.diurnal || {};
+          const n = d.night_00_06 && d.night_00_06.all_delta_0_minus_10_kt;
+          const m = d.morning_06_12 && d.morning_06_12.all_delta_0_minus_10_kt;
+          const a = d.afternoon_14_18 && d.afternoon_14_18.all_delta_0_minus_10_kt;
+          const parts = [];
+          if (d.note) parts.push(d.note);
+          if (n != null && m != null && a != null) {
+            parts.push(
+              `0−10 nm Δ (all years): night ${Number(n).toFixed(2)} kt · morning ${Number(m).toFixed(2)} kt · afternoon ${Number(a).toFixed(2)} kt.`
+            );
+          }
+          els.findingDiurnalNote.textContent = parts.join(" ");
+        }
+        const aft = (f.afternoon_14_18 && f.afternoon_14_18.rows) || [];
+        const dists = ["0.0", "2.5", "5.0", "7.5", "10.0", "15.0", "20.0", "30.0"];
+        if (!els.findingTableWrap) return;
+        if (!aft.length) {
+          els.findingTableWrap.innerHTML = "";
+          return;
+        }
+        const head =
+          "<tr><th>Year</th>" +
+          dists.map((d) => `<th>${String(Number(d))} nm</th>`).join("") +
+          "<th>0−10</th><th>5−10</th><th>n</th></tr>";
+        const body = aft
+          .map((row) => {
+            const tws = row.tws_kt || {};
+            const cells = dists
+              .map((d) => {
+                const v = asNum(tws[d]);
+                return `<td>${v == null ? "—" : v.toFixed(2)}</td>`;
+              })
+              .join("");
+            const d0 = asNum(row.delta_0_minus_10_kt);
+            const d5 = asNum(row.delta_5_minus_10_kt);
+            const cls = row.year === "all" || row.year === "All" ? "finding-all" : "";
+            return `<tr class="${cls}">
+              <td>${row.year}</td>${cells}
+              <td class="delta-neg">${d0 == null ? "—" : (d0 >= 0 ? "+" : "") + d0.toFixed(2)}</td>
+              <td class="delta-neg">${d5 == null ? "—" : (d5 >= 0 ? "+" : "") + d5.toFixed(2)}</td>
+              <td>${row.n == null ? "—" : row.n}</td>
+            </tr>`;
+          })
+          .join("");
+        els.findingTableWrap.innerHTML = `
+          <p class="help" style="margin:0.6rem 0 0.35rem">Afternoon 14–18 local (CEST), AROME HD Aug 2023–2025. Δ = inshore − 10 nm (kt).</p>
+          <table>
+            <thead>${head}</thead>
+            <tbody>${body}</tbody>
+          </table>`;
+      }
+
+      function defaultBelowResolutionNm() {
+        // IFS analysis ~9 km ≈ 4.9 nm; nearshore samples inside ~10 nm collapse to one cell.
+        const meta = (state.payload && state.payload.meta) || {};
+        const explicit = asNum(meta.transect_below_model_resolution_nm);
+        if (explicit != null) return explicit;
+        return 10;
       }
 
       function renderTransects() {
@@ -2678,6 +2815,10 @@
         if (transects.length === 0) {
           els.transectControls.classList.add("hidden");
           els.transectEmpty.classList.remove("hidden");
+          if (els.transectResolutionNote) {
+            els.transectResolutionNote.classList.add("hidden");
+            els.transectResolutionNote.textContent = "";
+          }
           Plotly.purge(els.transectPlot);
           els.transectPlot._pmcHome = null;
           els.transectPlot.innerHTML = "";
@@ -2693,15 +2834,67 @@
         const draw = () => {
           const idx = Number(els.transectSelect.value || 0);
           const t = transects[idx];
+          const floorNm =
+            asNum(t.below_model_resolution_nm) != null
+              ? asNum(t.below_model_resolution_nm)
+              : defaultBelowResolutionNm();
+          const dists = t.distance_nm;
+          const maskY = (vals) =>
+            dists.map((d, i) => {
+              const x = asNum(d);
+              const y = asNum(vals[i]);
+              if (x == null || y == null) return null;
+              if (floorNm != null && x < floorNm) return null;
+              return y;
+            });
           const traces = t.by_hour.map((row) => ({
             type: "scatter",
             mode: "lines",
-            x: t.distance_nm,
-            y: Array.isArray(row.mean_tws_kt) ? row.mean_tws_kt.map(asNum) : [],
+            x: dists,
+            y: maskY(Array.isArray(row.mean_tws_kt) ? row.mean_tws_kt : []),
             name: hourLabel(Number(row.hour)),
             line: { width: Number(row.hour) === state.selectedHour ? 3 : 1.4 },
             hoverinfo: "skip",
+            connectgaps: false,
           }));
+          const shapes = [];
+          const annotations = [];
+          if (floorNm != null && floorNm > 0) {
+            const xMax = Math.max(...dists.map(asNum).filter((v) => v != null), floorNm);
+            shapes.push({
+              type: "rect",
+              xref: "x",
+              yref: "paper",
+              x0: 0,
+              x1: Math.min(floorNm, xMax),
+              y0: 0,
+              y1: 1,
+              fillcolor: "rgba(148, 163, 184, 0.18)",
+              line: { width: 0 },
+              layer: "below",
+            });
+            annotations.push({
+              xref: "x",
+              yref: "paper",
+              x: Math.min(floorNm, xMax) / 2,
+              y: 0.96,
+              text: "below model resolution",
+              showarrow: false,
+              font: { size: 12, color: "#cbd5e1" },
+              bgcolor: "rgba(19,26,45,0.75)",
+            });
+          }
+          if (els.transectResolutionNote) {
+            if (floorNm != null && floorNm > 0) {
+              els.transectResolutionNote.classList.remove("hidden");
+              els.transectResolutionNote.textContent =
+                t.resolution_note ||
+                `Shaded band (0–${floorNm} nm): below IFS 9 km model resolution — not a coastal-wind finding.`;
+            } else {
+              els.transectResolutionNote.classList.add("hidden");
+              els.transectResolutionNote.textContent = "";
+            }
+          }
           applyPlot(
             els.transectPlot,
             traces,
@@ -2710,6 +2903,8 @@
               title: `Cross-shore transect: ${t.name}`,
               xaxis: { title: "Distance offshore (nm)", automargin: true },
               yaxis: { title: "Mean wind (kt)", automargin: true },
+              shapes,
+              annotations,
               legend: {
                 orientation: "h",
                 x: 0,
@@ -3576,6 +3771,7 @@
 
       function renderAll() {
         refreshTimeLabelsOnly();
+        renderNamedFindings();
         renderCalmMap();
         renderRouteComparison();
         renderHeadToHeadTable();
