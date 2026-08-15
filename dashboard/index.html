@@ -803,7 +803,7 @@
         <h1>PMC 2026</h1>
         <p id="generated-time">Generated: loading...</p>
       </div>
-      <nav class="app-tabs" role="tablist" aria-label="Dashboard pages">
+      <nav id="app-tabs" class="app-tabs hidden" role="tablist" aria-label="Dashboard pages">
         <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
         <button id="tab-results" type="button" role="tab" aria-selected="false">Historical result</button>
       </nav>
@@ -952,7 +952,7 @@
       <section class="card">
         <h2>Historical result</h2>
         <p class="subnote">
-          Actual YB tracks from previous Palermo–Montecarlo editions. Absolute rank is uncorrected elapsed time (line honours). Class rank is as YB published it — handicap classes are corrected.
+          Actual YB tracks from previous Palermo–Montecarlo editions. Both filters use uncorrected clock time: who got to Monaco first. Top 3 absolute is line honours. Top 3 per class is the three fastest elapsed times inside each selected class — not the handicap (corrected-time) winner.
         </p>
         <div class="plot-wrap">
           <div class="zoom-toolbar" aria-label="Results map tools">
@@ -995,6 +995,8 @@
 
       const STORAGE_PAYLOAD = "pmc.dashboard.payload.v2";
       const STORAGE_NAME = "pmc.dashboard.payloadName.v2";
+      // Flip to true when publishing the YB historical-result tab on Pages.
+      const SHOW_RESULTS_TAB = false;
       const STORAGE_PREFER = "pmc.dashboard.preferSaved.v2";
       const plotConfig = { displayModeBar: false, responsive: true, doubleClick: "reset" };
       const threeToneScale = [
@@ -1104,6 +1106,7 @@
         mapKeyLand: document.getElementById("map-key-land"),
         mapKeyRhumbline: document.getElementById("map-key-rhumbline"),
         mapPlot: document.getElementById("map-plot"),
+        appTabs: document.getElementById("app-tabs"),
         tabWeather: document.getElementById("tab-weather"),
         tabResults: document.getElementById("tab-results"),
         pageWeather: document.getElementById("page-weather"),
@@ -2495,6 +2498,39 @@
         }
       }
 
+      function classElapsedRanks(edition) {
+        if (edition._elapsedRanks) return edition._elapsedRanks;
+        const ranks = {};
+        const classIds = new Set();
+        (edition.boats || []).forEach((boat) => {
+          (boat.classes || []).forEach((cls) => classIds.add(cls.id));
+        });
+        classIds.forEach((classId) => {
+          const peers = (edition.boats || []).filter((boat) => (
+            boat.finished
+            && boat.elapsed_s != null
+            && (boat.classes || []).some((cls) => cls.id === classId)
+          ));
+          peers.sort((a, b) => (
+            (a.elapsed_s - b.elapsed_s)
+            || (a.absolute_rank || 99) - (b.absolute_rank || 99)
+            || String(a.name).localeCompare(String(b.name))
+          ));
+          ranks[classId] = {};
+          peers.forEach((boat, index) => {
+            ranks[classId][boat.id] = index + 1;
+          });
+        });
+        edition._elapsedRanks = ranks;
+        return ranks;
+      }
+
+      function classElapsedRank(edition, boat, cls) {
+        if (cls && cls.elapsed_rank != null) return cls.elapsed_rank;
+        const byClass = classElapsedRanks(edition)[cls.id] || {};
+        return byClass[boat.id] || null;
+      }
+
       function visibleResultBoats() {
         ensureResultsState();
         const rows = [];
@@ -2504,7 +2540,10 @@
             const selectedClasses = (boat.classes || []).filter((cls) => state.classOn[ed.year][cls.id]);
             if (!selectedClasses.length) return;
             const topAbs = Boolean(boat.finished && boat.absolute_rank && boat.absolute_rank <= 3);
-            const topClass = selectedClasses.some((cls) => cls.finished && cls.rank && cls.rank <= 3);
+            const topClass = selectedClasses.some((cls) => {
+              const rank = classElapsedRank(ed, boat, cls);
+              return Boolean(boat.finished && rank && rank <= 3);
+            });
             if (state.top3Abs && state.top3Class) {
               if (!topAbs && !topClass) return;
             } else if (state.top3Abs && !topAbs) {
@@ -2519,8 +2558,10 @@
       }
 
       function setPage(page) {
+        if (!SHOW_RESULTS_TAB) page = "weather";
         state.page = page;
         const weather = page === "weather";
+        if (els.appTabs) els.appTabs.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.pageWeather) els.pageWeather.classList.toggle("hidden", !weather);
         if (els.pageResults) els.pageResults.classList.toggle("hidden", weather);
         if (els.tabWeather) {
@@ -2708,7 +2749,10 @@
           .sort((a, b) => a.edition.year - b.edition.year || (a.boat.absolute_rank || 99) - (b.boat.absolute_rank || 99))
           .map((row) => {
             const classes = row.classes
-              .map((cls) => `${cls.name}${cls.rank ? " #" + cls.rank : ""}`)
+              .map((cls) => {
+                const rank = classElapsedRank(row.edition, row.boat, cls);
+                return `${cls.name}${rank ? " #" + rank : ""}`;
+              })
               .join(", ");
             return `<tr>
               <td>${row.edition.year}</td>
@@ -2750,8 +2794,13 @@
         if (state.eventsBound) return;
         state.eventsBound = true;
         bindMapClick();
+        if (els.appTabs) els.appTabs.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.tabWeather) els.tabWeather.onclick = () => setPage("weather");
-        if (els.tabResults) els.tabResults.onclick = () => setPage("results");
+        if (els.tabResults) {
+          els.tabResults.onclick = () => {
+            if (SHOW_RESULTS_TAB) setPage("results");
+          };
+        }
         if (els.yearsAll) {
           els.yearsAll.onclick = () => {
             Object.keys(state.yearOn).forEach((year) => {

@@ -57,11 +57,12 @@ class ClassResult:
     class_id: str
     class_name: str
     rank: int | None
-    finished: bool
-    status: str
-    tcf: float | None
-    finish_utc: str | None
-    dtf_nm: float | None
+    elapsed_rank: int | None = None
+    finished: bool = False
+    status: str = ""
+    tcf: float | None = None
+    finish_utc: str | None = None
+    dtf_nm: float | None = None
 
 
 @dataclass
@@ -189,6 +190,7 @@ def parse_leaderboard_csv(text: str, year: int) -> dict[str, Boat]:
                 class_id=class_id,
                 class_name=class_name,
                 rank=rank,
+                elapsed_rank=None,
                 finished=finished,
                 status=status,
                 tcf=tcf,
@@ -290,6 +292,25 @@ def attach_tracks(boats: dict[str, Boat], tracks: dict[str, tuple[list[str], lis
                     boat.elapsed_label = _elapsed_label(boat.elapsed_s)
 
 
+def assign_elapsed_class_ranks(boats: list[Boat]) -> None:
+    """Rank boats inside each class by uncorrected elapsed time."""
+
+    class_ids = {item.class_id for boat in boats for item in boat.classes}
+    for class_id in class_ids:
+        peers = [
+            boat
+            for boat in boats
+            if boat.finished
+            and boat.elapsed_s is not None
+            and any(item.class_id == class_id for item in boat.classes)
+        ]
+        peers.sort(key=lambda boat: (boat.elapsed_s or 10**9, boat.absolute_rank or 999, boat.name))
+        for index, boat in enumerate(peers, start=1):
+            for item in boat.classes:
+                if item.class_id == class_id:
+                    item.elapsed_rank = index
+
+
 def load_edition(year: int, cache_root: Path = DEFAULT_CACHE) -> list[Boat]:
     folder = cache_root / f"pm{year}"
     csv_text = (folder / "leaderboard.csv").read_text(encoding="utf-8", errors="replace")
@@ -297,7 +318,9 @@ def load_edition(year: int, cache_root: Path = DEFAULT_CACHE) -> list[Boat]:
     kml_path = folder / "tracks.kml"
     if kml_path.exists():
         attach_tracks(boats, parse_kml_tracks(kml_path.read_bytes()))
-    return [boat for boat in boats.values() if boat.lon]
+    ranked = [boat for boat in boats.values() if boat.lon]
+    assign_elapsed_class_ranks(ranked)
+    return ranked
 
 
 def build_overlay(years: tuple[int, ...] = DEFAULT_YEARS, cache_root: Path = DEFAULT_CACHE) -> dict[str, Any]:
@@ -330,7 +353,7 @@ def build_overlay(years: tuple[int, ...] = DEFAULT_YEARS, cache_root: Path = DEF
         "generated_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "filter_notes": {
             "absolute": "Line honours / elapsed time, uncorrected.",
-            "per_class": "YB class rank as published (handicap classes are corrected).",
+            "per_class": "Fastest elapsed times inside each class, uncorrected.",
         },
         "editions": editions,
     }
@@ -363,7 +386,9 @@ def _boat_to_json(boat: Boat) -> dict[str, Any]:
             {
                 "id": item.class_id,
                 "name": item.class_name,
-                "rank": item.rank,
+                "rank": item.elapsed_rank or item.rank,
+                "elapsed_rank": item.elapsed_rank,
+                "handicap_rank": item.rank,
                 "finished": item.finished,
             }
             for item in boat.classes
