@@ -4,10 +4,8 @@ Offline tactical dashboard for PMC-2026.
 
 ## What it does
 
-- Thin header tabs: **Historical weather**, **Model skill**, **Settings**, and
-  **Historical result** (YB tracks). The results tab is built but hidden until
-  publish (`SHOW_RESULTS_TAB` in `dashboard/index.html`). The tab bar stays
-  visible.
+- Thin header tabs: **Historical weather**, **Model skill**, **Historical
+  result** (YB tracks), and **Settings**.
 - **Model skill** is its own page: winners by lead, RMSE/bias/direction vs lead
   day, wind-bin and model filters, hide-biased toggle, and a sortable detail
   table. ECMWF/AIFS rows stay visually separated as reference-biased.
@@ -32,8 +30,7 @@ Offline tactical dashboard for PMC-2026.
   unvalidated note still appears there when `polar_is_validated=false`.
 - Defaults to local display time from `meta.display_timezone`, with a UTC/local
   toggle on the Settings tab that updates all visible time labels.
-- **Historical result** (hidden on Pages until `SHOW_RESULTS_TAB` is flipped)
-  overlays YB tracks from 2017–2019 and 2021–2025. Year
+- **Historical result** overlays YB tracks from 2017–2019 and 2021–2025. Year
   and class chips filter the fleet. **Top 3 absolute** is uncorrected line
   honours; **Top 3 per class** is the three fastest uncorrected elapsed times
   in each selected class (clock time, not IRC/ORC handicap). **Year weather**

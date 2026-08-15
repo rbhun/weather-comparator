@@ -933,7 +933,7 @@
       <nav id="app-tabs" class="app-tabs" role="tablist" aria-label="Dashboard pages">
         <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
         <button id="tab-skill" type="button" role="tab" aria-selected="false">Model skill</button>
-        <button id="tab-results" type="button" role="tab" aria-selected="false" class="hidden">Historical result</button>
+        <button id="tab-results" type="button" role="tab" aria-selected="false">Historical result</button>
         <button id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
       </nav>
     </header>
@@ -1239,7 +1239,7 @@
       const STORAGE_PAYLOAD = "pmc.dashboard.payload.v2";
       const STORAGE_NAME = "pmc.dashboard.payloadName.v2";
       // Flip to true when publishing the YB historical-result tab on Pages.
-      const SHOW_RESULTS_TAB = false;
+      const SHOW_RESULTS_TAB = true;
       const GOATCOUNTER_SITE = "rbhun-pmc";
       const STORAGE_PREFER = "pmc.dashboard.preferSaved.v2";
       const plotConfig = { displayModeBar: false, responsive: true, doubleClick: "reset" };
