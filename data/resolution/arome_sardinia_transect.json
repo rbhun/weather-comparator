@@ -1,0 +1,4447 @@
+{
+  "meta": {
+    "model": "meteofrance_arome_france_hd",
+    "transect": "sardinia_e",
+    "coast": {
+      "lat": 40.5,
+      "lon": 9.72,
+      "bearing_deg": 90.0
+    },
+    "years": [
+      2023,
+      2024,
+      2025
+    ],
+    "local_tz": "Europe/Rome CEST UTC+2",
+    "distances_nm": [
+      0.0,
+      2.5,
+      5.0,
+      7.5,
+      10.0,
+      15.0,
+      20.0,
+      30.0
+    ]
+  },
+  "all_years": {
+    "0.0": {
+      "lat": 40.5,
+      "lon": 9.72,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 2.78,
+          "mean_dir_deg": 250.4
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 2.71,
+          "mean_dir_deg": 256.4
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 2.96,
+          "mean_dir_deg": 253.2
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 2.81,
+          "mean_dir_deg": 252.4
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 2.84,
+          "mean_dir_deg": 254.3
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 2.66,
+          "mean_dir_deg": 256.0
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 2.73,
+          "mean_dir_deg": 254.7
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 2.59,
+          "mean_dir_deg": 259.1
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 2.76,
+          "mean_dir_deg": 239.1
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 2.68,
+          "mean_dir_deg": 182.7
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 3.58,
+          "mean_dir_deg": 145.3
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 4.39,
+          "mean_dir_deg": 112.0
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 5.54,
+          "mean_dir_deg": 103.3
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 6.24,
+          "mean_dir_deg": 102.4
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 6.06,
+          "mean_dir_deg": 100.9
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 6.08,
+          "mean_dir_deg": 115.5
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 5.64,
+          "mean_dir_deg": 127.5
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 5.29,
+          "mean_dir_deg": 139.5
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 4.52,
+          "mean_dir_deg": 147.1
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 3.89,
+          "mean_dir_deg": 169.6
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 3.28,
+          "mean_dir_deg": 206.1
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 2.87,
+          "mean_dir_deg": 233.2
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 2.76,
+          "mean_dir_deg": 252.1
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 3.02,
+          "mean_dir_deg": 245.0
+        }
+      }
+    },
+    "2.5": {
+      "lat": 40.49999,
+      "lon": 9.77476,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 2.75,
+          "mean_dir_deg": 266.5
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 2.69,
+          "mean_dir_deg": 261.4
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 3.15,
+          "mean_dir_deg": 271.1
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 2.89,
+          "mean_dir_deg": 260.7
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 2.83,
+          "mean_dir_deg": 264.0
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 2.59,
+          "mean_dir_deg": 260.6
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 2.63,
+          "mean_dir_deg": 258.7
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 2.4,
+          "mean_dir_deg": 263.2
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 2.93,
+          "mean_dir_deg": 258.6
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 3.03,
+          "mean_dir_deg": 319.0
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 4.29,
+          "mean_dir_deg": 68.9
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 5.7,
+          "mean_dir_deg": 85.5
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 6.94,
+          "mean_dir_deg": 94.8
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 7.46,
+          "mean_dir_deg": 101.1
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 7.35,
+          "mean_dir_deg": 99.1
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 7.35,
+          "mean_dir_deg": 113.6
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 6.95,
+          "mean_dir_deg": 127.1
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 6.58,
+          "mean_dir_deg": 133.0
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 5.86,
+          "mean_dir_deg": 137.8
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 5.1,
+          "mean_dir_deg": 149.4
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 4.15,
+          "mean_dir_deg": 160.6
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 3.25,
+          "mean_dir_deg": 201.5
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 2.87,
+          "mean_dir_deg": 231.9
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 2.95,
+          "mean_dir_deg": 246.2
+        }
+      }
+    },
+    "5.0": {
+      "lat": 40.49995,
+      "lon": 9.82952,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 3.66,
+          "mean_dir_deg": 265.8
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 3.39,
+          "mean_dir_deg": 273.5
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 3.65,
+          "mean_dir_deg": 284.4
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 3.56,
+          "mean_dir_deg": 283.1
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 3.52,
+          "mean_dir_deg": 286.4
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 3.21,
+          "mean_dir_deg": 286.4
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 3.42,
+          "mean_dir_deg": 281.9
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 3.26,
+          "mean_dir_deg": 279.8
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 3.5,
+          "mean_dir_deg": 278.2
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 3.32,
+          "mean_dir_deg": 290.2
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 4.45,
+          "mean_dir_deg": 79.2
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 5.45,
+          "mean_dir_deg": 85.7
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 6.02,
+          "mean_dir_deg": 89.7
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 6.48,
+          "mean_dir_deg": 101.6
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 6.49,
+          "mean_dir_deg": 96.8
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 6.52,
+          "mean_dir_deg": 111.3
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 6.42,
+          "mean_dir_deg": 127.5
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 5.97,
+          "mean_dir_deg": 136.1
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 5.49,
+          "mean_dir_deg": 147.0
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 4.82,
+          "mean_dir_deg": 160.5
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 4.18,
+          "mean_dir_deg": 182.5
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 3.77,
+          "mean_dir_deg": 216.0
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 3.75,
+          "mean_dir_deg": 239.0
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 3.81,
+          "mean_dir_deg": 248.2
+        }
+      }
+    },
+    "7.5": {
+      "lat": 40.49988,
+      "lon": 9.88427,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 6.67,
+          "mean_dir_deg": 247.4
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 6.13,
+          "mean_dir_deg": 258.5
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 6.46,
+          "mean_dir_deg": 289.3
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 6.98,
+          "mean_dir_deg": 300.7
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 6.46,
+          "mean_dir_deg": 296.6
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 5.89,
+          "mean_dir_deg": 291.7
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 6.34,
+          "mean_dir_deg": 293.3
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 6.12,
+          "mean_dir_deg": 289.6
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 6.41,
+          "mean_dir_deg": 286.3
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 6.21,
+          "mean_dir_deg": 294.2
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 6.23,
+          "mean_dir_deg": 304.2
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 7.05,
+          "mean_dir_deg": 71.6
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 7.85,
+          "mean_dir_deg": 79.8
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 8.88,
+          "mean_dir_deg": 89.5
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 8.84,
+          "mean_dir_deg": 92.0
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 9.11,
+          "mean_dir_deg": 102.2
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 9.09,
+          "mean_dir_deg": 124.3
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 8.83,
+          "mean_dir_deg": 131.3
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 8.43,
+          "mean_dir_deg": 142.4
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 8.1,
+          "mean_dir_deg": 160.3
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 7.58,
+          "mean_dir_deg": 175.3
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 6.86,
+          "mean_dir_deg": 192.3
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 7.05,
+          "mean_dir_deg": 208.8
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 6.82,
+          "mean_dir_deg": 226.9
+        }
+      }
+    },
+    "10.0": {
+      "lat": 40.49979,
+      "lon": 9.93903,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 7.05,
+          "mean_dir_deg": 231.8
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 6.92,
+          "mean_dir_deg": 252.5
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 7.03,
+          "mean_dir_deg": 277.7
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 7.55,
+          "mean_dir_deg": 300.3
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 7.06,
+          "mean_dir_deg": 300.7
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 7.01,
+          "mean_dir_deg": 303.4
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 7.12,
+          "mean_dir_deg": 302.4
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 7.17,
+          "mean_dir_deg": 301.2
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 7.38,
+          "mean_dir_deg": 294.3
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 7.32,
+          "mean_dir_deg": 294.5
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 6.98,
+          "mean_dir_deg": 291.1
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 6.91,
+          "mean_dir_deg": 41.5
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 7.61,
+          "mean_dir_deg": 73.7
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 8.73,
+          "mean_dir_deg": 85.6
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 9.09,
+          "mean_dir_deg": 83.9
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 8.89,
+          "mean_dir_deg": 97.5
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 9.09,
+          "mean_dir_deg": 118.5
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 8.81,
+          "mean_dir_deg": 127.5
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 8.69,
+          "mean_dir_deg": 133.6
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 8.49,
+          "mean_dir_deg": 154.4
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 7.93,
+          "mean_dir_deg": 177.1
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 7.33,
+          "mean_dir_deg": 194.3
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 7.32,
+          "mean_dir_deg": 204.5
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 7.25,
+          "mean_dir_deg": 219.1
+        }
+      }
+    },
+    "15.0": {
+      "lat": 40.49953,
+      "lon": 10.04855,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 7.7,
+          "mean_dir_deg": 227.5
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 7.54,
+          "mean_dir_deg": 252.1
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 7.83,
+          "mean_dir_deg": 276.5
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 7.83,
+          "mean_dir_deg": 296.6
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 7.7,
+          "mean_dir_deg": 303.2
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 7.93,
+          "mean_dir_deg": 307.0
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 8.29,
+          "mean_dir_deg": 312.5
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 8.3,
+          "mean_dir_deg": 315.3
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 8.09,
+          "mean_dir_deg": 297.5
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 7.81,
+          "mean_dir_deg": 297.7
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 7.8,
+          "mean_dir_deg": 300.9
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 7.22,
+          "mean_dir_deg": 330.5
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 7.74,
+          "mean_dir_deg": 45.4
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 8.32,
+          "mean_dir_deg": 72.8
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 8.66,
+          "mean_dir_deg": 75.6
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 8.6,
+          "mean_dir_deg": 95.0
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 9.0,
+          "mean_dir_deg": 112.1
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 8.72,
+          "mean_dir_deg": 120.1
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 8.9,
+          "mean_dir_deg": 134.9
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 8.47,
+          "mean_dir_deg": 160.6
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 8.07,
+          "mean_dir_deg": 176.1
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 7.85,
+          "mean_dir_deg": 195.4
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 7.77,
+          "mean_dir_deg": 210.1
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 7.73,
+          "mean_dir_deg": 219.8
+        }
+      }
+    },
+    "20.0": {
+      "lat": 40.49917,
+      "lon": 10.15806,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 8.18,
+          "mean_dir_deg": 232.0
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 8.05,
+          "mean_dir_deg": 250.9
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 8.08,
+          "mean_dir_deg": 275.7
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 8.64,
+          "mean_dir_deg": 296.3
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 8.16,
+          "mean_dir_deg": 306.6
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 8.29,
+          "mean_dir_deg": 317.0
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 8.86,
+          "mean_dir_deg": 319.7
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 9.09,
+          "mean_dir_deg": 315.7
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 8.59,
+          "mean_dir_deg": 309.0
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 8.44,
+          "mean_dir_deg": 299.4
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 8.29,
+          "mean_dir_deg": 304.7
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 7.56,
+          "mean_dir_deg": 317.6
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 7.48,
+          "mean_dir_deg": 353.4
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 7.94,
+          "mean_dir_deg": 58.7
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 8.06,
+          "mean_dir_deg": 66.8
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 8.09,
+          "mean_dir_deg": 91.8
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 8.62,
+          "mean_dir_deg": 105.9
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 8.29,
+          "mean_dir_deg": 114.2
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 8.72,
+          "mean_dir_deg": 137.1
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 8.59,
+          "mean_dir_deg": 164.8
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 8.08,
+          "mean_dir_deg": 184.8
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 8.09,
+          "mean_dir_deg": 199.7
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 7.97,
+          "mean_dir_deg": 213.5
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 7.85,
+          "mean_dir_deg": 223.4
+        }
+      }
+    },
+    "30.0": {
+      "lat": 40.49814,
+      "lon": 10.37709,
+      "by_local_hour": {
+        "0": {
+          "n": 93,
+          "mean_tws_kt": 8.33,
+          "mean_dir_deg": 250.5
+        },
+        "1": {
+          "n": 93,
+          "mean_tws_kt": 8.58,
+          "mean_dir_deg": 256.3
+        },
+        "2": {
+          "n": 93,
+          "mean_tws_kt": 8.49,
+          "mean_dir_deg": 273.2
+        },
+        "3": {
+          "n": 93,
+          "mean_tws_kt": 8.64,
+          "mean_dir_deg": 297.2
+        },
+        "4": {
+          "n": 93,
+          "mean_tws_kt": 8.58,
+          "mean_dir_deg": 311.0
+        },
+        "5": {
+          "n": 93,
+          "mean_tws_kt": 8.6,
+          "mean_dir_deg": 310.6
+        },
+        "6": {
+          "n": 93,
+          "mean_tws_kt": 8.73,
+          "mean_dir_deg": 312.0
+        },
+        "7": {
+          "n": 93,
+          "mean_tws_kt": 9.0,
+          "mean_dir_deg": 306.2
+        },
+        "8": {
+          "n": 93,
+          "mean_tws_kt": 9.14,
+          "mean_dir_deg": 306.5
+        },
+        "9": {
+          "n": 93,
+          "mean_tws_kt": 9.33,
+          "mean_dir_deg": 305.1
+        },
+        "10": {
+          "n": 93,
+          "mean_tws_kt": 8.89,
+          "mean_dir_deg": 306.5
+        },
+        "11": {
+          "n": 93,
+          "mean_tws_kt": 8.04,
+          "mean_dir_deg": 310.5
+        },
+        "12": {
+          "n": 93,
+          "mean_tws_kt": 7.72,
+          "mean_dir_deg": 317.4
+        },
+        "13": {
+          "n": 93,
+          "mean_tws_kt": 7.3,
+          "mean_dir_deg": 345.3
+        },
+        "14": {
+          "n": 93,
+          "mean_tws_kt": 7.56,
+          "mean_dir_deg": 26.5
+        },
+        "15": {
+          "n": 93,
+          "mean_tws_kt": 7.48,
+          "mean_dir_deg": 67.9
+        },
+        "16": {
+          "n": 93,
+          "mean_tws_kt": 7.8,
+          "mean_dir_deg": 95.6
+        },
+        "17": {
+          "n": 93,
+          "mean_tws_kt": 8.02,
+          "mean_dir_deg": 111.2
+        },
+        "18": {
+          "n": 93,
+          "mean_tws_kt": 8.2,
+          "mean_dir_deg": 136.9
+        },
+        "19": {
+          "n": 93,
+          "mean_tws_kt": 8.26,
+          "mean_dir_deg": 191.4
+        },
+        "20": {
+          "n": 93,
+          "mean_tws_kt": 8.3,
+          "mean_dir_deg": 237.0
+        },
+        "21": {
+          "n": 93,
+          "mean_tws_kt": 8.25,
+          "mean_dir_deg": 223.2
+        },
+        "22": {
+          "n": 93,
+          "mean_tws_kt": 8.17,
+          "mean_dir_deg": 233.2
+        },
+        "23": {
+          "n": 93,
+          "mean_tws_kt": 8.28,
+          "mean_dir_deg": 239.8
+        }
+      }
+    }
+  },
+  "by_year": {
+    "2023": {
+      "0.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 3.44,
+            "mean_dir_deg": 250.7
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 3.45,
+            "mean_dir_deg": 251.4
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 3.92,
+            "mean_dir_deg": 249.5
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 3.45,
+            "mean_dir_deg": 254.2
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 3.48,
+            "mean_dir_deg": 260.9
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 3.27,
+            "mean_dir_deg": 262.6
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 3.45,
+            "mean_dir_deg": 253.0
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 3.31,
+            "mean_dir_deg": 255.9
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 3.5,
+            "mean_dir_deg": 234.1
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 2.99,
+            "mean_dir_deg": 209.7
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 3.79,
+            "mean_dir_deg": 168.8
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 4.57,
+            "mean_dir_deg": 158.3
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.14,
+            "mean_dir_deg": 130.1
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.22,
+            "mean_dir_deg": 121.2
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.06,
+            "mean_dir_deg": 82.3
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 5.86,
+            "mean_dir_deg": 126.9
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 5.63,
+            "mean_dir_deg": 140.7
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 5.78,
+            "mean_dir_deg": 157.1
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 5.09,
+            "mean_dir_deg": 179.7
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 4.36,
+            "mean_dir_deg": 207.4
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 3.94,
+            "mean_dir_deg": 253.2
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 3.52,
+            "mean_dir_deg": 255.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 3.39,
+            "mean_dir_deg": 246.9
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 3.79,
+            "mean_dir_deg": 246.9
+          }
+        }
+      },
+      "2.5": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 2.94,
+            "mean_dir_deg": 266.2
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 2.74,
+            "mean_dir_deg": 262.9
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 3.7,
+            "mean_dir_deg": 271.3
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 3.25,
+            "mean_dir_deg": 263.3
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 3.22,
+            "mean_dir_deg": 266.8
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 3.11,
+            "mean_dir_deg": 256.8
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 2.95,
+            "mean_dir_deg": 258.4
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 2.81,
+            "mean_dir_deg": 264.0
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 3.64,
+            "mean_dir_deg": 263.0
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 3.78,
+            "mean_dir_deg": 305.4
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 4.88,
+            "mean_dir_deg": 359.5
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 6.1,
+            "mean_dir_deg": 79.5
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 7.32,
+            "mean_dir_deg": 88.1
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 8.19,
+            "mean_dir_deg": 121.2
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 7.51,
+            "mean_dir_deg": 89.3
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 7.37,
+            "mean_dir_deg": 113.7
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 7.11,
+            "mean_dir_deg": 139.1
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 7.27,
+            "mean_dir_deg": 142.8
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.77,
+            "mean_dir_deg": 156.8
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 5.6,
+            "mean_dir_deg": 173.3
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 4.44,
+            "mean_dir_deg": 196.0
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 3.45,
+            "mean_dir_deg": 220.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 2.94,
+            "mean_dir_deg": 236.7
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 3.09,
+            "mean_dir_deg": 254.8
+          }
+        }
+      },
+      "5.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 3.78,
+            "mean_dir_deg": 257.0
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 3.48,
+            "mean_dir_deg": 259.8
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 4.05,
+            "mean_dir_deg": 286.7
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 3.88,
+            "mean_dir_deg": 286.4
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 3.98,
+            "mean_dir_deg": 288.7
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 3.74,
+            "mean_dir_deg": 281.7
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 3.92,
+            "mean_dir_deg": 272.2
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 3.79,
+            "mean_dir_deg": 270.4
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 3.88,
+            "mean_dir_deg": 271.1
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 3.54,
+            "mean_dir_deg": 279.8
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 4.54,
+            "mean_dir_deg": 34.3
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.56,
+            "mean_dir_deg": 66.5
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 6.17,
+            "mean_dir_deg": 75.9
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.61,
+            "mean_dir_deg": 127.8
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.44,
+            "mean_dir_deg": 64.5
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 6.68,
+            "mean_dir_deg": 103.2
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 6.5,
+            "mean_dir_deg": 119.5
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 6.65,
+            "mean_dir_deg": 145.2
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.17,
+            "mean_dir_deg": 182.6
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 5.26,
+            "mean_dir_deg": 202.8
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 4.53,
+            "mean_dir_deg": 220.7
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 4.12,
+            "mean_dir_deg": 228.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 3.98,
+            "mean_dir_deg": 242.3
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 3.58,
+            "mean_dir_deg": 245.3
+          }
+        }
+      },
+      "7.5": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 7.09,
+            "mean_dir_deg": 245.0
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 6.2,
+            "mean_dir_deg": 247.9
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 7.32,
+            "mean_dir_deg": 290.0
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 8.02,
+            "mean_dir_deg": 300.6
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 6.97,
+            "mean_dir_deg": 305.5
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 6.6,
+            "mean_dir_deg": 282.9
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 7.21,
+            "mean_dir_deg": 275.8
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 7.28,
+            "mean_dir_deg": 274.8
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 7.37,
+            "mean_dir_deg": 277.2
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 6.98,
+            "mean_dir_deg": 285.0
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 7.11,
+            "mean_dir_deg": 291.0
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 7.66,
+            "mean_dir_deg": 22.3
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.22,
+            "mean_dir_deg": 61.8
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 9.69,
+            "mean_dir_deg": 88.3
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 9.48,
+            "mean_dir_deg": 63.2
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 9.76,
+            "mean_dir_deg": 60.1
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 9.96,
+            "mean_dir_deg": 108.3
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 10.52,
+            "mean_dir_deg": 124.4
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 9.87,
+            "mean_dir_deg": 147.8
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 9.43,
+            "mean_dir_deg": 182.7
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 8.25,
+            "mean_dir_deg": 206.9
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 7.56,
+            "mean_dir_deg": 210.0
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 7.56,
+            "mean_dir_deg": 217.5
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 6.78,
+            "mean_dir_deg": 229.9
+          }
+        }
+      },
+      "10.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 7.95,
+            "mean_dir_deg": 235.4
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 7.36,
+            "mean_dir_deg": 249.2
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 8.27,
+            "mean_dir_deg": 261.3
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 8.82,
+            "mean_dir_deg": 290.7
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 7.85,
+            "mean_dir_deg": 296.9
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 8.16,
+            "mean_dir_deg": 298.7
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 8.3,
+            "mean_dir_deg": 275.8
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 8.4,
+            "mean_dir_deg": 273.2
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 8.22,
+            "mean_dir_deg": 274.2
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 8.22,
+            "mean_dir_deg": 282.0
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 8.21,
+            "mean_dir_deg": 275.5
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 8.28,
+            "mean_dir_deg": 311.8
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.64,
+            "mean_dir_deg": 63.2
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 9.81,
+            "mean_dir_deg": 90.5
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 10.16,
+            "mean_dir_deg": 44.3
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 9.97,
+            "mean_dir_deg": 58.9
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 10.03,
+            "mean_dir_deg": 87.1
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 10.65,
+            "mean_dir_deg": 119.1
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 10.01,
+            "mean_dir_deg": 107.3
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 10.17,
+            "mean_dir_deg": 154.6
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 9.23,
+            "mean_dir_deg": 219.2
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 8.38,
+            "mean_dir_deg": 215.6
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 8.14,
+            "mean_dir_deg": 216.7
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 7.77,
+            "mean_dir_deg": 223.1
+          }
+        }
+      },
+      "15.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 8.2,
+            "mean_dir_deg": 229.2
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 8.2,
+            "mean_dir_deg": 231.7
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 9.16,
+            "mean_dir_deg": 255.0
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 9.33,
+            "mean_dir_deg": 269.8
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 8.55,
+            "mean_dir_deg": 281.6
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 8.87,
+            "mean_dir_deg": 296.9
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 8.91,
+            "mean_dir_deg": 282.1
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 8.74,
+            "mean_dir_deg": 276.4
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 9.01,
+            "mean_dir_deg": 279.3
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 8.72,
+            "mean_dir_deg": 271.2
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 9.36,
+            "mean_dir_deg": 285.4
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 8.93,
+            "mean_dir_deg": 289.2
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 9.42,
+            "mean_dir_deg": 328.5
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 10.09,
+            "mean_dir_deg": 39.9
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 10.24,
+            "mean_dir_deg": 35.3
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 9.89,
+            "mean_dir_deg": 38.4
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 10.27,
+            "mean_dir_deg": 88.0
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 10.29,
+            "mean_dir_deg": 105.1
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 10.61,
+            "mean_dir_deg": 106.2
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 9.89,
+            "mean_dir_deg": 111.0
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 9.73,
+            "mean_dir_deg": 244.2
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 9.53,
+            "mean_dir_deg": 233.7
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 8.95,
+            "mean_dir_deg": 225.4
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 8.8,
+            "mean_dir_deg": 222.2
+          }
+        }
+      },
+      "20.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 9.26,
+            "mean_dir_deg": 237.9
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 8.87,
+            "mean_dir_deg": 239.7
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 9.3,
+            "mean_dir_deg": 255.3
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 10.37,
+            "mean_dir_deg": 255.3
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 8.8,
+            "mean_dir_deg": 262.9
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 8.92,
+            "mean_dir_deg": 293.5
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 9.33,
+            "mean_dir_deg": 281.3
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 9.43,
+            "mean_dir_deg": 279.6
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 9.27,
+            "mean_dir_deg": 290.3
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 9.24,
+            "mean_dir_deg": 279.7
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 9.58,
+            "mean_dir_deg": 279.2
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 9.03,
+            "mean_dir_deg": 291.7
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 9.33,
+            "mean_dir_deg": 305.8
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 9.47,
+            "mean_dir_deg": 351.3
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 9.53,
+            "mean_dir_deg": 20.4
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 9.61,
+            "mean_dir_deg": 31.3
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 9.98,
+            "mean_dir_deg": 72.0
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 10.34,
+            "mean_dir_deg": 86.3
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 10.74,
+            "mean_dir_deg": 92.1
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 10.56,
+            "mean_dir_deg": 102.8
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 10.1,
+            "mean_dir_deg": 258.2
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 9.82,
+            "mean_dir_deg": 238.5
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 9.68,
+            "mean_dir_deg": 231.6
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 9.44,
+            "mean_dir_deg": 233.9
+          }
+        }
+      },
+      "30.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 10.37,
+            "mean_dir_deg": 256.3
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 10.16,
+            "mean_dir_deg": 266.1
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 9.66,
+            "mean_dir_deg": 263.0
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 9.93,
+            "mean_dir_deg": 266.6
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 9.63,
+            "mean_dir_deg": 281.0
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 9.4,
+            "mean_dir_deg": 289.8
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 9.86,
+            "mean_dir_deg": 282.0
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 10.52,
+            "mean_dir_deg": 270.6
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 10.09,
+            "mean_dir_deg": 290.9
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 10.39,
+            "mean_dir_deg": 287.7
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 10.06,
+            "mean_dir_deg": 288.3
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 9.49,
+            "mean_dir_deg": 294.9
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.82,
+            "mean_dir_deg": 310.3
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 8.66,
+            "mean_dir_deg": 313.5
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 9.39,
+            "mean_dir_deg": 345.2
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 9.32,
+            "mean_dir_deg": 336.4
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 9.27,
+            "mean_dir_deg": 27.1
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 9.84,
+            "mean_dir_deg": 59.4
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 10.55,
+            "mean_dir_deg": 66.6
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 10.58,
+            "mean_dir_deg": 153.5
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 9.99,
+            "mean_dir_deg": 267.5
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 10.19,
+            "mean_dir_deg": 244.3
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 9.91,
+            "mean_dir_deg": 243.4
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 9.96,
+            "mean_dir_deg": 248.2
+          }
+        }
+      }
+    },
+    "2024": {
+      "0.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 2.3,
+            "mean_dir_deg": 247.5
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 2.09,
+            "mean_dir_deg": 260.4
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 2.51,
+            "mean_dir_deg": 247.0
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 2.39,
+            "mean_dir_deg": 250.7
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 2.59,
+            "mean_dir_deg": 251.2
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 2.49,
+            "mean_dir_deg": 253.1
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 2.34,
+            "mean_dir_deg": 263.8
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 2.13,
+            "mean_dir_deg": 275.6
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 2.41,
+            "mean_dir_deg": 239.9
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 2.39,
+            "mean_dir_deg": 152.0
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 3.07,
+            "mean_dir_deg": 130.3
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 4.02,
+            "mean_dir_deg": 106.6
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.53,
+            "mean_dir_deg": 104.2
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 5.87,
+            "mean_dir_deg": 103.3
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 5.46,
+            "mean_dir_deg": 97.7
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 6.03,
+            "mean_dir_deg": 110.4
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 5.42,
+            "mean_dir_deg": 116.2
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 4.63,
+            "mean_dir_deg": 121.6
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 3.86,
+            "mean_dir_deg": 125.0
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 3.57,
+            "mean_dir_deg": 128.2
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 2.88,
+            "mean_dir_deg": 130.8
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 2.44,
+            "mean_dir_deg": 211.4
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 2.45,
+            "mean_dir_deg": 261.6
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 2.7,
+            "mean_dir_deg": 241.6
+          }
+        }
+      },
+      "2.5": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 2.45,
+            "mean_dir_deg": 253.2
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 2.26,
+            "mean_dir_deg": 257.5
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 2.63,
+            "mean_dir_deg": 268.5
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 2.56,
+            "mean_dir_deg": 259.3
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 2.79,
+            "mean_dir_deg": 269.3
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 2.41,
+            "mean_dir_deg": 266.7
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 2.42,
+            "mean_dir_deg": 260.2
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 2.21,
+            "mean_dir_deg": 270.8
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 2.69,
+            "mean_dir_deg": 255.9
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 2.85,
+            "mean_dir_deg": 3.6
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 3.62,
+            "mean_dir_deg": 88.6
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.19,
+            "mean_dir_deg": 95.6
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 6.23,
+            "mean_dir_deg": 103.1
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.67,
+            "mean_dir_deg": 99.1
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.51,
+            "mean_dir_deg": 90.9
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 6.9,
+            "mean_dir_deg": 105.2
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 6.33,
+            "mean_dir_deg": 119.8
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 5.51,
+            "mean_dir_deg": 121.8
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 4.75,
+            "mean_dir_deg": 120.7
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 4.47,
+            "mean_dir_deg": 122.5
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 3.88,
+            "mean_dir_deg": 129.9
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 2.98,
+            "mean_dir_deg": 181.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 2.76,
+            "mean_dir_deg": 236.2
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 2.73,
+            "mean_dir_deg": 236.7
+          }
+        }
+      },
+      "5.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 3.39,
+            "mean_dir_deg": 266.7
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 3.0,
+            "mean_dir_deg": 275.6
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 3.27,
+            "mean_dir_deg": 279.1
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 3.28,
+            "mean_dir_deg": 284.4
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 3.27,
+            "mean_dir_deg": 294.8
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 2.87,
+            "mean_dir_deg": 298.6
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 3.27,
+            "mean_dir_deg": 298.8
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 3.12,
+            "mean_dir_deg": 286.4
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 3.53,
+            "mean_dir_deg": 279.8
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 3.63,
+            "mean_dir_deg": 338.3
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 4.52,
+            "mean_dir_deg": 79.7
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.02,
+            "mean_dir_deg": 87.8
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.4,
+            "mean_dir_deg": 94.3
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 5.87,
+            "mean_dir_deg": 99.2
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 5.82,
+            "mean_dir_deg": 93.0
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 5.7,
+            "mean_dir_deg": 102.5
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 5.67,
+            "mean_dir_deg": 121.2
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 4.77,
+            "mean_dir_deg": 120.4
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 4.66,
+            "mean_dir_deg": 118.5
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 4.1,
+            "mean_dir_deg": 127.2
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 3.68,
+            "mean_dir_deg": 128.9
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 3.42,
+            "mean_dir_deg": 208.2
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 3.6,
+            "mean_dir_deg": 247.0
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 3.57,
+            "mean_dir_deg": 247.3
+          }
+        }
+      },
+      "7.5": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 5.15,
+            "mean_dir_deg": 249.1
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 5.11,
+            "mean_dir_deg": 256.7
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 5.09,
+            "mean_dir_deg": 284.4
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 5.8,
+            "mean_dir_deg": 304.0
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 5.79,
+            "mean_dir_deg": 296.8
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 5.29,
+            "mean_dir_deg": 296.4
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 6.53,
+            "mean_dir_deg": 315.2
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 5.45,
+            "mean_dir_deg": 305.8
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 6.28,
+            "mean_dir_deg": 284.9
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 6.39,
+            "mean_dir_deg": 300.8
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 5.8,
+            "mean_dir_deg": 331.5
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.78,
+            "mean_dir_deg": 78.7
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 6.44,
+            "mean_dir_deg": 89.4
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 7.01,
+            "mean_dir_deg": 88.0
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.68,
+            "mean_dir_deg": 90.1
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 7.09,
+            "mean_dir_deg": 98.3
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 7.2,
+            "mean_dir_deg": 119.6
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 6.32,
+            "mean_dir_deg": 118.8
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.58,
+            "mean_dir_deg": 118.1
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 6.29,
+            "mean_dir_deg": 121.1
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 6.4,
+            "mean_dir_deg": 114.3
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 5.71,
+            "mean_dir_deg": 157.0
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 6.04,
+            "mean_dir_deg": 186.6
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 5.65,
+            "mean_dir_deg": 218.5
+          }
+        }
+      },
+      "10.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 5.26,
+            "mean_dir_deg": 223.9
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 5.37,
+            "mean_dir_deg": 252.7
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 5.39,
+            "mean_dir_deg": 273.2
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 6.36,
+            "mean_dir_deg": 311.6
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 6.23,
+            "mean_dir_deg": 304.9
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 5.84,
+            "mean_dir_deg": 305.3
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 6.65,
+            "mean_dir_deg": 327.8
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 6.25,
+            "mean_dir_deg": 342.9
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 7.29,
+            "mean_dir_deg": 301.9
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 7.05,
+            "mean_dir_deg": 302.3
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 6.42,
+            "mean_dir_deg": 305.2
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.46,
+            "mean_dir_deg": 66.7
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.69,
+            "mean_dir_deg": 82.3
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.75,
+            "mean_dir_deg": 79.6
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.68,
+            "mean_dir_deg": 84.6
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 6.34,
+            "mean_dir_deg": 92.1
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 7.13,
+            "mean_dir_deg": 116.3
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 6.29,
+            "mean_dir_deg": 118.1
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.53,
+            "mean_dir_deg": 120.7
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 6.48,
+            "mean_dir_deg": 121.7
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 6.67,
+            "mean_dir_deg": 111.9
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 6.01,
+            "mean_dir_deg": 137.4
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 6.26,
+            "mean_dir_deg": 178.3
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 5.69,
+            "mean_dir_deg": 205.3
+          }
+        }
+      },
+      "15.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 6.04,
+            "mean_dir_deg": 215.6
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 5.75,
+            "mean_dir_deg": 267.9
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 5.88,
+            "mean_dir_deg": 273.0
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 6.11,
+            "mean_dir_deg": 308.0
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 6.43,
+            "mean_dir_deg": 314.8
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 6.68,
+            "mean_dir_deg": 316.9
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 7.35,
+            "mean_dir_deg": 319.1
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 8.04,
+            "mean_dir_deg": 341.9
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 7.6,
+            "mean_dir_deg": 316.6
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 7.38,
+            "mean_dir_deg": 317.0
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 7.07,
+            "mean_dir_deg": 326.5
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.51,
+            "mean_dir_deg": 25.9
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.65,
+            "mean_dir_deg": 57.0
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.31,
+            "mean_dir_deg": 82.9
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.04,
+            "mean_dir_deg": 76.5
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 5.83,
+            "mean_dir_deg": 95.0
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 6.76,
+            "mean_dir_deg": 107.5
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 6.37,
+            "mean_dir_deg": 110.0
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.41,
+            "mean_dir_deg": 123.2
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 6.79,
+            "mean_dir_deg": 165.5
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 6.58,
+            "mean_dir_deg": 99.3
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 6.29,
+            "mean_dir_deg": 154.5
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 6.28,
+            "mean_dir_deg": 182.7
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 5.59,
+            "mean_dir_deg": 189.0
+          }
+        }
+      },
+      "20.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 6.17,
+            "mean_dir_deg": 211.0
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 6.15,
+            "mean_dir_deg": 263.0
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 6.63,
+            "mean_dir_deg": 270.3
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 6.56,
+            "mean_dir_deg": 309.0
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 6.75,
+            "mean_dir_deg": 320.0
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 7.43,
+            "mean_dir_deg": 329.0
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 8.45,
+            "mean_dir_deg": 334.3
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 9.35,
+            "mean_dir_deg": 345.8
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 7.9,
+            "mean_dir_deg": 326.0
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 8.1,
+            "mean_dir_deg": 325.3
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 7.63,
+            "mean_dir_deg": 322.9
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.95,
+            "mean_dir_deg": 337.3
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.38,
+            "mean_dir_deg": 27.3
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.18,
+            "mean_dir_deg": 80.1
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 5.6,
+            "mean_dir_deg": 68.1
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 5.38,
+            "mean_dir_deg": 95.8
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 6.43,
+            "mean_dir_deg": 106.0
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 5.94,
+            "mean_dir_deg": 108.9
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.12,
+            "mean_dir_deg": 158.7
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 6.51,
+            "mean_dir_deg": 61.1
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 6.31,
+            "mean_dir_deg": 113.1
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 6.65,
+            "mean_dir_deg": 164.4
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 6.22,
+            "mean_dir_deg": 206.3
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 5.75,
+            "mean_dir_deg": 199.3
+          }
+        }
+      },
+      "30.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 5.64,
+            "mean_dir_deg": 229.0
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 6.27,
+            "mean_dir_deg": 238.0
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 6.71,
+            "mean_dir_deg": 259.9
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 7.19,
+            "mean_dir_deg": 296.5
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 7.08,
+            "mean_dir_deg": 313.9
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 7.27,
+            "mean_dir_deg": 296.4
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 7.51,
+            "mean_dir_deg": 322.2
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 7.82,
+            "mean_dir_deg": 332.4
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 8.7,
+            "mean_dir_deg": 319.1
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 8.81,
+            "mean_dir_deg": 320.0
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 8.24,
+            "mean_dir_deg": 320.1
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 6.39,
+            "mean_dir_deg": 328.3
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.84,
+            "mean_dir_deg": 325.8
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 5.51,
+            "mean_dir_deg": 22.8
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 5.15,
+            "mean_dir_deg": 32.8
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 4.95,
+            "mean_dir_deg": 80.2
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 5.5,
+            "mean_dir_deg": 111.8
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 5.51,
+            "mean_dir_deg": 133.2
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 5.58,
+            "mean_dir_deg": 216.0
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 5.96,
+            "mean_dir_deg": 276.5
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 6.28,
+            "mean_dir_deg": 255.2
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 6.72,
+            "mean_dir_deg": 207.4
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 6.7,
+            "mean_dir_deg": 243.8
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 5.96,
+            "mean_dir_deg": 226.3
+          }
+        }
+      }
+    },
+    "2025": {
+      "0.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 2.6,
+            "mean_dir_deg": 252.9
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 2.59,
+            "mean_dir_deg": 257.2
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 2.43,
+            "mean_dir_deg": 262.8
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 2.6,
+            "mean_dir_deg": 252.1
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 2.45,
+            "mean_dir_deg": 250.8
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 2.22,
+            "mean_dir_deg": 250.9
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 2.39,
+            "mean_dir_deg": 249.2
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 2.34,
+            "mean_dir_deg": 249.6
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 2.37,
+            "mean_dir_deg": 242.9
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 2.66,
+            "mean_dir_deg": 179.7
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 3.87,
+            "mean_dir_deg": 157.1
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 4.58,
+            "mean_dir_deg": 92.1
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 5.95,
+            "mean_dir_deg": 89.5
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.63,
+            "mean_dir_deg": 94.8
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 6.67,
+            "mean_dir_deg": 112.2
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 6.36,
+            "mean_dir_deg": 117.7
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 5.87,
+            "mean_dir_deg": 132.5
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 5.48,
+            "mean_dir_deg": 145.2
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 4.61,
+            "mean_dir_deg": 154.4
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 3.74,
+            "mean_dir_deg": 181.9
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 3.01,
+            "mean_dir_deg": 212.1
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 2.66,
+            "mean_dir_deg": 225.4
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 2.45,
+            "mean_dir_deg": 250.0
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 2.57,
+            "mean_dir_deg": 245.6
+          }
+        }
+      },
+      "2.5": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 2.87,
+            "mean_dir_deg": 278.6
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 3.08,
+            "mean_dir_deg": 263.9
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 3.11,
+            "mean_dir_deg": 273.2
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 2.87,
+            "mean_dir_deg": 259.5
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 2.48,
+            "mean_dir_deg": 254.6
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 2.27,
+            "mean_dir_deg": 258.2
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 2.52,
+            "mean_dir_deg": 257.6
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 2.19,
+            "mean_dir_deg": 254.8
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 2.46,
+            "mean_dir_deg": 257.4
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 2.47,
+            "mean_dir_deg": 296.7
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 4.38,
+            "mean_dir_deg": 77.0
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.81,
+            "mean_dir_deg": 67.9
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 7.29,
+            "mean_dir_deg": 86.1
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 7.51,
+            "mean_dir_deg": 97.3
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 8.03,
+            "mean_dir_deg": 112.1
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 7.79,
+            "mean_dir_deg": 122.5
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 7.41,
+            "mean_dir_deg": 130.6
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 6.95,
+            "mean_dir_deg": 138.7
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 6.06,
+            "mean_dir_deg": 143.8
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 5.24,
+            "mean_dir_deg": 157.4
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 4.12,
+            "mean_dir_deg": 165.7
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 3.31,
+            "mean_dir_deg": 198.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 2.92,
+            "mean_dir_deg": 221.8
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 3.03,
+            "mean_dir_deg": 245.9
+          }
+        }
+      },
+      "5.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 3.82,
+            "mean_dir_deg": 275.7
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 3.67,
+            "mean_dir_deg": 285.8
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 3.63,
+            "mean_dir_deg": 286.7
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 3.53,
+            "mean_dir_deg": 278.7
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 3.32,
+            "mean_dir_deg": 273.5
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 3.02,
+            "mean_dir_deg": 277.7
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 3.06,
+            "mean_dir_deg": 275.2
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 2.88,
+            "mean_dir_deg": 283.1
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 3.09,
+            "mean_dir_deg": 283.0
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 2.77,
+            "mean_dir_deg": 272.4
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 4.29,
+            "mean_dir_deg": 90.9
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 5.78,
+            "mean_dir_deg": 90.8
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 6.48,
+            "mean_dir_deg": 89.5
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 6.95,
+            "mean_dir_deg": 98.3
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 7.21,
+            "mean_dir_deg": 114.9
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 7.19,
+            "mean_dir_deg": 124.1
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 7.09,
+            "mean_dir_deg": 135.7
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 6.5,
+            "mean_dir_deg": 144.8
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 5.65,
+            "mean_dir_deg": 153.6
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 5.1,
+            "mean_dir_deg": 164.4
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 4.34,
+            "mean_dir_deg": 176.7
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 3.77,
+            "mean_dir_deg": 208.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 3.66,
+            "mean_dir_deg": 230.0
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 4.28,
+            "mean_dir_deg": 252.5
+          }
+        }
+      },
+      "7.5": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 7.78,
+            "mean_dir_deg": 248.2
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 7.08,
+            "mean_dir_deg": 273.2
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 6.97,
+            "mean_dir_deg": 292.7
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 7.1,
+            "mean_dir_deg": 298.3
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 6.61,
+            "mean_dir_deg": 284.9
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 5.79,
+            "mean_dir_deg": 294.8
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 5.27,
+            "mean_dir_deg": 292.1
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 5.62,
+            "mean_dir_deg": 296.4
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 5.59,
+            "mean_dir_deg": 298.1
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 5.26,
+            "mean_dir_deg": 297.6
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 5.79,
+            "mean_dir_deg": 300.8
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 7.7,
+            "mean_dir_deg": 82.3
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.9,
+            "mean_dir_deg": 74.5
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 9.93,
+            "mean_dir_deg": 91.5
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 10.36,
+            "mean_dir_deg": 108.4
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 10.48,
+            "mean_dir_deg": 118.2
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 10.11,
+            "mean_dir_deg": 132.5
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 9.65,
+            "mean_dir_deg": 142.8
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 8.85,
+            "mean_dir_deg": 154.2
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 8.56,
+            "mean_dir_deg": 171.2
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 8.1,
+            "mean_dir_deg": 176.8
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 7.32,
+            "mean_dir_deg": 187.7
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 7.56,
+            "mean_dir_deg": 212.8
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 8.03,
+            "mean_dir_deg": 228.6
+          }
+        }
+      },
+      "10.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 7.94,
+            "mean_dir_deg": 234.8
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 8.03,
+            "mean_dir_deg": 257.2
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 7.43,
+            "mean_dir_deg": 294.6
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 7.48,
+            "mean_dir_deg": 301.5
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 7.1,
+            "mean_dir_deg": 302.3
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 7.04,
+            "mean_dir_deg": 306.0
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 6.43,
+            "mean_dir_deg": 310.5
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 6.85,
+            "mean_dir_deg": 308.7
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 6.63,
+            "mean_dir_deg": 313.5
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 6.69,
+            "mean_dir_deg": 304.9
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 6.31,
+            "mean_dir_deg": 310.3
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 6.99,
+            "mean_dir_deg": 56.1
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.49,
+            "mean_dir_deg": 68.5
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 9.62,
+            "mean_dir_deg": 90.0
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 10.42,
+            "mean_dir_deg": 102.2
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 10.36,
+            "mean_dir_deg": 115.8
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 10.11,
+            "mean_dir_deg": 127.7
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 9.5,
+            "mean_dir_deg": 137.2
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 9.53,
+            "mean_dir_deg": 149.9
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 8.82,
+            "mean_dir_deg": 164.4
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 7.88,
+            "mean_dir_deg": 180.1
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 7.59,
+            "mean_dir_deg": 189.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 7.57,
+            "mean_dir_deg": 206.8
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 8.29,
+            "mean_dir_deg": 224.5
+          }
+        }
+      },
+      "15.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 8.87,
+            "mean_dir_deg": 234.2
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 8.68,
+            "mean_dir_deg": 255.6
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 8.44,
+            "mean_dir_deg": 295.7
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 8.06,
+            "mean_dir_deg": 307.9
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 8.13,
+            "mean_dir_deg": 315.0
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 8.22,
+            "mean_dir_deg": 309.2
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 8.61,
+            "mean_dir_deg": 333.1
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 8.11,
+            "mean_dir_deg": 341.1
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 7.68,
+            "mean_dir_deg": 311.5
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 7.31,
+            "mean_dir_deg": 321.2
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 6.98,
+            "mean_dir_deg": 320.4
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 7.2,
+            "mean_dir_deg": 0.7
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.14,
+            "mean_dir_deg": 59.6
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 8.57,
+            "mean_dir_deg": 74.4
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 9.7,
+            "mean_dir_deg": 94.6
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 10.07,
+            "mean_dir_deg": 107.0
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 9.98,
+            "mean_dir_deg": 121.8
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 9.49,
+            "mean_dir_deg": 132.7
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 9.67,
+            "mean_dir_deg": 151.4
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 8.71,
+            "mean_dir_deg": 170.4
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 7.9,
+            "mean_dir_deg": 176.1
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 7.72,
+            "mean_dir_deg": 184.1
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 8.08,
+            "mean_dir_deg": 203.4
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 8.81,
+            "mean_dir_deg": 232.4
+          }
+        }
+      },
+      "20.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 9.12,
+            "mean_dir_deg": 240.4
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 9.13,
+            "mean_dir_deg": 249.7
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 8.33,
+            "mean_dir_deg": 298.1
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 8.98,
+            "mean_dir_deg": 318.0
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 8.94,
+            "mean_dir_deg": 324.1
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 8.54,
+            "mean_dir_deg": 321.1
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 8.81,
+            "mean_dir_deg": 337.8
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 8.48,
+            "mean_dir_deg": 334.0
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 8.6,
+            "mean_dir_deg": 328.1
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 7.97,
+            "mean_dir_deg": 304.7
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 7.66,
+            "mean_dir_deg": 325.7
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 7.72,
+            "mean_dir_deg": 329.6
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 7.74,
+            "mean_dir_deg": 15.3
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 8.16,
+            "mean_dir_deg": 60.1
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 9.04,
+            "mean_dir_deg": 95.2
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 9.29,
+            "mean_dir_deg": 101.1
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 9.45,
+            "mean_dir_deg": 113.2
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 8.59,
+            "mean_dir_deg": 129.4
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 9.29,
+            "mean_dir_deg": 147.7
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 8.69,
+            "mean_dir_deg": 178.6
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 7.83,
+            "mean_dir_deg": 170.5
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 7.81,
+            "mean_dir_deg": 177.6
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 8.01,
+            "mean_dir_deg": 198.4
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 8.35,
+            "mean_dir_deg": 226.9
+          }
+        }
+      },
+      "30.0": {
+        "by_local_hour": {
+          "0": {
+            "n": 31,
+            "mean_tws_kt": 8.98,
+            "mean_dir_deg": 258.5
+          },
+          "1": {
+            "n": 31,
+            "mean_tws_kt": 9.32,
+            "mean_dir_deg": 259.9
+          },
+          "2": {
+            "n": 31,
+            "mean_tws_kt": 9.09,
+            "mean_dir_deg": 299.1
+          },
+          "3": {
+            "n": 31,
+            "mean_tws_kt": 8.81,
+            "mean_dir_deg": 320.0
+          },
+          "4": {
+            "n": 31,
+            "mean_tws_kt": 9.04,
+            "mean_dir_deg": 324.7
+          },
+          "5": {
+            "n": 31,
+            "mean_tws_kt": 9.13,
+            "mean_dir_deg": 333.0
+          },
+          "6": {
+            "n": 31,
+            "mean_tws_kt": 8.82,
+            "mean_dir_deg": 317.5
+          },
+          "7": {
+            "n": 31,
+            "mean_tws_kt": 8.66,
+            "mean_dir_deg": 311.6
+          },
+          "8": {
+            "n": 31,
+            "mean_tws_kt": 8.63,
+            "mean_dir_deg": 315.6
+          },
+          "9": {
+            "n": 31,
+            "mean_tws_kt": 8.81,
+            "mean_dir_deg": 315.8
+          },
+          "10": {
+            "n": 31,
+            "mean_tws_kt": 8.37,
+            "mean_dir_deg": 317.0
+          },
+          "11": {
+            "n": 31,
+            "mean_tws_kt": 8.25,
+            "mean_dir_deg": 312.1
+          },
+          "12": {
+            "n": 31,
+            "mean_tws_kt": 8.49,
+            "mean_dir_deg": 316.3
+          },
+          "13": {
+            "n": 31,
+            "mean_tws_kt": 7.73,
+            "mean_dir_deg": 3.4
+          },
+          "14": {
+            "n": 31,
+            "mean_tws_kt": 8.13,
+            "mean_dir_deg": 68.8
+          },
+          "15": {
+            "n": 31,
+            "mean_tws_kt": 8.17,
+            "mean_dir_deg": 87.2
+          },
+          "16": {
+            "n": 31,
+            "mean_tws_kt": 8.61,
+            "mean_dir_deg": 102.7
+          },
+          "17": {
+            "n": 31,
+            "mean_tws_kt": 8.72,
+            "mean_dir_deg": 124.8
+          },
+          "18": {
+            "n": 31,
+            "mean_tws_kt": 8.48,
+            "mean_dir_deg": 136.3
+          },
+          "19": {
+            "n": 31,
+            "mean_tws_kt": 8.22,
+            "mean_dir_deg": 185.9
+          },
+          "20": {
+            "n": 31,
+            "mean_tws_kt": 8.62,
+            "mean_dir_deg": 205.2
+          },
+          "21": {
+            "n": 31,
+            "mean_tws_kt": 7.85,
+            "mean_dir_deg": 201.5
+          },
+          "22": {
+            "n": 31,
+            "mean_tws_kt": 7.91,
+            "mean_dir_deg": 217.7
+          },
+          "23": {
+            "n": 31,
+            "mean_tws_kt": 8.9,
+            "mean_dir_deg": 237.3
+          }
+        }
+      }
+    }
+  },
+  "afternoon_14_18_per_year": {
+    "2023": {
+      "tws_by_nm": {
+        "0.0": 5.68,
+        "2.5": 7.21,
+        "5.0": 6.49,
+        "7.5": 9.92,
+        "10.0": 10.16,
+        "15.0": 10.26,
+        "20.0": 10.04,
+        "30.0": 9.67
+      },
+      "n_by_nm": {
+        "0.0": 155,
+        "2.5": 155,
+        "5.0": 155,
+        "7.5": 155,
+        "10.0": 155,
+        "15.0": 155,
+        "20.0": 155,
+        "30.0": 155
+      },
+      "delta_0_minus_10": -4.48,
+      "delta_5_minus_10": -3.67,
+      "delta_0_minus_7_5": -4.24
+    },
+    "2024": {
+      "tws_by_nm": {
+        "0.0": 5.08,
+        "2.5": 6.0,
+        "5.0": 5.32,
+        "7.5": 6.77,
+        "10.0": 6.59,
+        "15.0": 6.28,
+        "20.0": 5.89,
+        "30.0": 5.34
+      },
+      "n_by_nm": {
+        "0.0": 155,
+        "2.5": 155,
+        "5.0": 155,
+        "7.5": 155,
+        "10.0": 155,
+        "15.0": 155,
+        "20.0": 155,
+        "30.0": 155
+      },
+      "delta_0_minus_10": -1.51,
+      "delta_5_minus_10": -1.27,
+      "delta_0_minus_7_5": -1.69
+    },
+    "2025": {
+      "tws_by_nm": {
+        "0.0": 5.8,
+        "2.5": 7.25,
+        "5.0": 6.73,
+        "7.5": 9.89,
+        "10.0": 9.98,
+        "15.0": 9.78,
+        "20.0": 9.13,
+        "30.0": 8.42
+      },
+      "n_by_nm": {
+        "0.0": 155,
+        "2.5": 155,
+        "5.0": 155,
+        "7.5": 155,
+        "10.0": 155,
+        "15.0": 155,
+        "20.0": 155,
+        "30.0": 155
+      },
+      "delta_0_minus_10": -4.18,
+      "delta_5_minus_10": -3.25,
+      "delta_0_minus_7_5": -4.09
+    }
+  },
+  "afternoon_14_18_all_years": {
+    "0.0": 5.52,
+    "2.5": 6.82,
+    "5.0": 6.18,
+    "7.5": 8.86,
+    "10.0": 8.91,
+    "15.0": 8.77,
+    "20.0": 8.36,
+    "30.0": 7.81
+  },
+  "windows": {
+    "night_00_06": {
+      "hours_local": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "by_year": {
+        "2023": {
+          "tws_by_nm": {
+            "0.0": 3.49,
+            "2.5": 3.13,
+            "5.0": 3.83,
+            "7.5": 7.06,
+            "10.0": 8.1,
+            "15.0": 8.75,
+            "20.0": 9.26,
+            "30.0": 9.86
+          },
+          "n_by_nm": {
+            "0.0": 217,
+            "2.5": 217,
+            "5.0": 217,
+            "7.5": 217,
+            "10.0": 217,
+            "15.0": 217,
+            "20.0": 217,
+            "30.0": 217
+          },
+          "delta_0_minus_10": -4.61,
+          "delta_5_minus_10": -4.27,
+          "delta_0_minus_7_5": -3.57
+        },
+        "2024": {
+          "tws_by_nm": {
+            "0.0": 2.39,
+            "2.5": 2.5,
+            "5.0": 3.19,
+            "7.5": 5.54,
+            "10.0": 5.87,
+            "15.0": 6.32,
+            "20.0": 6.88,
+            "30.0": 6.81
+          },
+          "n_by_nm": {
+            "0.0": 217,
+            "2.5": 217,
+            "5.0": 217,
+            "7.5": 217,
+            "10.0": 217,
+            "15.0": 217,
+            "20.0": 217,
+            "30.0": 217
+          },
+          "delta_0_minus_10": -3.48,
+          "delta_5_minus_10": -2.68,
+          "delta_0_minus_7_5": -3.15
+        },
+        "2025": {
+          "tws_by_nm": {
+            "0.0": 2.47,
+            "2.5": 2.74,
+            "5.0": 3.44,
+            "7.5": 6.66,
+            "10.0": 7.35,
+            "15.0": 8.43,
+            "20.0": 8.84,
+            "30.0": 9.03
+          },
+          "n_by_nm": {
+            "0.0": 217,
+            "2.5": 217,
+            "5.0": 217,
+            "7.5": 217,
+            "10.0": 217,
+            "15.0": 217,
+            "20.0": 217,
+            "30.0": 217
+          },
+          "delta_0_minus_10": -4.88,
+          "delta_5_minus_10": -3.91,
+          "delta_0_minus_7_5": -4.19
+        }
+      },
+      "all_years": {
+        "tws_by_nm": {
+          "0.0": 2.78,
+          "2.5": 2.79,
+          "5.0": 3.49,
+          "7.5": 6.42,
+          "10.0": 7.11,
+          "15.0": 7.83,
+          "20.0": 8.33,
+          "30.0": 8.57
+        },
+        "n_by_nm": {
+          "0.0": 651,
+          "2.5": 651,
+          "5.0": 651,
+          "7.5": 651,
+          "10.0": 651,
+          "15.0": 651,
+          "20.0": 651,
+          "30.0": 651
+        },
+        "delta_0_minus_10": -4.33,
+        "delta_5_minus_10": -3.62,
+        "delta_0_minus_7_5": -3.64
+      }
+    },
+    "morning_06_12": {
+      "hours_local": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "by_year": {
+        "2023": {
+          "tws_by_nm": {
+            "0.0": 3.82,
+            "2.5": 4.5,
+            "5.0": 4.49,
+            "7.5": 7.4,
+            "10.0": 8.32,
+            "15.0": 9.01,
+            "20.0": 9.32,
+            "30.0": 9.89
+          },
+          "n_by_nm": {
+            "0.0": 217,
+            "2.5": 217,
+            "5.0": 217,
+            "7.5": 217,
+            "10.0": 217,
+            "15.0": 217,
+            "20.0": 217,
+            "30.0": 217
+          },
+          "delta_0_minus_10": -4.5,
+          "delta_5_minus_10": -3.83,
+          "delta_0_minus_7_5": -3.58
+        },
+        "2024": {
+          "tws_by_nm": {
+            "0.0": 3.13,
+            "2.5": 3.6,
+            "5.0": 4.07,
+            "7.5": 6.1,
+            "10.0": 6.4,
+            "15.0": 6.94,
+            "20.0": 7.54,
+            "30.0": 7.62
+          },
+          "n_by_nm": {
+            "0.0": 217,
+            "2.5": 217,
+            "5.0": 217,
+            "7.5": 217,
+            "10.0": 217,
+            "15.0": 217,
+            "20.0": 217,
+            "30.0": 217
+          },
+          "delta_0_minus_10": -3.27,
+          "delta_5_minus_10": -2.33,
+          "delta_0_minus_7_5": -2.97
+        },
+        "2025": {
+          "tws_by_nm": {
+            "0.0": 3.45,
+            "2.5": 3.87,
+            "5.0": 4.05,
+            "7.5": 6.3,
+            "10.0": 6.91,
+            "15.0": 7.72,
+            "20.0": 8.14,
+            "30.0": 8.58
+          },
+          "n_by_nm": {
+            "0.0": 217,
+            "2.5": 217,
+            "5.0": 217,
+            "7.5": 217,
+            "10.0": 217,
+            "15.0": 217,
+            "20.0": 217,
+            "30.0": 217
+          },
+          "delta_0_minus_10": -3.46,
+          "delta_5_minus_10": -2.86,
+          "delta_0_minus_7_5": -2.85
+        }
+      },
+      "all_years": {
+        "tws_by_nm": {
+          "0.0": 3.47,
+          "2.5": 3.99,
+          "5.0": 4.2,
+          "7.5": 6.6,
+          "10.0": 7.21,
+          "15.0": 7.89,
+          "20.0": 8.33,
+          "30.0": 8.69
+        },
+        "n_by_nm": {
+          "0.0": 651,
+          "2.5": 651,
+          "5.0": 651,
+          "7.5": 651,
+          "10.0": 651,
+          "15.0": 651,
+          "20.0": 651,
+          "30.0": 651
+        },
+        "delta_0_minus_10": -3.74,
+        "delta_5_minus_10": -3.01,
+        "delta_0_minus_7_5": -3.13
+      }
+    },
+    "afternoon_14_18": {
+      "hours_local": [
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "by_year": {
+        "2023": {
+          "tws_by_nm": {
+            "0.0": 5.68,
+            "2.5": 7.21,
+            "5.0": 6.49,
+            "7.5": 9.92,
+            "10.0": 10.16,
+            "15.0": 10.26,
+            "20.0": 10.04,
+            "30.0": 9.67
+          },
+          "n_by_nm": {
+            "0.0": 155,
+            "2.5": 155,
+            "5.0": 155,
+            "7.5": 155,
+            "10.0": 155,
+            "15.0": 155,
+            "20.0": 155,
+            "30.0": 155
+          },
+          "delta_0_minus_10": -4.48,
+          "delta_5_minus_10": -3.67,
+          "delta_0_minus_7_5": -4.24
+        },
+        "2024": {
+          "tws_by_nm": {
+            "0.0": 5.08,
+            "2.5": 6.0,
+            "5.0": 5.32,
+            "7.5": 6.77,
+            "10.0": 6.59,
+            "15.0": 6.28,
+            "20.0": 5.89,
+            "30.0": 5.34
+          },
+          "n_by_nm": {
+            "0.0": 155,
+            "2.5": 155,
+            "5.0": 155,
+            "7.5": 155,
+            "10.0": 155,
+            "15.0": 155,
+            "20.0": 155,
+            "30.0": 155
+          },
+          "delta_0_minus_10": -1.51,
+          "delta_5_minus_10": -1.27,
+          "delta_0_minus_7_5": -1.69
+        },
+        "2025": {
+          "tws_by_nm": {
+            "0.0": 5.8,
+            "2.5": 7.25,
+            "5.0": 6.73,
+            "7.5": 9.89,
+            "10.0": 9.98,
+            "15.0": 9.78,
+            "20.0": 9.13,
+            "30.0": 8.42
+          },
+          "n_by_nm": {
+            "0.0": 155,
+            "2.5": 155,
+            "5.0": 155,
+            "7.5": 155,
+            "10.0": 155,
+            "15.0": 155,
+            "20.0": 155,
+            "30.0": 155
+          },
+          "delta_0_minus_10": -4.18,
+          "delta_5_minus_10": -3.25,
+          "delta_0_minus_7_5": -4.09
+        }
+      },
+      "all_years": {
+        "tws_by_nm": {
+          "0.0": 5.52,
+          "2.5": 6.82,
+          "5.0": 6.18,
+          "7.5": 8.86,
+          "10.0": 8.91,
+          "15.0": 8.77,
+          "20.0": 8.36,
+          "30.0": 7.81
+        },
+        "n_by_nm": {
+          "0.0": 465,
+          "2.5": 465,
+          "5.0": 465,
+          "7.5": 465,
+          "10.0": 465,
+          "15.0": 465,
+          "20.0": 465,
+          "30.0": 465
+        },
+        "delta_0_minus_10": -3.39,
+        "delta_5_minus_10": -2.73,
+        "delta_0_minus_7_5": -3.34
+      }
+    }
+  }
+}
