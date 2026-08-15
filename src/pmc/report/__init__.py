@@ -136,8 +136,15 @@ def emit(
             "Trim samples or reduce precision."
         )
 
+    return _write_payload_files(output_path, encoded)
+
+
+def _write_payload_files(output_path: Path, encoded: str) -> Path:
+    """Write data.json plus a data.js sibling so file:// pages can load without fetch."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(encoded, encoding="utf-8")
+    js_path = output_path.with_name(f"{output_path.stem}.js")
+    js_path.write_text(f"window.DASHBOARD_PAYLOAD = {encoded.rstrip()};\n", encoding="utf-8")
     return output_path
 
 
@@ -151,9 +158,7 @@ def validate_and_write_payload(input_path: Path, output_path: Path) -> Path:
         ensure_ascii=True,
         allow_nan=False,
     ) + "\n"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(encoded, encoding="utf-8")
-    return output_path
+    return _write_payload_files(output_path, encoded)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -179,5 +184,6 @@ def main(argv: list[str] | None = None) -> int:
 
     out_path = validate_and_write_payload(args.input, args.output)
     print(f"Wrote dashboard payload: {out_path}")
+    print(f"Wrote file:// companion: {out_path.with_name(out_path.stem + '.js')}")
     print(f"Validated at: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}")
     return 0

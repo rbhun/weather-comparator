@@ -319,7 +319,7 @@ def _format_transects_for_dashboard(transects: pd.DataFrame) -> list[dict[str, A
 
 
 def main() -> int:
-    wind_path = ROOT / "data/wind/analysis-august-public.zarr"
+    wind_path = ROOT / "data/wind/analysis-august.zarr"
     live_wind_path = _find_live_wind_store()
     polar_path = ROOT / "config/polar/chocolate3.pol"
     course_path = ROOT / "config/course.yaml"

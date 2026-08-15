@@ -5,10 +5,9 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
-import os
 from pathlib import Path
 
-from .openmeteo import OpenMeteoFetcher, load_domain
+from .openmeteo import OpenMeteoFetcher, load_domain, load_api_key
 
 
 def parse_date(value: str) -> dt.date:
@@ -57,6 +56,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Comma-separated month numbers to include (e.g. 8 or 6,7,8).",
     )
+    parser.add_argument(
+        "--hourly",
+        default=None,
+        help="Comma-separated Open-Meteo hourly variables. Default is 10m wind.",
+    )
     return parser
 
 
@@ -79,7 +83,7 @@ def main() -> int:
             parser.error("--month-filter only accepts month numbers 1-12")
 
     fetcher = OpenMeteoFetcher(
-        api_key=os.getenv("OPENMETEO_API_KEY"),
+        api_key=load_api_key(),
         cache_root=Path(args.cache_root),
         output_root=Path(args.wind_root),
         max_workers=args.max_workers,
@@ -100,6 +104,7 @@ def main() -> int:
         force_model=args.force_model,
         refresh_models=args.refresh_models,
         month_filter=month_filter,
+        hourly=args.hourly,
     )
     print(path)
     print(json.dumps(summary.__dict__, indent=2))

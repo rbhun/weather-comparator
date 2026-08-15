@@ -5,11 +5,13 @@ This module intentionally focuses on Cluster D ownership (`src/pmc/io`).
 
 from __future__ import annotations
 
+import calendar
 import concurrent.futures
 import datetime as dt
 import email.utils
 import hashlib
 import json
+import os
 import random
 import threading
 import time
@@ -39,6 +41,11 @@ DEFAULT_CACHE_ROOT = Path("data/cache/openmeteo")
 DEFAULT_WIND_ROOT = Path("data/wind")
 DEFAULT_LOG_ROOT = Path("data/wind/logs")
 DEFAULT_CHECKPOINT_ROOT = Path("data/wind/checkpoints")
+DEFAULT_HOURLY = "wind_speed_10m,wind_direction_10m"
+UV_PAIRS = {
+    ("wind_speed_10m", "wind_direction_10m"): ("u10", "v10"),
+    ("wind_speed_100m", "wind_direction_100m"): ("u100", "v100"),
+}
 
 
 @dataclass(frozen=True)
@@ -99,7 +106,7 @@ class EndpointConfig:
 MODE_CONFIG: dict[str, ModeConfig] = {
     "analysis": ModeConfig(
         mode="analysis",
-        endpoint="https://archive-api.open-meteo.com/v1/archive",
+        endpoint="https://customer-archive-api.open-meteo.com/v1/archive",
         candidates=(
             "ecmwf_ifs",
             "ecmwf_ifs025",
@@ -180,7 +187,7 @@ class DiskRequestCache:
         self.root = root
         self.root.mkdir(parents=True, exist_ok=True)
 
-    def get(self, endpoint: str, params: Mapping[str, Any]) -> dict[str, Any] | None:
+    def get(self, endpoint: str, params: Mapping[str, Any]) -> dict[str, Any] | list[Any] | None:
         path = self._cache_path(endpoint, params)
         if not path.exists():
             return None
@@ -237,6 +244,7 @@ class OpenMeteoFetcher:
         self.cache_hits = 0
         self.cache_misses = 0
         self.request_count = 0
+        self._hourly = DEFAULT_HOURLY
 
     def fetch_wind(
         self,
@@ -248,6 +256,7 @@ class OpenMeteoFetcher:
         force_model: str | None = None,
         refresh_models: bool = False,
         month_filter: set[int] | None = None,
+        hourly: str | None = None,
     ) -> tuple[Path, FetchSummary]:
         """Fetch a wind store for one source and date range."""
 
@@ -264,8 +273,9 @@ class OpenMeteoFetcher:
         endpoint = endpoint_cfg.endpoint
         self._auth_mode = endpoint_cfg.auth_mode
         self._send_api_key = self._resolve_auth_mode(endpoint_cfg.auth_mode)
+        self._hourly = hourly or DEFAULT_HOURLY
         print(
-            f"[fetch] endpoint={endpoint} auth_mode={self._auth_mode}",
+            f"[fetch] endpoint={endpoint} auth_mode={self._auth_mode} hourly={self._hourly}",
             flush=True,
         )
 
@@ -377,13 +387,9 @@ class OpenMeteoFetcher:
         lon_axis = cfg.longitudes()
         all_points = _grid_points(lat_axis, lon_axis)
         base_batches = list(_chunked(all_points, self.batch_size))
-        sea_point_indices = self._load_known_sea_point_indices(
-            mode=mode_cfg.mode,
-            output_path=output_path,
-            lat_axis=lat_axis,
-            lon_axis=lon_axis,
-        )
-        point_batches = _filter_batches_by_indices(base_batches, sea_point_indices)
+        # Always fetch the full domain, including land. Filtering to previously
+        # valid sea cells dropped land and propagated 2017 snap-holes forward.
+        point_batches = base_batches
         active_points = sum(len(batch) for batch in point_batches)
         periods = self._build_periods(mode_cfg.mode, start, end, month_filter)
         existing_periods = self._existing_periods(mode_cfg.mode, output_path)
@@ -394,6 +400,7 @@ class OpenMeteoFetcher:
             start=start,
             end=end,
             month_filter=month_filter,
+            hourly=self._hourly,
         )
         checkpoint = self._load_checkpoint(checkpoint_path)
         task_total = len(point_batches) * len(periods)
@@ -495,12 +502,14 @@ class OpenMeteoFetcher:
         times = pd.date_range(period_t0, period_t1, freq="h")
         n_time = len(times)
 
-        u10 = np.full((n_time, lat_axis.size, lon_axis.size), np.nan, dtype=np.float32)
-        v10 = np.full((n_time, lat_axis.size, lon_axis.size), np.nan, dtype=np.float32)
+        arrays = {
+            name: np.full((n_time, lat_axis.size, lon_axis.size), np.nan, dtype=np.float32)
+            for name in _output_var_names(self._hourly)
+        }
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as pool:
             future_map: dict[
-                concurrent.futures.Future[list[dict[str, Any]]],
+                concurrent.futures.Future[list[tuple[list[tuple[int, int, float, float]], dict[str, Any]]]],
                 tuple[int, list[tuple[int, int, float, float]]],
             ] = {}
             for batch_index, batch in enumerate(point_batches):
@@ -510,7 +519,7 @@ class OpenMeteoFetcher:
                     self._save_checkpoint(checkpoint_path, checkpoint)
                     continue
                 if task_id in checkpoint["completed_tasks"]:
-                    cached_payloads = self._fetch_batch_resilient(
+                    cached_items = self._fetch_batch_resilient(
                         endpoint=endpoint,
                         model=model,
                         period_start=period_start,
@@ -518,12 +527,9 @@ class OpenMeteoFetcher:
                         batch=batch,
                         allow_network=False,
                     )
-                    self._apply_payloads_to_arrays(
-                        payloads=cached_payloads,
-                        lat_axis=lat_axis,
-                        lon_axis=lon_axis,
-                        u10=u10,
-                        v10=v10,
+                    self._apply_payload_items(
+                        items=cached_items,
+                        arrays=arrays,
                         n_time=n_time,
                     )
                     continue
@@ -541,28 +547,23 @@ class OpenMeteoFetcher:
 
             for future in concurrent.futures.as_completed(future_map):
                 batch_index, _batch = future_map[future]
-                payloads = future.result()
-                self._apply_payloads_to_arrays(
-                    payloads=payloads,
-                    lat_axis=lat_axis,
-                    lon_axis=lon_axis,
-                    u10=u10,
-                    v10=v10,
+                items = future.result()
+                self._apply_payload_items(
+                    items=items,
+                    arrays=arrays,
                     n_time=n_time,
                 )
                 task_id = _task_id(period_id=period_id, batch_index=batch_index)
                 checkpoint["completed_tasks"].add(task_id)
                 self._save_checkpoint(checkpoint_path, checkpoint)
 
-        finite = np.isfinite(u10) & np.isfinite(v10)
+        stacked = np.stack(list(arrays.values()), axis=0)
+        finite = np.any(np.isfinite(stacked), axis=0)
         cells_fetched = int(np.count_nonzero(finite))
-        cells_total = int(np.prod(u10.shape))
+        cells_total = int(np.prod(finite.shape))
         cells_missing = cells_total - cells_fetched
         ds = xr.Dataset(
-            data_vars={
-                "u10": (("time", "lat", "lon"), u10),
-                "v10": (("time", "lat", "lon"), v10),
-            },
+            data_vars={name: (("time", "lat", "lon"), values) for name, values in arrays.items()},
             coords={
                 "time": times.tz_convert(None).to_numpy(dtype="datetime64[ns]"),
                 "lat": lat_axis.astype(np.float32),
@@ -590,13 +591,15 @@ class OpenMeteoFetcher:
             return None
         ds = xr.open_zarr(output_path)
         try:
-            if "u10" not in ds or "v10" not in ds:
+            valid = None
+            for name in ds.data_vars:
+                values = ds[name].values
+                if values.ndim != 3:
+                    continue
+                mask = np.any(np.isfinite(values), axis=0)
+                valid = mask if valid is None else (valid | mask)
+            if valid is None:
                 return None
-            u = ds["u10"].values
-            v = ds["v10"].values
-            if u.ndim != 3 or v.ndim != 3:
-                return None
-            valid = np.any(np.isfinite(u) & np.isfinite(v), axis=0)
             indices = set()
             for lat_idx in range(valid.shape[0]):
                 for lon_idx in range(valid.shape[1]):
@@ -612,38 +615,59 @@ class OpenMeteoFetcher:
         finally:
             ds.close()
 
-    def _apply_payloads_to_arrays(
+    def _apply_payload_items(
         self,
-        payloads: list[dict[str, Any]],
-        lat_axis: np.ndarray,
-        lon_axis: np.ndarray,
-        u10: np.ndarray,
-        v10: np.ndarray,
+        items: list[tuple[list[tuple[int, int, float, float]], dict[str, Any]]],
+        arrays: dict[str, np.ndarray],
         n_time: int,
     ) -> None:
-        lat_step = float(lat_axis[1] - lat_axis[0]) if len(lat_axis) > 1 else 1.0
-        lon_step = float(lon_axis[1] - lon_axis[0]) if len(lon_axis) > 1 else 1.0
-        for payload in payloads:
-            responses = _extract_responses(payload)
+        for batch, payload in items:
+            self._apply_payload_to_batch(payload=payload, batch=batch, arrays=arrays, n_time=n_time)
+
+    def _apply_payload_to_batch(
+        self,
+        payload: dict[str, Any],
+        batch: list[tuple[int, int, float, float]],
+        arrays: dict[str, np.ndarray],
+        n_time: int,
+    ) -> None:
+        responses = _extract_responses(payload)
+        requested = {token.strip() for token in self._hourly.split(",") if token.strip()}
+        if len(responses) == len(batch):
+            assigned = [(int(lat_idx), int(lon_idx), response) for (lat_idx, lon_idx, _, _), response in zip(batch, responses)]
+        else:
+            assigned = []
             for response in responses:
                 lat_v = float(response.get("latitude"))
                 lon_v = float(response.get("longitude"))
-                lat_idx = int(round((lat_v - float(lat_axis[0])) / lat_step))
-                lon_idx = int(round((lon_v - float(lon_axis[0])) / lon_step))
-                if lat_idx < 0 or lat_idx >= lat_axis.size:
-                    continue
-                if lon_idx < 0 or lon_idx >= lon_axis.size:
-                    continue
+                nearest = min(batch, key=lambda p: (p[2] - lat_v) ** 2 + (p[3] - lon_v) ** 2)
+                assigned.append((int(nearest[0]), int(nearest[1]), response))
 
-                hourly = response.get("hourly") or {}
-                speed = np.asarray(hourly.get("wind_speed_10m", []), dtype=float)
-                direction = np.asarray(hourly.get("wind_direction_10m", []), dtype=float)
+        for lat_idx, lon_idx, response in assigned:
+            hourly = response.get("hourly") or {}
+            for (speed_name, dir_name), (u_name, v_name) in UV_PAIRS.items():
+                if u_name not in arrays or v_name not in arrays:
+                    continue
+                if speed_name not in requested or dir_name not in requested:
+                    continue
+                speed = np.asarray(hourly.get(speed_name, []), dtype=float)
+                direction = np.asarray(hourly.get(dir_name, []), dtype=float)
                 if speed.size == 0 or direction.size == 0:
                     continue
                 n = min(n_time, speed.size, direction.size)
-                u10_vals, v10_vals = _wind_speed_dir_to_uv(speed[:n], direction[:n])
-                u10[:n, lat_idx, lon_idx] = u10_vals.astype(np.float32)
-                v10[:n, lat_idx, lon_idx] = v10_vals.astype(np.float32)
+                u_vals, v_vals = _wind_speed_dir_to_uv(speed[:n], direction[:n])
+                arrays[u_name][:n, lat_idx, lon_idx] = u_vals.astype(np.float32)
+                arrays[v_name][:n, lat_idx, lon_idx] = v_vals.astype(np.float32)
+            for name in requested:
+                if name in {src for pair in UV_PAIRS for src in pair}:
+                    continue
+                if name not in arrays:
+                    continue
+                values = np.asarray(hourly.get(name, []), dtype=float)
+                if values.size == 0:
+                    continue
+                n = min(n_time, values.size)
+                arrays[name][:n, lat_idx, lon_idx] = values[:n].astype(np.float32)
 
     def _fetch_batch(
         self,
@@ -664,7 +688,7 @@ class OpenMeteoFetcher:
             "longitude": longitudes,
             "start_date": period_start.isoformat(),
             "end_date": period_end.isoformat(),
-            "hourly": "wind_speed_10m,wind_direction_10m",
+            "hourly": self._hourly,
             "wind_speed_unit": "ms",
             "timezone": "UTC",
             "models": model,
@@ -679,20 +703,23 @@ class OpenMeteoFetcher:
         period_end: dt.date,
         batch: list[tuple[int, int, float, float]],
         allow_network: bool = True,
-    ) -> list[dict[str, Any]]:
+    ) -> list[tuple[list[tuple[int, int, float, float]], dict[str, Any]]]:
         pending = [batch]
-        payloads: list[dict[str, Any]] = []
+        items: list[tuple[list[tuple[int, int, float, float]], dict[str, Any]]] = []
         while pending:
             current = pending.pop()
             try:
-                payloads.append(
-                    self._fetch_batch(
-                        endpoint=endpoint,
-                        model=model,
-                        period_start=period_start,
-                        period_end=period_end,
-                        batch=current,
-                        allow_network=allow_network,
+                items.append(
+                    (
+                        current,
+                        self._fetch_batch(
+                            endpoint=endpoint,
+                            model=model,
+                            period_start=period_start,
+                            period_end=period_end,
+                            batch=current,
+                            allow_network=allow_network,
+                        ),
                     )
                 )
             except requests.HTTPError as exc:
@@ -719,7 +746,7 @@ class OpenMeteoFetcher:
                     pending.append(current[:midpoint])
                     continue
                 raise
-        return payloads
+        return items
 
     def _get_json(self, endpoint: str, params: dict[str, Any], allow_network: bool = True) -> dict[str, Any]:
         cache_key_params = dict(params)
@@ -751,6 +778,12 @@ class OpenMeteoFetcher:
                     params=request_params,
                     timeout=self.timeout_seconds,
                 )
+                if response.status_code == 200:
+                    payload = response.json()
+                    self.cache.put(endpoint, cache_key_params, payload)
+                    self.cache_misses += 1
+                    self.request_count += 1
+                    return payload
                 if response.status_code in transient_statuses:
                     raise requests.HTTPError(
                         f"Transient status {response.status_code}",
@@ -864,7 +897,14 @@ class OpenMeteoFetcher:
         try:
             values = pd.to_datetime(ds["time"].values, utc=True)
             if mode == "analysis":
-                return {str(int(ts.year)) for ts in values if int(ts.month) == 8}
+                ids: set[str] = set()
+                for ts in values:
+                    year = int(ts.year)
+                    month = int(ts.month)
+                    ids.add(f"{year}-{month:02d}")
+                    if month == 8:
+                        ids.add(str(year))
+                return ids
             return {ts.date().isoformat() for ts in values}
         finally:
             ds.close()
@@ -874,8 +914,8 @@ class OpenMeteoFetcher:
         lat_chunk = min(32, period_ds.sizes["lat"])
         lon_chunk = min(40, period_ds.sizes["lon"])
         encoding = {
-            "u10": {"chunks": (time_chunk, lat_chunk, lon_chunk)},
-            "v10": {"chunks": (time_chunk, lat_chunk, lon_chunk)},
+            name: {"chunks": (time_chunk, lat_chunk, lon_chunk)}
+            for name in period_ds.data_vars
         }
         if not path.exists():
             period_ds.to_zarr(path, mode="w", encoding=encoding, consolidated=True, zarr_format=2)
@@ -973,10 +1013,14 @@ class OpenMeteoFetcher:
         start: dt.date,
         end: dt.date,
         month_filter: set[int] | None,
+        hourly: str = DEFAULT_HOURLY,
     ) -> Path:
         DEFAULT_CHECKPOINT_ROOT.mkdir(parents=True, exist_ok=True)
         mf = "all" if month_filter is None else "-".join(str(m) for m in sorted(month_filter))
-        filename = f"{mode}_{model}_{start.isoformat()}_{end.isoformat()}_{mf}.json"
+        suffix = ""
+        if hourly != DEFAULT_HOURLY:
+            suffix = "_" + hashlib.sha256(hourly.encode("utf-8")).hexdigest()[:10]
+        filename = f"{mode}_{model}_{start.isoformat()}_{end.isoformat()}_{mf}{suffix}.json"
         return DEFAULT_CHECKPOINT_ROOT / filename
 
     def _load_checkpoint(self, path: Path) -> dict[str, set[str]]:
@@ -1004,8 +1048,7 @@ class OpenMeteoFetcher:
         month_filter: set[int] | None,
     ) -> list[tuple[str, dt.date, dt.date]]:
         if mode == "analysis":
-            year_periods = _build_year_periods(start=start, end=end, month_filter=month_filter)
-            return [(str(year), period_start, period_end) for year, period_start, period_end in year_periods]
+            return _build_year_periods(start=start, end=end, month_filter=month_filter)
         return [(day.isoformat(), day, day) for day in _iter_days(start, end, month_filter)]
 
 
@@ -1017,10 +1060,32 @@ def fetch_wind(source: str, start: dt.date, end: dt.date, cfg: Domain) -> Path:
     return path
 
 
-def _read_api_key() -> str | None:
-    from os import getenv
+def load_api_key() -> str | None:
+    """Load OPENMETEO_API_KEY from the environment or a gitignored .env."""
 
-    return getenv("OPENMETEO_API_KEY")
+    existing = os.getenv("OPENMETEO_API_KEY")
+    if existing and existing.strip():
+        return existing.strip()
+
+    env_path = Path(".env")
+    if not env_path.exists():
+        return None
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() != "OPENMETEO_API_KEY":
+            continue
+        value = value.strip().strip("'").strip('"')
+        if value:
+            os.environ["OPENMETEO_API_KEY"] = value
+            return value
+    return None
+
+
+def _read_api_key() -> str | None:
+    return load_api_key()
 
 
 def _inclusive_axis(start: float, stop: float, step: float) -> np.ndarray:
@@ -1065,19 +1130,21 @@ def _build_year_periods(
     start: dt.date,
     end: dt.date,
     month_filter: set[int] | None,
-) -> list[tuple[int, dt.date, dt.date]]:
-    periods: list[tuple[int, dt.date, dt.date]] = []
+) -> list[tuple[str, dt.date, dt.date]]:
+    periods: list[tuple[str, dt.date, dt.date]] = []
+    months = sorted(month_filter) if month_filter is not None else [8]
     years = range(start.year, end.year + 1)
+    august_only = months == [8]
     for year in years:
-        august_start = dt.date(year, 8, 1)
-        august_end = dt.date(year, 8, 31)
-        if month_filter is not None and 8 not in month_filter:
-            continue
-        if august_end < start or august_start > end:
-            continue
-        period_start = max(start, august_start)
-        period_end = min(end, august_end)
-        periods.append((year, period_start, period_end))
+        for month in months:
+            month_start = dt.date(year, month, 1)
+            month_end = dt.date(year, month, calendar.monthrange(year, month)[1])
+            if month_end < start or month_start > end:
+                continue
+            period_start = max(start, month_start)
+            period_end = min(end, month_end)
+            period_id = str(year) if august_only else f"{year}-{month:02d}"
+            periods.append((period_id, period_start, period_end))
     return periods
 
 
@@ -1143,6 +1210,21 @@ def _has_hourly_values(payload: dict[str, Any]) -> bool:
         if isinstance(speed, list) and isinstance(direction, list) and speed and direction:
             return True
     return False
+
+
+def _output_var_names(hourly: str) -> list[str]:
+    requested = [token.strip() for token in hourly.split(",") if token.strip()]
+    names: list[str] = []
+    consumed: set[str] = set()
+    for (speed_name, dir_name), (u_name, v_name) in UV_PAIRS.items():
+        if speed_name in requested and dir_name in requested:
+            names.extend([u_name, v_name])
+            consumed.add(speed_name)
+            consumed.add(dir_name)
+    for name in requested:
+        if name not in consumed:
+            names.append(name)
+    return names
 
 
 def _wind_speed_dir_to_uv(speed_ms: np.ndarray, direction_from_deg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

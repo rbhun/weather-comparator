@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PMC 2026 - Weather Decision Dashboard</title>
     <script src="./vendor/plotly.min.js"></script>
+    <script src="./tiles/osm_manifest.js"></script>
     <script src="./tiles/openseamap_manifest.js"></script>
+    <script src="./tiles/land.js"></script>
+    <script src="./data.js?v=layout-rework"></script>
     <style>
       :root {
         --bg: #0b1020;
@@ -76,9 +79,38 @@
         font-weight: 600;
       }
 
-      .time-toggle button.active {
+      .time-toggle button.active,
+      .map-tools button.active {
         background: var(--accent);
         color: #041638;
+      }
+
+      .map-tools {
+        display: inline-flex;
+        gap: 0.35rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.35rem;
+        background: #0f1629;
+        margin-top: 0.55rem;
+      }
+
+      .map-tools button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 0.45rem 0.85rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .map-hit {
+        position: absolute;
+        z-index: 4;
+        cursor: crosshair;
+        background: transparent;
+        touch-action: manipulation;
       }
 
       .container {
@@ -156,6 +188,11 @@
         min-height: 380px;
       }
 
+      #map-plot {
+        width: 100%;
+        min-height: 620px;
+      }
+
       .plot.short {
         min-height: 300px;
       }
@@ -187,6 +224,56 @@
       .biased-row {
         background: var(--bad-bg);
         border-left: 4px solid var(--bad-border);
+      }
+
+      #head-to-head-table {
+        overflow-x: auto;
+      }
+
+      .h2h-route {
+        font-weight: 800;
+      }
+
+      .h2h-bar {
+        position: relative;
+        display: flex;
+        min-width: 10.5rem;
+        height: 1.7rem;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #3a4a6d;
+        background: #0f1629;
+      }
+
+      .h2h-bar-a,
+      .h2h-bar-b {
+        height: 100%;
+      }
+
+      .h2h-bar-a {
+        background: #c23b3b;
+      }
+
+      .h2h-bar-b {
+        background: #2f9e6a;
+      }
+
+      .h2h-bar-label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0.5rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #ffffff;
+        text-shadow: 0 1px 2px #000000;
+        pointer-events: none;
+      }
+
+      .h2h-best {
+        font-weight: 800;
       }
 
       .badge {
@@ -240,6 +327,356 @@
         font-size: 0.93rem;
         color: #d8e5ff;
       }
+
+      .hour-control {
+        margin-top: 0.45rem;
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .hour-readout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem 0.8rem;
+        align-items: baseline;
+      }
+
+      .hour-kicker {
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .hour-main {
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1.15;
+        color: #ffffff;
+      }
+
+      .hour-sub {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .hour-slider-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.55rem;
+        align-items: center;
+      }
+
+      #hour-play {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.45rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.4rem 0.8rem;
+        font-weight: 800;
+        cursor: pointer;
+        min-width: 4.6rem;
+      }
+
+      #hour-play.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .map-layer-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.55rem;
+        align-items: center;
+      }
+
+      .fold {
+        margin-top: 0.55rem;
+      }
+
+      .fold summary {
+        cursor: pointer;
+        font-weight: 800;
+        list-style: none;
+      }
+
+      .fold summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .fold summary::before {
+        content: "> ";
+        color: var(--accent);
+      }
+
+      .fold[open] summary::before {
+        content: "v ";
+      }
+
+      .point-head {
+        display: grid;
+        grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 1.4fr);
+        gap: 0.75rem;
+        align-items: start;
+        margin-bottom: 0.45rem;
+      }
+
+      @media (max-width: 720px) {
+        .point-head {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .point-head .meta-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.4rem;
+      }
+
+      .point-head .meta-card {
+        padding: 0.4rem 0.5rem;
+      }
+
+      .point-head h2 {
+        font-size: 1.1rem;
+      }
+
+      .point-head h3 {
+        margin-top: 0.25rem;
+        font-size: 0.98rem;
+        font-weight: 700;
+      }
+
+      .point-head .subnote {
+        margin-top: 0.2rem;
+        font-size: 0.88rem;
+      }
+
+      .point-head .meta-card .v {
+        font-size: 1rem;
+      }
+
+      .zoom-toolbar button[data-act="select"] {
+        width: auto;
+        min-width: 4.2rem;
+        padding: 0 0.5rem;
+        font-size: 0.72rem;
+      }
+
+      .zoom-toolbar button[data-act="select"].active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .plot-wrap {
+        position: relative;
+        margin-top: 0.45rem;
+      }
+
+      .zoom-toolbar {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        z-index: 5;
+        display: flex;
+        gap: 0.28rem;
+      }
+
+      .zoom-toolbar button {
+        width: 2.1rem;
+        height: 2.1rem;
+        border: 1px solid #6f89b8;
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: #ffffff;
+        font-size: 1.05rem;
+        font-weight: 800;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .zoom-toolbar button:hover {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .map-key {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem 1.2rem;
+        margin-top: 0.45rem;
+        font-weight: 700;
+      }
+
+      .map-key-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.45rem;
+        background: #101732;
+        color: var(--text);
+        font: inherit;
+        font-weight: 700;
+        padding: 0.28rem 0.55rem;
+        cursor: pointer;
+      }
+
+      .map-key-item.off {
+        opacity: 0.4;
+      }
+
+      .map-key-item.static {
+        cursor: default;
+      }
+
+      .map-key-swatch {
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 0.2rem;
+        border: 1px solid #0b1020;
+        flex: 0 0 auto;
+      }
+
+      .map-key-swatch.land {
+        background: #80848a;
+      }
+
+      .map-key-swatch.course {
+        background: #ffffff;
+        height: 0.28rem;
+        border-radius: 0;
+      }
+
+      .map-key-swatch.selected {
+        background: transparent;
+        border: 2px solid #ffffff;
+      }
+
+      .file-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        align-items: center;
+        margin-top: 0.55rem;
+      }
+
+      .file-actions button {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.45rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.45rem 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .route-compare {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+        gap: 0.75rem;
+        align-items: stretch;
+        margin-top: 0.45rem;
+      }
+
+      .route-compare .plot-wrap {
+        height: 100%;
+      }
+
+      #route-plot {
+        min-height: 0;
+        height: 100%;
+      }
+
+      .route-legend-panel {
+        min-width: 0;
+      }
+
+      .route-legend {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .route-legend-row {
+        display: grid;
+        grid-template-columns: auto auto 1fr;
+        gap: 0.55rem;
+        align-items: center;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.55rem;
+        background: #101732;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text);
+        font: inherit;
+        width: 100%;
+      }
+
+      .route-legend-row.on {
+        border-color: #6f89b8;
+      }
+
+      .route-legend-row.focus {
+        outline: 2px solid #ffffff;
+      }
+
+      .route-legend-row.off {
+        opacity: 0.45;
+      }
+
+      .route-swatch {
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 0.2rem;
+        border: 1px solid #0b1020;
+      }
+
+      .route-legend-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 0.45rem;
+      }
+
+      .route-legend-actions button {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.35rem 0.65rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .meta-card.route-card {
+        cursor: pointer;
+      }
+
+      .meta-card.route-card.focus {
+        outline: 2px solid #ffffff;
+      }
+
+      .jump-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        align-items: center;
+        margin-top: 0.55rem;
+      }
+
+      .jump-row a,
+      .jump-row button {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.35rem 0.7rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -258,68 +695,100 @@
       <section id="warning-banner" class="warning-banner"></section>
       <section id="status" class="status">Loading dashboard/data.json...</section>
 
-      <section class="card">
-        <h2>1) Calm risk map (flagship)</h2>
-        <p class="subnote">
-          Domain heatmap of probability of wind below 5 kt. Tap a cell for details.
-        </p>
-        <div class="controls">
-          <label for="hour-slider" id="hour-label">Hour:</label>
-          <input id="hour-slider" type="range" min="0" max="23" step="1" value="0" />
-        </div>
-        <p id="chart-layer-note" class="chart-note">
-          Chart layer is OpenSeaMap, crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL.
-        </p>
-        <div id="map-plot" class="plot" aria-label="Calm risk map"></div>
-      </section>
-
-      <section class="card">
-        <h2>2) Route comparison and uncertainty</h2>
-        <p class="subnote">
-          Distributions are shown as full sample spreads. Focus on percentiles, not means.
-          <br />
-          Leg 1 is mostly upwind: follower sails VMG and does not model shift-playing, so
-          leg-1 comparisons can undervalue higher-oscillation regimes (typically coastal).
-        </p>
-        <div id="route-plot" class="plot short"></div>
-        <div id="route-summary" class="meta-grid"></div>
-      </section>
-
-      <section class="card">
-        <h3>Head-to-head margins (percentiles included)</h3>
-        <div id="head-to-head-table"></div>
-      </section>
-
-      <section class="card">
-        <h3>Leg-2 fork matchup by gate-arrival hour (local)</h3>
-        <p class="subnote">
-          East-of-Corsica vs Bonifacio/west-Corsica, matched on modeled gate-arrival time.
-        </p>
-        <div id="leg2-hour-table"></div>
-      </section>
-
-      <section class="card">
-        <h3>Bonifacio option decision support</h3>
-        <p id="bonifacio-panel-label" class="subnote"></p>
-        <div id="bonifacio-panel-table"></div>
-      </section>
-
-      <section class="card">
-        <h2>3) Point detail (selected grid cell)</h2>
-        <p class="subnote">
-          One tap away from map click. Includes by-hour speed and calm risk, plus wind rose when directional components are present.
-        </p>
-        <div class="grid-2">
-          <div>
-            <h3 id="point-title">Selected cell: --</h3>
-            <div id="point-metrics" class="meta-grid"></div>
-            <div id="point-detail-table"></div>
+      <section id="calm-risk-map" class="card">
+        <h2>1) Wind map</h2>
+        <div class="hour-control">
+          <div class="hour-readout">
+            <div class="hour-kicker">Hour of day</div>
+            <div id="hour-main" class="hour-main">--:--</div>
+            <div id="hour-sub" class="hour-sub"></div>
           </div>
+          <div class="hour-slider-row">
+            <button id="hour-play" type="button" aria-pressed="false">Play</button>
+            <input id="hour-slider" type="range" min="0" max="23" step="1" value="0" />
+          </div>
+          <div class="map-layer-row">
+            <label class="help" for="map-layer" id="hour-label">Layer</label>
+            <select id="map-layer">
+              <option value="mean_tws_kt">Mean wind (kt)</option>
+              <option value="mean_tws_dir">Mean wind + direction</option>
+              <option value="p_below_5kt">Calm risk P(&lt;5 kt)</option>
+            </select>
+          </div>
+        </div>
+        <details class="fold">
+          <summary>Map notes</summary>
+          <p id="chart-layer-note" class="chart-note">
+            Map underlay is OpenStreetMap data (CARTO Voyager) plus a Natural Earth coastline. Crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. Tiles by CARTO.
+          </p>
+        </details>
+        <div class="plot-wrap">
+          <div class="zoom-toolbar" aria-label="Map tools">
+            <button type="button" id="map-tool-select" data-act="select" title="Select cell">Select</button>
+            <button type="button" data-act="in" title="Zoom in">+</button>
+            <button type="button" data-act="out" title="Zoom out">−</button>
+            <button type="button" data-act="all" title="Show all">A</button>
+          </div>
+          <div id="map-plot" class="plot" aria-label="Wind map"></div>
+        </div>
+        <div class="map-key" aria-label="Map key">
+          <button id="map-key-land" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch land"></span>Land
+          </button>
+          <button id="map-key-rhumbline" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch course"></span>Rhumbline
+          </button>
+          <span class="map-key-item static"><span class="map-key-swatch selected"></span>Selected cell</span>
+        </div>
+        <div class="jump-row">
+          <span id="map-selected">Drag to zoom. Select, then tap a cell.</span>
+        </div>
+      </section>
+
+      <section id="point-detail" class="card">
+        <div class="point-head">
           <div>
+            <h2>2) Point detail</h2>
+            <p class="subnote">Select a cell on the map. Arrows show where the wind is going. Wider polar slice = lower constancy.</p>
+            <h3 id="point-title">Selected cell: --</h3>
+          </div>
+          <div id="point-metrics" class="meta-grid"></div>
+        </div>
+        <div class="grid-2">
+          <div class="plot-wrap">
             <div id="point-hour-plot" class="plot short"></div>
+          </div>
+          <div class="plot-wrap">
             <div id="point-rose-plot" class="plot short"></div>
           </div>
         </div>
+        <details class="fold">
+          <summary>Hourly details</summary>
+          <div id="point-detail-table"></div>
+        </details>
+      </section>
+
+      <section id="route-comparison" class="card">
+        <h2>3) Route comparison</h2>
+        <p class="subnote">Same lines as the map. Tap a name to highlight; uncheck to hide. Use percentiles, not means.</p>
+        <div class="route-compare">
+          <div class="plot-wrap">
+            <div id="route-plot" class="plot short"></div>
+          </div>
+          <div class="route-legend-panel">
+            <div id="route-legend" class="route-legend"></div>
+            <div class="route-legend-actions">
+              <button id="routes-show-all" type="button">Show all on map</button>
+              <button id="routes-hide-all" type="button">Hide all on map</button>
+              <button id="routes-clear-focus" type="button">Clear highlight</button>
+            </div>
+          </div>
+        </div>
+        <div id="route-summary" class="meta-grid"></div>
+        <details class="fold">
+          <summary>Head-to-head margins</summary>
+          <div id="head-to-head-table"></div>
+        </details>
       </section>
 
       <section class="card">
@@ -329,7 +798,14 @@
           <label for="transect-select">Transect</label>
           <select id="transect-select"></select>
         </div>
-        <div id="transect-plot" class="plot short"></div>
+        <div class="plot-wrap">
+          <div class="zoom-toolbar" aria-label="Transect plot zoom">
+            <button type="button" data-act="in" title="Zoom in">+</button>
+            <button type="button" data-act="out" title="Zoom out">−</button>
+            <button type="button" data-act="all" title="Show all">A</button>
+          </div>
+          <div id="transect-plot" class="plot short"></div>
+        </div>
         <p id="transect-empty" class="help hidden">
           Transect data is not present in this payload. The dashboard can render it when a `transects` section is included in data.json.
         </p>
@@ -343,24 +819,92 @@
         <div id="skill-table"></div>
       </section>
 
-      <section id="file-loader" class="card hidden">
-        <h3>Local file fallback</h3>
-        <p class="help">
-          Your browser blocked direct local fetch of <code>data.json</code> (common on file:// pages). Select the same file manually to continue.
+      <section id="file-loader" class="card">
+        <h3>Load data file</h3>
+        <p id="file-loader-help" class="help">
+          Bundled <code>data.js</code> should load automatically. Use this only to switch to another local payload. The last chosen file is remembered in this browser.
         </p>
-        <input id="data-file-input" type="file" accept=".json,application/json" />
+        <div class="file-actions">
+          <input id="data-file-input" type="file" accept=".json,application/json" />
+          <button id="use-bundled" type="button">Use bundled data</button>
+        </div>
       </section>
     </main>
 
     <script>
       "use strict";
 
+      const STORAGE_PAYLOAD = "pmc.dashboard.payload.v2";
+      const STORAGE_NAME = "pmc.dashboard.payloadName.v2";
+      const STORAGE_PREFER = "pmc.dashboard.preferSaved.v2";
+      const plotConfig = { displayModeBar: false, responsive: true, doubleClick: "reset" };
+      const threeToneScale = [
+        [0, "#08306b"],
+        [0.5, "#f7f7f7"],
+        [1, "#cc4c02"],
+      ];
+      const ROUTE_COLORS = [
+        "#E69F00",
+        "#56B4E9",
+        "#009E73",
+        "#F0E442",
+        "#0072B2",
+        "#D55E00",
+        "#CC79A7",
+        "#A0A0A0",
+      ];
+
+      function routeId(route, idx) {
+        return route.id || route.label || `route-${idx}`;
+      }
+
+      function routeColor(idx) {
+        return ROUTE_COLORS[idx % ROUTE_COLORS.length];
+      }
+
+      function routeLookup(key) {
+        const routes = (state.payload && state.payload.routes) || [];
+        const idx = routes.findIndex((route, i) => {
+          const id = routeId(route, i);
+          return id === key || route.id === key || route.label === key;
+        });
+        if (idx < 0) {
+          return { id: key, label: key, color: "#A0A0A0", p50: null };
+        }
+        const route = routes[idx];
+        return {
+          id: routeId(route, idx),
+          label: route.label || routeId(route, idx),
+          color: routeColor(idx),
+          p50: asNum(route.elapsed_hours && route.elapsed_hours.p50),
+        };
+      }
+
+      function ensureRouteState(routes) {
+        routes.forEach((route, idx) => {
+          const id = routeId(route, idx);
+          if (state.routeOn[id] == null) state.routeOn[id] = true;
+        });
+      }
+
       const state = {
         payload: null,
         timeMode: "local",
         selectedHour: 0,
+        mapLayer: "mean_tws_kt",
         selectedLatIdx: 0,
         selectedLonIdx: 0,
+        routeOn: {},
+        routeFocus: null,
+        eventsBound: false,
+        mapImages: null,
+        mapRange: null,
+        mapTool: "zoom",
+        showLand: true,
+        showRhumbline: true,
+        meanWindMax: null,
+        hourPlaying: false,
+        hourTimer: null,
       };
 
       const els = {
@@ -368,17 +912,26 @@
         warningBanner: document.getElementById("warning-banner"),
         generatedTime: document.getElementById("generated-time"),
         hourSlider: document.getElementById("hour-slider"),
+        hourPlay: document.getElementById("hour-play"),
         hourLabel: document.getElementById("hour-label"),
+        mapLayer: document.getElementById("map-layer"),
+        hourMain: document.getElementById("hour-main"),
+        hourSub: document.getElementById("hour-sub"),
         modeLocal: document.getElementById("mode-local"),
         modeUtc: document.getElementById("mode-utc"),
         chartLayerNote: document.getElementById("chart-layer-note"),
+        mapSelected: document.getElementById("map-selected"),
+        mapToolSelect: document.getElementById("map-tool-select"),
+        mapKeyLand: document.getElementById("map-key-land"),
+        mapKeyRhumbline: document.getElementById("map-key-rhumbline"),
         mapPlot: document.getElementById("map-plot"),
         routePlot: document.getElementById("route-plot"),
+        routeLegend: document.getElementById("route-legend"),
+        routesShowAll: document.getElementById("routes-show-all"),
+        routesHideAll: document.getElementById("routes-hide-all"),
+        routesClearFocus: document.getElementById("routes-clear-focus"),
         routeSummary: document.getElementById("route-summary"),
         headToHeadTable: document.getElementById("head-to-head-table"),
-        leg2HourTable: document.getElementById("leg2-hour-table"),
-        bonifacioPanelLabel: document.getElementById("bonifacio-panel-label"),
-        bonifacioPanelTable: document.getElementById("bonifacio-panel-table"),
         pointTitle: document.getElementById("point-title"),
         pointMetrics: document.getElementById("point-metrics"),
         pointDetailTable: document.getElementById("point-detail-table"),
@@ -390,7 +943,9 @@
         transectEmpty: document.getElementById("transect-empty"),
         skillTable: document.getElementById("skill-table"),
         fileLoader: document.getElementById("file-loader"),
+        fileLoaderHelp: document.getElementById("file-loader-help"),
         dataFileInput: document.getElementById("data-file-input"),
+        useBundled: document.getElementById("use-bundled"),
       };
 
       const plotLayoutBase = {
@@ -406,22 +961,190 @@
         return Number.isFinite(n) ? n : null;
       }
 
-      function formatTimeWithZone(dateUtc, timeZone) {
+      function nearestIdx(values, target) {
+        return values.reduce((bestIdx, val, idx) => {
+          const cur = Math.abs(Number(val) - target);
+          const best = Math.abs(Number(values[bestIdx]) - target);
+          return cur < best ? idx : bestIdx;
+        }, 0);
+      }
+
+      function selectedCellLabel() {
+        if (!state.payload) return "No cell selected.";
+        const lat = asNum(state.payload.climatology.grid.lat[state.selectedLatIdx]);
+        const lon = asNum(state.payload.climatology.grid.lon[state.selectedLonIdx]);
+        return `Selected cell: ${round2(lat)} N, ${round2(lon)} E`;
+      }
+
+      function updateSelectedReadout() {
+        if (!els.mapSelected) return;
+        const tool = state.mapTool === "select" ? "Select is on — tap a cell." : "Drag a box or + / − / A to zoom.";
+        els.mapSelected.textContent = `${selectedCellLabel()}. ${tool}`;
+      }
+
+      function updateMapKeyButtons() {
+        if (els.mapKeyLand) {
+          els.mapKeyLand.classList.toggle("off", !state.showLand);
+          els.mapKeyLand.setAttribute("aria-pressed", state.showLand ? "true" : "false");
+        }
+        if (els.mapKeyRhumbline) {
+          els.mapKeyRhumbline.classList.toggle("off", !state.showRhumbline);
+          els.mapKeyRhumbline.setAttribute("aria-pressed", state.showRhumbline ? "true" : "false");
+        }
+      }
+
+      function updateMapToolButtons() {
+        if (els.mapToolSelect) els.mapToolSelect.classList.toggle("active", state.mapTool === "select");
+        updateSelectedReadout();
+      }
+
+      function setMapTool(tool) {
+        state.mapTool = tool === "select" ? "select" : "zoom";
+        updateMapToolButtons();
+        if (els.mapToolSelect) els.mapToolSelect.blur();
+        if (els.mapPlot && els.mapPlot.layout) {
+          Plotly.relayout(els.mapPlot, { dragmode: state.mapTool === "zoom" ? "zoom" : false });
+        }
+        syncMapHitLayer();
+      }
+
+      function cellHasWind(latIdx, lonIdx) {
+        const hours = (state.payload && state.payload.climatology && state.payload.climatology.by_hour) || [];
+        return hours.some((row) => {
+          const field = row.mean_tws_kt || row.p_below_5kt;
+          const val = field && field[latIdx] && field[latIdx][lonIdx];
+          return asNum(val) != null;
+        });
+      }
+
+      function nearestCellWithWind(lat, lon) {
+        const lats = state.payload.climatology.grid.lat;
+        const lons = state.payload.climatology.grid.lon;
+        let best = { latIdx: nearestIdx(lats, lat), lonIdx: nearestIdx(lons, lon), dist: Infinity };
+        if (cellHasWind(best.latIdx, best.lonIdx)) return best;
+        for (let i = 0; i < lats.length; i++) {
+          for (let j = 0; j < lons.length; j++) {
+            if (!cellHasWind(i, j)) continue;
+            const d = Math.hypot(Number(lats[i]) - lat, Number(lons[j]) - lon);
+            if (d < best.dist) best = { latIdx: i, lonIdx: j, dist: d };
+          }
+        }
+        return best;
+      }
+
+      function selectCellFromLatLon(lat, lon) {
+        const lats = state.payload.climatology.grid.lat;
+        const lons = state.payload.climatology.grid.lon;
+        state.selectedLatIdx = nearestIdx(lats, lat);
+        state.selectedLonIdx = nearestIdx(lons, lon);
+        renderCalmMap();
+        renderPointDetail();
+      }
+
+      function plotAreaRect(gd) {
+        const area = gd.querySelector(".nsewdrag") || gd.querySelector(".xy") || gd.querySelector(".bglayer");
+        return area ? area.getBoundingClientRect() : null;
+      }
+
+      function latLonFromMapPointer(ev) {
+        const gd = els.mapPlot;
+        const full = gd && gd._fullLayout;
+        if (!full || !full.xaxis || !full.yaxis) return null;
+        const box = plotAreaRect(gd);
+        if (!box || box.width < 2 || box.height < 2) return null;
+        if (ev.clientX < box.left || ev.clientX > box.right || ev.clientY < box.top || ev.clientY > box.bottom) {
+          return null;
+        }
+        const xr = full.xaxis.range;
+        const yr = full.yaxis.range;
+        if (!xr || !yr) return null;
+        const lon = xr[0] + (xr[1] - xr[0]) * ((ev.clientX - box.left) / box.width);
+        const lat = yr[0] + (yr[1] - yr[0]) * (1 - (ev.clientY - box.top) / box.height);
+        return { lon, lat };
+      }
+
+      function rememberMapRange(gd) {
+        const xa = gd && gd._fullLayout && gd._fullLayout.xaxis;
+        const ya = gd && gd._fullLayout && gd._fullLayout.yaxis;
+        if (!xa || !ya || !xa.range || !ya.range) return;
+        state.mapRange = { x: xa.range.slice(), y: ya.range.slice() };
+      }
+
+      function bindMapHit(hit) {
+        let down = null;
+        hit.addEventListener("pointerdown", (ev) => {
+          down = { x: ev.clientX, y: ev.clientY };
+        });
+        hit.addEventListener("pointerup", (ev) => {
+          if (state.mapTool !== "select") return;
+          if (!down) return;
+          const moved = Math.hypot(ev.clientX - down.x, ev.clientY - down.y);
+          down = null;
+          if (moved > 10) return;
+          const pos = latLonFromMapPointer(ev);
+          if (pos) selectCellFromLatLon(pos.lat, pos.lon);
+        });
+      }
+
+      function syncMapHitLayer() {
+        const wrap = els.mapPlot && els.mapPlot.parentElement;
+        if (!wrap) return;
+        let hit = wrap.querySelector(".map-hit");
+        if (!hit) {
+          hit = document.createElement("div");
+          hit.className = "map-hit";
+          hit.setAttribute("aria-hidden", "true");
+          wrap.appendChild(hit);
+          bindMapHit(hit);
+        }
+        if (state.mapTool !== "select") {
+          hit.style.display = "none";
+          return;
+        }
+        const box = plotAreaRect(els.mapPlot);
+        const wrapBox = wrap.getBoundingClientRect();
+        if (!box) {
+          hit.style.display = "none";
+          return;
+        }
+        hit.style.display = "block";
+        hit.style.left = `${box.left - wrapBox.left}px`;
+        hit.style.top = `${box.top - wrapBox.top}px`;
+        hit.style.width = `${box.width}px`;
+        hit.style.height = `${box.height}px`;
+      }
+
+      function formatParts(dateUtc, timeZone, opts) {
         const fmt = new Intl.DateTimeFormat("en-GB", {
           timeZone,
+          hour12: false,
+          ...opts,
+        });
+        const byType = {};
+        fmt.formatToParts(dateUtc).forEach((p) => {
+          byType[p.type] = (byType[p.type] || "") + p.value;
+        });
+        return byType;
+      }
+
+      function formatTimeWithZone(dateUtc, timeZone) {
+        const p = formatParts(dateUtc, timeZone, {
           day: "2-digit",
           month: "short",
           hour: "2-digit",
           minute: "2-digit",
-          hour12: false,
           timeZoneName: "short",
         });
-        const parts = fmt.formatToParts(dateUtc);
-        const byType = {};
-        parts.forEach((p) => {
-          byType[p.type] = (byType[p.type] || "") + p.value;
+        return `${p.day} ${p.month} ${p.hour}:${p.minute} ${p.timeZoneName}`;
+      }
+
+      function formatClock(dateUtc, timeZone) {
+        const p = formatParts(dateUtc, timeZone, {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
         });
-        return `${byType.day} ${byType.month} ${byType.hour}:${byType.minute} ${byType.timeZoneName}`;
+        return `${p.hour}:${p.minute} ${p.timeZoneName}`;
       }
 
       function formatTimestamp(isoUtc) {
@@ -432,12 +1155,96 @@
         return formatTimeWithZone(date, state.payload.meta.display_timezone);
       }
 
+      function hourDate(utcHour) {
+        // Date is only for timezone math. Race starts 18 Aug; the date is never shown.
+        return new Date(Date.UTC(2026, 7, 18, Number(utcHour), 0, 0));
+      }
+
+      function hourClocks(utcHour) {
+        const date = hourDate(utcHour);
+        const tz = (state.payload && state.payload.meta.display_timezone) || "Europe/Rome";
+        return {
+          local: formatClock(date, tz),
+          utc: formatClock(date, "UTC"),
+        };
+      }
+
       function hourLabel(hour) {
-        const utcDate = new Date(Date.UTC(2026, 7, 21, hour, 0, 0));
-        if (state.timeMode === "utc") {
-          return formatTimeWithZone(utcDate, "UTC");
+        const clocks = hourClocks(hour);
+        return state.timeMode === "utc" ? clocks.utc : clocks.local;
+      }
+
+      function captureHome(gd) {
+        if (!gd || gd._pmcHome || !gd._fullLayout) return;
+        const home = {};
+        if (gd._fullLayout.polar) {
+          const r = gd._fullLayout.polar.radialaxis && gd._fullLayout.polar.radialaxis.range;
+          if (r) home["polar.radialaxis.range"] = r.slice();
+          else home["polar.radialaxis.autorange"] = true;
+          gd._pmcHome = home;
+          return;
         }
-        return formatTimeWithZone(utcDate, state.payload.meta.display_timezone);
+        ["xaxis", "yaxis", "yaxis2"].forEach((axis) => {
+          const ax = gd._fullLayout[axis];
+          if (!ax) return;
+          if (ax.range) home[`${axis}.range`] = ax.range.slice();
+          else home[`${axis}.autorange`] = true;
+        });
+        gd._pmcHome = home;
+      }
+
+      function applyPlot(el, traces, layout, opts) {
+        const noZoom = Boolean(opts && opts.noZoom);
+        const mapSelect = Boolean(opts && opts.mapSelect);
+        const withRev = { uirevision: el.id || "pmc", dragmode: "zoom", ...layout };
+        if (noZoom) {
+          withRev.dragmode = false;
+          withRev.xaxis = { ...(withRev.xaxis || {}), fixedrange: true };
+          withRev.yaxis = { ...(withRev.yaxis || {}), fixedrange: true };
+        } else if (mapSelect) {
+          withRev.dragmode = state.mapTool === "zoom" ? "zoom" : false;
+        }
+        const config = noZoom
+          ? { ...plotConfig, scrollZoom: false, doubleClick: false }
+          : mapSelect
+            ? { ...plotConfig, doubleClick: false }
+            : plotConfig;
+        return Plotly.react(el, traces, withRev, config).then(() => {
+          if (!noZoom) captureHome(el);
+          if (mapSelect) syncMapHitLayer();
+        });
+      }
+
+      function zoomPlot(gd, factor) {
+        if (!gd || !gd._fullLayout) return;
+        if (gd._fullLayout.polar) {
+          const r = (gd._fullLayout.polar.radialaxis && gd._fullLayout.polar.radialaxis.range) || [0, 1];
+          Plotly.relayout(gd, { "polar.radialaxis.range": [0, r[1] * factor] });
+          return;
+        }
+        const updates = {};
+        ["xaxis", "yaxis", "yaxis2"].forEach((axis) => {
+          const ax = gd._fullLayout[axis];
+          if (!ax || !ax.range) return;
+          const mid = (ax.range[0] + ax.range[1]) / 2;
+          const half = ((ax.range[1] - ax.range[0]) / 2) * factor;
+          updates[`${axis}.range`] = [mid - half, mid + half];
+          updates[`${axis}.autorange`] = false;
+        });
+        if (Object.keys(updates).length) Plotly.relayout(gd, updates);
+      }
+
+      function resetPlot(gd) {
+        if (!gd) return;
+        if (gd._pmcHome) {
+          Plotly.relayout(gd, gd._pmcHome);
+          return;
+        }
+        if (gd._fullLayout && gd._fullLayout.polar) {
+          Plotly.relayout(gd, { "polar.radialaxis.autorange": true });
+          return;
+        }
+        Plotly.relayout(gd, { "xaxis.autorange": true, "yaxis.autorange": true });
       }
 
       function setStatus(msg, isError) {
@@ -456,6 +1263,56 @@
         return deg;
       }
 
+      function dirLabel(deg) {
+        if (deg == null) return "N/A";
+        const names = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        const wrapped = ((deg % 360) + 360) % 360;
+        const i = Math.round(wrapped / 22.5) % 16;
+        return `${Math.round(wrapped)}° ${names[i]}`;
+      }
+
+      function constancySliceTraces(dirDeg, constancy) {
+        const c = constancy == null ? 0 : Math.max(0, Math.min(1, constancy));
+        const width = Math.max(10, (1 - c) * 180);
+        const half = width / 2;
+        const n = 48;
+        const theta = [];
+        const r = [];
+        const col = [];
+        for (let i = 0; i < n; i++) {
+          const a = -half + (width * (i + 0.5)) / n;
+          theta.push((dirDeg + a + 360) % 360);
+          r.push(1);
+          col.push(1 - Math.abs(a) / half);
+        }
+        return [
+          {
+            type: "barpolar",
+            theta,
+            r,
+            width: Array(n).fill(width / n),
+            marker: {
+              color: col,
+              colorscale: threeToneScale,
+              cmin: 0,
+              cmax: 1,
+              showscale: false,
+            },
+            hoverinfo: "skip",
+            name: "Constancy slice",
+          },
+          {
+            type: "scatterpolar",
+            mode: "lines",
+            r: [0, 1.08],
+            theta: [dirDeg, dirDeg],
+            line: { color: "#ffffff", width: 4 },
+            hoverinfo: "skip",
+            name: "Mean direction",
+          },
+        ];
+      }
+
       function buildWarnings(meta) {
         const warnings = Array.isArray(meta.warnings) ? meta.warnings.slice() : [];
         if (meta.polar_is_validated === false) {
@@ -472,6 +1329,66 @@
         return state.payload.climatology.by_hour.find((row) => Number(row.hour) === Number(hour));
       }
 
+      function fixedMeanWindMax() {
+        if (state.meanWindMax != null) return state.meanWindMax;
+        let max = 0;
+        const hours = (state.payload && state.payload.climatology && state.payload.climatology.by_hour) || [];
+        hours.forEach((row) => {
+          (row.mean_tws_kt || []).forEach((line) => {
+            (line || []).forEach((v) => {
+              const n = asNum(v);
+              if (n != null && n > max) max = n;
+            });
+          });
+        });
+        state.meanWindMax = Math.max(10, Math.ceil(max / 2) * 2);
+        return state.meanWindMax;
+      }
+
+      function hourCount() {
+        const hours = state.payload && state.payload.climatology && state.payload.climatology.by_hour;
+        return hours && hours.length ? hours.length : 24;
+      }
+
+      function applySelectedHour(hour) {
+        state.selectedHour = ((Number(hour) % hourCount()) + hourCount()) % hourCount();
+        els.hourSlider.value = String(state.selectedHour);
+        renderCalmMap();
+        refreshTimeLabelsOnly();
+        renderPointDetail();
+        renderTransects();
+      }
+
+      function updateHourPlayButton() {
+        if (!els.hourPlay) return;
+        els.hourPlay.textContent = state.hourPlaying ? "Pause" : "Play";
+        els.hourPlay.classList.toggle("active", state.hourPlaying);
+        els.hourPlay.setAttribute("aria-pressed", state.hourPlaying ? "true" : "false");
+      }
+
+      function stopHourPlay() {
+        state.hourPlaying = false;
+        if (state.hourTimer != null) {
+          clearInterval(state.hourTimer);
+          state.hourTimer = null;
+        }
+        updateHourPlayButton();
+      }
+
+      function startHourPlay() {
+        if (state.hourPlaying) return;
+        state.hourPlaying = true;
+        updateHourPlayButton();
+        state.hourTimer = setInterval(() => {
+          applySelectedHour(state.selectedHour + 1);
+        }, 450);
+      }
+
+      function toggleHourPlay() {
+        if (state.hourPlaying) stopHourPlay();
+        else startHourPlay();
+      }
+
       function getCellSeries(field) {
         return state.payload.climatology.by_hour.map((row) => {
           const matrix = row[field];
@@ -485,7 +1402,11 @@
       function refreshTimeLabelsOnly() {
         if (!state.payload) return;
         els.generatedTime.textContent = `Generated: ${formatTimestamp(state.payload.meta.generated_utc)}`;
-        els.hourLabel.textContent = `Hour: ${hourLabel(state.selectedHour)} (from UTC hour ${state.selectedHour})`;
+        const clocks = hourClocks(state.selectedHour);
+        const primary = state.timeMode === "utc" ? clocks.utc : clocks.local;
+        const secondary = state.timeMode === "utc" ? clocks.local : clocks.utc;
+        els.hourMain.textContent = primary;
+        els.hourSub.textContent = `${secondary} · hour of day, not race date`;
       }
 
       function tileXToLon(x, z) {
@@ -497,56 +1418,167 @@
         return (180 / Math.PI) * Math.atan(Math.sinh(n));
       }
 
-      function buildOpenSeaMapImages() {
-        const m = window.OPEN_SEA_MAP_MANIFEST || null;
-        if (!m || !Array.isArray(m.included_zooms) || m.included_zooms.length === 0) {
-          els.chartLayerNote.textContent =
-            "Chart layer is OpenSeaMap, crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. (No local tiles found.)";
+      function pickDisplayZoom(manifest) {
+        const ranges = manifest.zoom_ranges || {};
+        if (ranges["8"] && Number(ranges["8"].count) >= 45) return 8;
+        if (ranges["7"]) return 7;
+        const zooms = (manifest.included_zooms || []).map(Number).sort((a, b) => a - b);
+        return zooms.length ? zooms[0] : null;
+      }
+
+      function buildTileImages(manifest, opts) {
+        if (!manifest || !Array.isArray(manifest.included_zooms) || manifest.included_zooms.length === 0) {
           return [];
         }
-        const zoom = Math.max(...m.included_zooms.map((v) => Number(v)));
-        const zr = m.zoom_ranges && m.zoom_ranges[String(zoom)];
-        if (!zr) {
-          return [];
-        }
-        const embeddedForZoom = Array.isArray(m.embedded_tiles)
-          ? m.embedded_tiles.filter((t) => Number(t.z) === zoom)
+        const zoom = pickDisplayZoom(manifest);
+        const zr = manifest.zoom_ranges && manifest.zoom_ranges[String(zoom)];
+        if (zoom == null || !zr) return [];
+        const embedded = Array.isArray(manifest.embedded_tiles)
+          ? manifest.embedded_tiles.filter((t) => Number(t.z) === zoom)
           : [];
-        const embeddedByKey = new Map(
-          embeddedForZoom.map((t) => [`${t.x}/${t.y}`, t.source_data_uri])
-        );
+        const byKey = new Map(embedded.map((t) => [`${t.x}/${t.y}`, t.source_data_uri]));
         const images = [];
         for (let x = zr.x_min; x <= zr.x_max; x++) {
           for (let y = zr.y_min; y <= zr.y_max; y++) {
-            const lonLeft = tileXToLon(x, zoom);
-            const lonRight = tileXToLon(x + 1, zoom);
-            const latTop = tileYToLat(y, zoom);
-            const latBottom = tileYToLat(y + 1, zoom);
-            const sourceData = embeddedByKey.get(`${x}/${y}`);
-            if (!sourceData) {
-              continue;
-            }
+            const source = byKey.get(`${x}/${y}`);
+            if (!source) continue;
             images.push({
-              source: sourceData,
+              source,
               xref: "x",
               yref: "y",
-              x: lonLeft,
-              y: latTop,
-              sizex: lonRight - lonLeft,
-              sizey: latTop - latBottom,
+              x: tileXToLon(x, zoom),
+              y: tileYToLat(y, zoom),
+              sizex: tileXToLon(x + 1, zoom) - tileXToLon(x, zoom),
+              sizey: tileYToLat(y, zoom) - tileYToLat(y + 1, zoom),
               sizing: "stretch",
-              opacity: 0.45,
-              layer: "below",
+              opacity: opts.opacity,
+              layer: opts.layer,
               xanchor: "left",
               yanchor: "top",
             });
           }
         }
-        const mb = (Number(m.total_bytes) || 0) / (1024 * 1024);
-        els.chartLayerNote.textContent =
-          "Chart layer is OpenSeaMap, crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. "
-          + `Cached offline tiles: z${m.included_zooms.join(", z")} (${mb.toFixed(2)} MB).`;
         return images;
+      }
+
+      function getMapImages() {
+        if (state.mapImages) return state.mapImages;
+        const osm = window.OPEN_STREET_MAP_MANIFEST || {
+          included_zooms: [8],
+          zoom_ranges: { "8": { x_min: 132, x_max: 138, y_min: 93, y_max: 99, count: 49 } },
+          tile_url_template: "tiles/osm/{z}/{x}/{y}.png",
+          total_bytes: 0,
+        };
+        const osmImages = buildTileImages(osm, {
+          opacity: 1,
+          layer: "below",
+          fallbackTemplate: "tiles/osm/{z}/{x}/{y}.png",
+        });
+        const osmMb = ((osm && Number(osm.total_bytes)) || 0) / (1024 * 1024);
+        const landCount = (window.LAND_RINGS && window.LAND_RINGS.rings && window.LAND_RINGS.rings.length) || 0;
+        if (osmImages.length === 0 && landCount === 0) {
+          els.chartLayerNote.textContent =
+            "No map underlay is available. Run dashboard/embed_map_assets.py, then reload.";
+        } else {
+          els.chartLayerNote.textContent =
+            "Map underlay is OpenStreetMap data (CARTO Voyager) plus a Natural Earth coastline. " +
+            "Crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. Tiles by CARTO. " +
+            `Embedded OSM tiles: ${osmImages.length} (${osmMb.toFixed(2)} MB). Coastline rings: ${landCount}.`;
+        }
+        state.mapImages = osmImages;
+        return state.mapImages;
+      }
+
+      function windArrowTrace(lat, lon, byHour) {
+        const u = byHour.vector_mean_u;
+        const v = byHour.vector_mean_v;
+        if (!Array.isArray(u) || !Array.isArray(v)) return null;
+        const xs = [];
+        const ys = [];
+        const angles = [];
+        const strideI = Math.max(3, Math.round(lat.length / 12));
+        const strideJ = Math.max(3, Math.round(lon.length / 14));
+        const i0 = Math.floor(strideI / 2);
+        const j0 = Math.floor(strideJ / 2);
+        for (let i = i0; i < lat.length; i += strideI) {
+          for (let j = j0; j < lon.length; j += strideJ) {
+            const from = windDirFromUv(asNum(u[i] && u[i][j]), asNum(v[i] && v[i][j]));
+            if (from == null) continue;
+            xs.push(lon[j]);
+            ys.push(lat[i]);
+            angles.push((from + 180) % 360);
+          }
+        }
+        if (!xs.length) return null;
+        return {
+          type: "scatter",
+          mode: "markers",
+          x: xs,
+          y: ys,
+          marker: {
+            symbol: "arrow",
+            size: 12,
+            color: "#0b1020",
+            line: { color: "#ffffff", width: 1.2 },
+            angleref: "up",
+            angle: angles,
+          },
+          hoverinfo: "skip",
+          showlegend: false,
+          name: "Mean direction",
+        };
+      }
+
+      function landTraces() {
+        const rings = (window.LAND_RINGS && Array.isArray(window.LAND_RINGS.rings)) ? window.LAND_RINGS.rings : [];
+        return rings.map((ring, idx) => ({
+          type: "scatter",
+          mode: "lines",
+          x: ring.map((pt) => pt[0]),
+          y: ring.map((pt) => pt[1]),
+          fill: "toself",
+          fillcolor: "rgba(128, 132, 138, 0.92)",
+          line: { color: "#d5d8de", width: 1.2 },
+          hoverinfo: "skip",
+          showlegend: false,
+          name: "Land",
+        }));
+      }
+
+      function missingMask(field) {
+        return (field || []).map((row) =>
+          (row || []).map((v) => (asNum(v) == null ? 1 : null))
+        );
+      }
+
+      function fillEnclosedSeaHoles(field) {
+        const rows = (field || []).map((row) => (row || []).map((v) => asNum(v)));
+        const h = rows.length;
+        if (!h) return rows;
+        const out = rows.map((row) => row.slice());
+        const dirs = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+        ];
+        for (let i = 0; i < h; i++) {
+          for (let j = 0; j < rows[i].length; j++) {
+            if (rows[i][j] != null) continue;
+            let sum = 0;
+            let n = 0;
+            dirs.forEach(([di, dj]) => {
+              const row = rows[i + di];
+              const val = row ? row[j + dj] : null;
+              if (val != null) {
+                sum += val;
+                n += 1;
+              }
+            });
+            if (n === 4) out[i][j] = sum / 4;
+          }
+        }
+        return out;
       }
 
       function renderCalmMap() {
@@ -557,90 +1589,205 @@
         const course = state.payload.meta.course || {};
         const routes = Array.isArray(state.payload.routes) ? state.payload.routes : [];
 
-        const routeTraces = routes.map((route) => ({
-          type: "scatter",
-          mode: "lines",
-          x: route.legs.map((pt) => pt[1]),
-          y: route.legs.map((pt) => pt[0]),
-          line: { width: 1.2, color: "rgba(235,235,235,0.35)" },
-          hoverinfo: "skip",
-          showlegend: false,
-        }));
+        ensureRouteState(routes);
+        const routeTraces = routes.map((route, idx) => {
+          const id = routeId(route, idx);
+          const on = state.routeOn[id] !== false;
+          const focus = state.routeFocus === id;
+          const dim = state.routeFocus && !focus;
+          return {
+            type: "scatter",
+            mode: "lines",
+            x: (route.legs || []).map((pt) => pt[1]),
+            y: (route.legs || []).map((pt) => pt[0]),
+            name: route.label || id,
+            line: {
+              width: focus ? 5 : 2.4,
+              color: routeColor(idx),
+            },
+            opacity: !on ? 0 : dim ? 0.22 : 1,
+            hoverinfo: "skip",
+            showlegend: false,
+            visible: on,
+          };
+        });
         const keyRoute = [
           [course.start && course.start[0], course.start && course.start[1]],
           [course.gate && course.gate[0], course.gate && course.gate[1]],
           [course.finish && course.finish[0], course.finish && course.finish[1]],
         ].filter((pt) => pt[0] != null && pt[1] != null);
 
+        const isDirLayer = state.mapLayer === "mean_tws_dir";
+        const layer = state.mapLayer === "p_below_5kt" ? "p_below_5kt" : "mean_tws_kt";
+        const field = byHour[layer] || byHour.mean_tws_kt || z;
+        const finite = [];
+        (field || []).forEach((row) => {
+          (row || []).forEach((v) => {
+            const n = asNum(v);
+            if (n != null) finite.push(n);
+          });
+        });
+        const isProb = layer === "p_below_5kt";
+        const zmin = isProb ? 0 : 0;
+        const zmax = isProb ? 1 : fixedMeanWindMax();
+        const painted = fillEnclosedSeaHoles(field);
         const traces = [
           {
             type: "heatmap",
-            z,
+            z: missingMask(field),
             x: lon,
             y: lat,
             zmin: 0,
             zmax: 1,
-            colorscale: "Cividis",
-            colorbar: { title: "P(<5 kt)" },
-            opacity: 0.74,
+            colorscale: [
+              [0, "rgba(0,0,0,0)"],
+              [1, "#7f848c"],
+            ],
+            showscale: false,
             hoverinfo: "skip",
+            name: "Land",
+            visible: state.showLand,
           },
+          {
+            type: "heatmap",
+            z: painted,
+            x: lon,
+            y: lat,
+            zmin,
+            zmax,
+            colorscale: threeToneScale,
+            colorbar: {
+              title: isProb ? "P(<5 kt)" : "Mean wind (kt)",
+              tick0: zmin,
+              dtick: isProb ? 0.25 : 2,
+            },
+            zsmooth: false,
+            xgap: 1,
+            ygap: 1,
+            opacity: 0.95,
+            hoverinfo: "skip",
+            visible: finite.length > 0,
+          },
+          ...(state.showLand ? landTraces() : []),
           ...routeTraces,
+          ...(isDirLayer ? [windArrowTrace(lat, lon, byHour)].filter(Boolean) : []),
           {
             type: "scatter",
             mode: "lines+markers",
             x: keyRoute.map((pt) => pt[1]),
             y: keyRoute.map((pt) => pt[0]),
-            name: "Start-Gate-Finish",
+            name: "Rhumbline",
             line: { width: 3, color: "#ffffff" },
             marker: { size: 7, color: "#ffffff" },
             hoverinfo: "skip",
+            showlegend: false,
+            visible: state.showRhumbline,
+          },
+          {
+            type: "scatter",
+            mode: "markers",
+            x: [lon[state.selectedLonIdx]],
+            y: [lat[state.selectedLatIdx]],
+            name: "Selected cell",
+            marker: {
+              size: 16,
+              color: "rgba(0,0,0,0)",
+              line: { width: 3, color: "#ffffff" },
+              symbol: "x",
+            },
+            hoverinfo: "skip",
+            showlegend: false,
           },
         ];
 
+        const layerTitle = isProb
+          ? `Calm risk P(<5 kt) at ${hourLabel(state.selectedHour)}`
+          : isDirLayer
+            ? `Mean wind + direction (toward) at ${hourLabel(state.selectedHour)}`
+            : `Mean wind (kt) at ${hourLabel(state.selectedHour)}`;
+        const xRange = (state.mapRange && state.mapRange.x) || [Math.min(...lon), Math.max(...lon)];
+        const yRange = (state.mapRange && state.mapRange.y) || [Math.min(...lat), Math.max(...lat)];
         const layout = {
           ...plotLayoutBase,
-          title: `Calm risk at ${hourLabel(state.selectedHour)}`,
+          title: layerTitle,
           xaxis: {
             title: "Longitude (deg E)",
             zeroline: false,
-            range: [Math.min(...lon), Math.max(...lon)],
+            range: xRange,
           },
           yaxis: {
             title: "Latitude (deg N)",
             zeroline: false,
-            range: [Math.min(...lat), Math.max(...lat)],
+            range: yRange,
           },
-          images: buildOpenSeaMapImages(),
+          images: getMapImages(),
+          showlegend: false,
         };
-        Plotly.react(els.mapPlot, traces, layout, { displayModeBar: false, responsive: true });
+        applyPlot(els.mapPlot, traces, layout, { mapSelect: true });
+      }
+
+      function renderRouteLegend() {
+        const routes = Array.isArray(state.payload && state.payload.routes) ? state.payload.routes : [];
+        ensureRouteState(routes);
+        if (!els.routeLegend) return;
+        els.routeLegend.innerHTML = routes
+          .map((route, idx) => {
+            const id = routeId(route, idx);
+            const on = state.routeOn[id] !== false;
+            const focus = state.routeFocus === id;
+            const cls = `route-legend-row ${on ? "on" : "off"} ${focus ? "focus" : ""}`;
+            return `<div class="${cls}" data-route-id="${id}" role="button" tabindex="0">
+              <input type="checkbox" data-route-toggle="${id}" ${on ? "checked" : ""} />
+              <span class="route-swatch" style="background:${routeColor(idx)}"></span>
+              <span>${route.label || id}</span>
+            </div>`;
+          })
+          .join("");
       }
 
       function renderRouteComparison() {
         const routes = Array.isArray(state.payload.routes) ? state.payload.routes : [];
-        const traces = routes.map((route) => ({
-          type: "box",
-          y: (route.elapsed_hours && route.elapsed_hours.samples) || [],
-          name: route.label || route.id,
-          boxpoints: false,
-          marker: { color: "#88b3ff" },
-          line: { color: "#9bc1ff" },
-          hoverinfo: "skip",
-        }));
+        ensureRouteState(routes);
+        renderRouteLegend();
+        const traces = routes.map((route, idx) => {
+          const id = routeId(route, idx);
+          const on = state.routeOn[id] !== false;
+          const color = routeColor(idx);
+          return {
+            type: "box",
+            y: (route.elapsed_hours && route.elapsed_hours.samples) || [],
+            name: route.label || id,
+            boxpoints: false,
+            marker: { color },
+            fillcolor: color,
+            opacity: on ? 1 : 0.25,
+            line: { color, width: state.routeFocus === id ? 3 : 1.5 },
+            hoverinfo: "skip",
+            showlegend: false,
+          };
+        });
+        const panel = document.querySelector(".route-legend-panel");
+        const matchedHeight = Math.max(
+          panel ? Math.round(panel.getBoundingClientRect().height) : 0,
+          360
+        );
         const layout = {
           ...plotLayoutBase,
           title: "Elapsed-time distributions (hours) with full sample uncertainty",
+          height: matchedHeight,
           yaxis: { title: "Elapsed hours" },
-          xaxis: { tickangle: -25 },
+          xaxis: { tickangle: -25, showticklabels: false },
         };
-        Plotly.react(els.routePlot, traces, layout, { displayModeBar: false, responsive: true });
+        applyPlot(els.routePlot, traces, layout, { noZoom: true });
 
         els.routeSummary.innerHTML = routes
-          .map((route) => {
+          .map((route, idx) => {
+            const id = routeId(route, idx);
             const e = route.elapsed_hours || {};
+            const color = routeColor(idx);
             return `
-              <div class="meta-card">
-                <span class="k">${route.label || route.id}</span>
+              <div class="meta-card route-card ${state.routeFocus === id ? "focus" : ""}" data-route-id="${id}" style="border-left: 6px solid ${color}">
+                <span class="k">${route.label || id}</span>
                 <div class="v">${round2(asNum(e.p50))} h median</div>
                 <div class="badge">P10 ${round2(asNum(e.p10))} h</div>
                 <div class="badge">P90 ${round2(asNum(e.p90))} h</div>
@@ -654,17 +1801,37 @@
       function renderHeadToHeadTable() {
         const rows = Array.isArray(state.payload.head_to_head) ? state.payload.head_to_head : [];
         const body = rows
-          .map(
-            (r) => `<tr>
-              <td>${r.a}</td>
-              <td>${r.b}</td>
-              <td>${round2(asNum(r.a_wins_pct))}%</td>
-              <td>${round2(asNum(r.median_margin_hours))} h</td>
+          .map((r) => {
+            const a = routeLookup(r.a);
+            const b = routeLookup(r.b);
+            const aWin = asNum(r.a_wins_pct);
+            const aPct = aWin == null ? 50 : Math.max(0, Math.min(100, aWin));
+            const bPct = 100 - aPct;
+            const aBest = a.p50 != null && b.p50 != null && a.p50 < b.p50;
+            const bBest = a.p50 != null && b.p50 != null && b.p50 < a.p50;
+            const aMedianStyle = aBest
+              ? ` class="h2h-best" style="background:${a.color};color:#0b1020"`
+              : "";
+            const bMedianStyle = bBest
+              ? ` class="h2h-best" style="background:${b.color};color:#0b1020"`
+              : "";
+            return `<tr>
+              <td><span class="h2h-route" style="color:${a.color}">${a.label}</span></td>
+              <td><span class="h2h-route" style="color:${b.color}">${b.label}</span></td>
+              <td>
+                <div class="h2h-bar" role="img" aria-label="A wins ${round2(aPct)} percent, B wins ${round2(bPct)} percent">
+                  <div class="h2h-bar-a" style="width:${aPct}%"></div>
+                  <div class="h2h-bar-b" style="width:${bPct}%"></div>
+                  <div class="h2h-bar-label"><span>A ${round2(aPct)}%</span><span>B ${round2(bPct)}%</span></div>
+                </div>
+              </td>
+              <td${aMedianStyle}>${round2(a.p50)} h</td>
+              <td${bMedianStyle}>${round2(b.p50)} h</td>
               <td>${round2(asNum(r.p10_margin_hours))} h</td>
               <td>${round2(asNum(r.p90_margin_hours))} h</td>
               <td>${r.n}</td>
-            </tr>`
-          )
+            </tr>`;
+          })
           .join("");
         els.headToHeadTable.innerHTML = `
           <table>
@@ -672,97 +1839,12 @@
               <tr>
                 <th>Route A</th>
                 <th>Route B</th>
-                <th>A wins</th>
-                <th>Median margin</th>
+                <th>A wins ← → B wins</th>
+                <th>A median</th>
+                <th>B median</th>
                 <th>P10 margin</th>
                 <th>P90 margin</th>
                 <th>N</th>
-              </tr>
-            </thead>
-            <tbody>${body}</tbody>
-          </table>
-        `;
-      }
-
-      function renderLeg2DecisionPanels() {
-        const rows = Array.isArray(state.payload.leg2_win_rate_by_arrival_hour_local)
-          ? state.payload.leg2_win_rate_by_arrival_hour_local
-          : [];
-        if (rows.length === 0) {
-          els.leg2HourTable.innerHTML = "<p class='help'>No leg-2 bucketed comparison data present.</p>";
-        } else {
-          const body = rows
-            .map(
-              (r) => `<tr>
-                <td>${hourLabel(Number(r.arrival_hour_local))}</td>
-                <td>${r.n}</td>
-                <td>${round2(asNum(r.east_of_corsica_wins_pct))}%</td>
-                <td>${round2(asNum(r.bonifacio_west_corsica_wins_pct))}%</td>
-                <td>${round2(asNum(r.median_margin_hours))} h</td>
-                <td>${round2(asNum(r.p10_margin_hours))} h</td>
-                <td>${round2(asNum(r.p90_margin_hours))} h</td>
-              </tr>`
-            )
-            .join("");
-          els.leg2HourTable.innerHTML = `
-            <table>
-              <thead>
-                <tr>
-                  <th>Gate-arrival hour</th>
-                  <th>N</th>
-                  <th>East wins</th>
-                  <th>Bonifacio/west wins</th>
-                  <th>Median margin (B-A)</th>
-                  <th>P10 margin</th>
-                  <th>P90 margin</th>
-                </tr>
-              </thead>
-              <tbody>${body}</tbody>
-            </table>
-          `;
-        }
-
-        const panel = state.payload.bonifacio_decision_support || {};
-        els.bonifacioPanelLabel.textContent = panel.label
-          || "Channel choice inside the Maddalena archipelago is below model resolution. These are the conditions on arrival - the choice is local knowledge.";
-        const panelRows = Array.isArray(panel.rows) ? panel.rows : [];
-        if (panelRows.length === 0) {
-          els.bonifacioPanelTable.innerHTML = "<p class='help'>No Bonifacio decision-support rows present.</p>";
-          return;
-        }
-        const body = panelRows
-          .map((r) => {
-            const forecast = r.race_day_forecast || {};
-            const climo = r.august_climatology_at_hour || {};
-            const climoTws = climo.tws_kt || {};
-            const climoDir = climo.twd_deg || {};
-            const climoNw = climo.nw_component_kt || {};
-            return `<tr>
-              <td>${r.leg1_offset_nm}</td>
-              <td>${r.modeled_entry_time_local || "N/A"}</td>
-              <td>${round2(asNum(forecast.tws_kt))}</td>
-              <td>${round2(asNum(forecast.twd_deg))}</td>
-              <td>${round2(asNum(forecast.nw_component_kt))}</td>
-              <td>${round2(asNum(climoTws.p10))} / ${round2(asNum(climoTws.p50))} / ${round2(asNum(climoTws.p90))}</td>
-              <td>${round2(asNum(climoDir.p10))} / ${round2(asNum(climoDir.p50))} / ${round2(asNum(climoDir.p90))}</td>
-              <td>${round2(asNum(climoNw.p10))} / ${round2(asNum(climoNw.p50))} / ${round2(asNum(climoNw.p90))}</td>
-              <td>${climo.n == null ? "N/A" : climo.n}</td>
-            </tr>`;
-          })
-          .join("");
-        els.bonifacioPanelTable.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Leg1 offset (nm)</th>
-                <th>Modelled entry (local)</th>
-                <th>Forecast TWS (kt)</th>
-                <th>Forecast TWD (deg)</th>
-                <th>Forecast NW comp (kt)</th>
-                <th>Climo TWS p10/p50/p90</th>
-                <th>Climo TWD p10/p50/p90</th>
-                <th>Climo NW comp p10/p50/p90</th>
-                <th>Climo N</th>
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -780,15 +1862,26 @@
           selected && selected.directional_const
             ? asNum(selected.directional_const[state.selectedLatIdx][state.selectedLonIdx])
             : null;
+        const uSel = selected && selected.vector_mean_u
+          ? asNum(selected.vector_mean_u[state.selectedLatIdx][state.selectedLonIdx])
+          : null;
+        const vSel = selected && selected.vector_mean_v
+          ? asNum(selected.vector_mean_v[state.selectedLatIdx][state.selectedLonIdx])
+          : null;
+        const dirSel = windDirFromUv(uSel, vSel);
         const nSamples =
           selected && selected.n_samples ? asNum(selected.n_samples[state.selectedLatIdx][state.selectedLonIdx]) : null;
 
-        els.pointTitle.textContent = `Selected cell: ${round2(asNum(lat))} N, ${round2(asNum(lon))} E`;
+        els.pointTitle.textContent = selectedCellLabel();
+        updateSelectedReadout();
+        const noWind = speed == null && p5 == null;
         els.pointMetrics.innerHTML = `
-          <div class="meta-card"><span class="k">Mean wind</span><div class="v">${round2(speed)} kt</div></div>
-          <div class="meta-card"><span class="k">Calm risk</span><div class="v">${round2(p5 == null ? null : p5 * 100)}%</div></div>
-          <div class="meta-card"><span class="k">Directional constancy</span><div class="v">${round2(dconst)}</div></div>
-          <div class="meta-card"><span class="k">Samples</span><div class="v">${nSamples == null ? "N/A" : Math.round(nSamples)}</div></div>
+          <div class="meta-card"><span class="k">Mean wind</span><div class="v">${speed == null ? "No data" : `${round2(speed)} kt`}</div></div>
+          <div class="meta-card"><span class="k">Calm risk</span><div class="v">${p5 == null ? "No data" : `${round2(p5 * 100)}%`}</div></div>
+          <div class="meta-card"><span class="k">Mean direction</span><div class="v">${dirSel == null ? "No data" : dirLabel(dirSel)}</div></div>
+          <div class="meta-card"><span class="k">Directional constancy</span><div class="v">${dconst == null ? "No data" : round2(dconst)}</div></div>
+          <div class="meta-card"><span class="k">Samples</span><div class="v">${nSamples == null ? "No data" : Math.round(nSamples)}</div></div>
+          ${noWind ? `<p class="chart-note">This cell is grey on the map — no wind was stored here (land or missing sea cell), not 0 kt.</p>` : ""}
         `;
 
         const xHours = state.payload.climatology.by_hour.map((row) => Number(row.hour));
@@ -797,8 +1890,11 @@
         const p5Series = getCellSeries("p_below_5kt").map((v) => (v == null ? null : v * 100));
         const dconstSeries = getCellSeries("directional_const");
         const sampleSeries = getCellSeries("n_samples");
+        const uSeries = getCellSeries("vector_mean_u");
+        const vSeries = getCellSeries("vector_mean_v");
+        const dirSeries = uSeries.map((u, i) => windDirFromUv(u, vSeries[i]));
 
-        Plotly.react(
+        applyPlot(
           els.pointHourPlot,
           [
             {
@@ -808,8 +1904,34 @@
               y: meanSeries,
               name: "Mean wind (kt)",
               line: { color: "#8dd3ff", width: 2 },
-              marker: { size: 5 },
+              marker: { size: 5, color: "#8dd3ff" },
               hoverinfo: "skip",
+            },
+            {
+              type: "scatter",
+              mode: "markers",
+              x: xHours,
+              y: meanSeries,
+              name: "Mean dir (toward)",
+              marker: {
+                symbol: "arrow",
+                size: 14,
+                color: "#ffffff",
+                angleref: "up",
+                angle: dirSeries.map((d) => (d == null ? 0 : (d + 180) % 360)),
+              },
+              hoverinfo: "skip",
+            },
+            {
+              type: "scatter",
+              mode: "text",
+              x: xHours.filter((_, i) => i % 3 === 0),
+              y: meanSeries.filter((_, i) => i % 3 === 0).map((v) => (v == null ? null : v)),
+              text: dirSeries.filter((_, i) => i % 3 === 0).map((d) => (d == null ? "" : dirLabel(d))),
+              textposition: "top center",
+              textfont: { color: "#d8e5ff", size: 11 },
+              hoverinfo: "skip",
+              showlegend: false,
             },
             {
               type: "scatter",
@@ -825,13 +1947,14 @@
           ],
           {
             ...plotLayoutBase,
-            title: "By-hour wind and calm probability at selected cell",
-            xaxis: { title: "Hour", tickvals: xHours, ticktext, tickangle: -30 },
+            title: "By-hour wind, direction (arrows = toward), and calm probability",
+            xaxis: { title: "Hour of day", tickvals: xHours, ticktext, tickangle: -30 },
             yaxis: { title: "Mean wind (kt)" },
             yaxis2: { title: "P(<5 kt) %", overlaying: "y", side: "right", range: [0, 100] },
             legend: { orientation: "h" },
+            margin: { ...plotLayoutBase.margin, t: 50, b: 80 },
           },
-          { displayModeBar: false, responsive: true }
+          { noZoom: true }
         );
 
         const rowHtml = xHours
@@ -840,6 +1963,7 @@
               <td>${hourLabel(hr)}</td>
               <td>${round2(meanSeries[i])}</td>
               <td>${round2(p5Series[i])}%</td>
+              <td>${dirSeries[i] == null ? "N/A" : dirLabel(dirSeries[i])}</td>
               <td>${round2(dconstSeries[i])}</td>
               <td>${sampleSeries[i] == null ? "N/A" : Math.round(sampleSeries[i])}</td>
             </tr>`;
@@ -848,44 +1972,53 @@
         els.pointDetailTable.innerHTML = `
           <table>
             <thead>
-              <tr><th>Hour</th><th>Mean kt</th><th>P&lt;5 kt</th><th>Dir const.</th><th>N</th></tr>
+              <tr><th>Hour</th><th>Mean kt</th><th>P&lt;5 kt</th><th>Dir from</th><th>Dir const.</th><th>N</th></tr>
             </thead>
             <tbody>${rowHtml}</tbody>
           </table>
         `;
 
-        const uSeries = getCellSeries("vector_mean_u");
-        const vSeries = getCellSeries("vector_mean_v");
-        const hasVector = uSeries.some((v) => v != null) && vSeries.some((v) => v != null);
-        if (!hasVector) {
+        if (dirSel == null) {
           Plotly.purge(els.pointRosePlot);
+          els.pointRosePlot._pmcHome = null;
           els.pointRosePlot.innerHTML =
-            "<p class='help'>Wind-rose data unavailable in this payload (missing vector_mean_u/vector_mean_v).</p>";
+            "<p class='help'>No vector wind at this cell and hour, so the constancy slice cannot be drawn.</p>";
           return;
         }
-        const dirSeries = uSeries.map((u, i) => windDirFromUv(u, vSeries[i]));
-        Plotly.react(
+        const sliceWidth = Math.max(10, (1 - Math.max(0, Math.min(1, dconst == null ? 0 : dconst))) * 180);
+        applyPlot(
           els.pointRosePlot,
-          [
-            {
-              type: "barpolar",
-              theta: dirSeries,
-              r: meanSeries,
-              marker: { color: meanSeries, colorscale: "Cividis" },
-              hoverinfo: "skip",
-              name: "Mean wind by hour",
-            },
-          ],
+          constancySliceTraces(dirSel, dconst),
           {
             ...plotLayoutBase,
-            title: "Diurnal wind rose (selected cell)",
+            title: `Direction and constancy at ${hourLabel(state.selectedHour)} · ${dirLabel(dirSel)} · C=${round2(dconst)} · slice ${Math.round(sliceWidth)}°`,
+            showlegend: false,
             polar: {
               bgcolor: "#131a2d",
-              radialaxis: { color: "#f2f5ff" },
-              angularaxis: { color: "#f2f5ff", direction: "clockwise" },
+              radialaxis: { range: [0, 1.15], showticklabels: false, ticks: "", color: "#f2f5ff" },
+              angularaxis: {
+                color: "#f2f5ff",
+                direction: "clockwise",
+                rotation: 90,
+                thetaunit: "degrees",
+                tickvals: [0, 45, 90, 135, 180, 225, 270, 315],
+                ticktext: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+              },
             },
+            annotations: [
+              {
+                text: "Wider slice = lower constancy. White line = mean direction the wind comes FROM.",
+                showarrow: false,
+                xref: "paper",
+                yref: "paper",
+                x: 0.5,
+                y: -0.12,
+                font: { color: "#b7c4e5", size: 12 },
+              },
+            ],
+            margin: { ...plotLayoutBase.margin, t: 60, b: 70 },
           },
-          { displayModeBar: false, responsive: true }
+          { noZoom: true }
         );
       }
 
@@ -918,6 +2051,7 @@
           els.transectControls.classList.add("hidden");
           els.transectEmpty.classList.remove("hidden");
           Plotly.purge(els.transectPlot);
+          els.transectPlot._pmcHome = null;
           els.transectPlot.innerHTML = "";
           return;
         }
@@ -940,7 +2074,7 @@
             line: { width: Number(row.hour) === state.selectedHour ? 3 : 1.4 },
             hoverinfo: "skip",
           }));
-          Plotly.react(
+          applyPlot(
             els.transectPlot,
             traces,
             {
@@ -949,8 +2083,7 @@
               xaxis: { title: "Distance offshore (nm)" },
               yaxis: { title: "Mean wind (kt)" },
               legend: { font: { size: 11 } },
-            },
-            { displayModeBar: false, responsive: true }
+            }
           );
         };
         els.transectSelect.onchange = draw;
@@ -1004,20 +2137,26 @@
         renderCalmMap();
         renderRouteComparison();
         renderHeadToHeadTable();
-        renderLeg2DecisionPanels();
         renderPointDetail();
         renderTransects();
         renderSkillTable();
       }
 
       function bindEvents() {
+        if (state.eventsBound) return;
+        state.eventsBound = true;
+        bindMapClick();
         els.hourSlider.oninput = () => {
-          state.selectedHour = Number(els.hourSlider.value);
-          renderCalmMap();
-          refreshTimeLabelsOnly();
-          renderPointDetail();
-          renderTransects();
+          stopHourPlay();
+          applySelectedHour(els.hourSlider.value);
         };
+        if (els.hourPlay) els.hourPlay.onclick = () => toggleHourPlay();
+        if (els.mapLayer) {
+          els.mapLayer.onchange = () => {
+            state.mapLayer = els.mapLayer.value;
+            renderCalmMap();
+          };
+        }
         els.modeLocal.onclick = () => {
           state.timeMode = "local";
           updateTimeModeButtons();
@@ -1028,25 +2167,103 @@
           updateTimeModeButtons();
           renderAll();
         };
-        els.mapPlot.on("plotly_click", (ev) => {
-          const pt = ev && ev.points && ev.points[0];
-          if (!pt || pt.curveNumber !== 0) return;
-          const lat = asNum(pt.y);
-          const lon = asNum(pt.x);
-          const lats = state.payload.climatology.grid.lat;
-          const lons = state.payload.climatology.grid.lon;
-          state.selectedLatIdx = lats.reduce((bestIdx, val, idx) => {
-            const cur = Math.abs(Number(val) - lat);
-            const best = Math.abs(Number(lats[bestIdx]) - lat);
-            return cur < best ? idx : bestIdx;
-          }, 0);
-          state.selectedLonIdx = lons.reduce((bestIdx, val, idx) => {
-            const cur = Math.abs(Number(val) - lon);
-            const best = Math.abs(Number(lons[bestIdx]) - lon);
-            return cur < best ? idx : bestIdx;
-          }, 0);
-          renderPointDetail();
+        document.addEventListener("click", (ev) => {
+          const btn = ev.target.closest(".zoom-toolbar button");
+          if (btn) {
+            const wrap = btn.closest(".plot-wrap");
+            const plot = wrap && wrap.querySelector(".plot");
+            const act = btn.getAttribute("data-act");
+            if (act === "select") {
+              setMapTool(state.mapTool === "select" ? "zoom" : "select");
+              return;
+            }
+            if (!plot || !plot.data) return;
+            if (plot === els.mapPlot && state.mapTool === "select") setMapTool("zoom");
+            if (act === "all") {
+              if (plot === els.mapPlot) state.mapRange = null;
+              resetPlot(plot);
+            } else if (act === "in") {
+              zoomPlot(plot, 0.7);
+              if (plot === els.mapPlot) rememberMapRange(plot);
+            } else if (act === "out") {
+              zoomPlot(plot, 1 / 0.7);
+              if (plot === els.mapPlot) rememberMapRange(plot);
+            }
+            if (plot === els.mapPlot) requestAnimationFrame(syncMapHitLayer);
+            return;
+          }
+          const toggle = ev.target.closest("[data-route-toggle]");
+          if (toggle) {
+            const id = toggle.getAttribute("data-route-toggle");
+            state.routeOn[id] = toggle.checked;
+            if (!toggle.checked && state.routeFocus === id) state.routeFocus = null;
+            renderCalmMap();
+            renderRouteComparison();
+            return;
+          }
+          const routeEl = ev.target.closest("[data-route-id]");
+          if (routeEl && (routeEl.closest("#route-legend") || routeEl.closest("#route-summary"))) {
+            const id = routeEl.getAttribute("data-route-id");
+            state.routeFocus = state.routeFocus === id ? null : id;
+            if (state.routeFocus) state.routeOn[id] = true;
+            renderCalmMap();
+            renderRouteComparison();
+          }
         });
+        if (els.routesShowAll) {
+          els.routesShowAll.onclick = () => {
+            const routes = (state.payload && state.payload.routes) || [];
+            ensureRouteState(routes);
+            Object.keys(state.routeOn).forEach((id) => {
+              state.routeOn[id] = true;
+            });
+            renderCalmMap();
+            renderRouteComparison();
+          };
+        }
+        if (els.routesHideAll) {
+          els.routesHideAll.onclick = () => {
+            const routes = (state.payload && state.payload.routes) || [];
+            ensureRouteState(routes);
+            Object.keys(state.routeOn).forEach((id) => {
+              state.routeOn[id] = false;
+            });
+            state.routeFocus = null;
+            renderCalmMap();
+            renderRouteComparison();
+          };
+        }
+        if (els.routesClearFocus) {
+          els.routesClearFocus.onclick = () => {
+            state.routeFocus = null;
+            renderCalmMap();
+            renderRouteComparison();
+          };
+        }
+        els.dataFileInput.onchange = async () => {
+          const file = els.dataFileInput.files && els.dataFileInput.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text();
+            const payload = JSON.parse(text);
+            persistPayload(payload, file.name);
+            mountWithPayload(payload, `Remembered file: ${file.name}`);
+          } catch (err) {
+            setStatus(`Failed to parse selected JSON: ${String(err)}`, true);
+          }
+        };
+        els.useBundled.onclick = () => {
+          clearPersistedPayload();
+          const bundled = window.DASHBOARD_PAYLOAD;
+          if (bundled) {
+            mountWithPayload(bundled, "Bundled dashboard/data.js");
+            return;
+          }
+          tryLoadDefaultData().then((payload) => {
+            if (payload) mountWithPayload(payload, "Bundled dashboard/data.json");
+            else setStatus("Bundled data is not available. Select a JSON file.", true);
+          });
+        };
       }
 
       async function tryLoadDefaultData() {
@@ -1061,45 +2278,125 @@
         }
       }
 
-      function mountWithPayload(payload) {
+      function bindMapClick() {
+        if (!els.mapPlot || els.mapPlot._pmcClickBound) return;
+        els.mapPlot._pmcClickBound = true;
+        if (els.mapKeyLand) {
+          els.mapKeyLand.onclick = () => {
+            state.showLand = !state.showLand;
+            updateMapKeyButtons();
+            renderCalmMap();
+          };
+        }
+        if (els.mapKeyRhumbline) {
+          els.mapKeyRhumbline.onclick = () => {
+            state.showRhumbline = !state.showRhumbline;
+            updateMapKeyButtons();
+            renderCalmMap();
+          };
+        }
+        if (els.mapPlot.on) {
+          els.mapPlot.on("plotly_relayout", () => {
+            rememberMapRange(els.mapPlot);
+            if (state.mapTool === "select") syncMapHitLayer();
+          });
+        }
+        updateMapToolButtons();
+        updateMapKeyButtons();
+      }
+
+      function persistPayload(payload, name) {
+        try {
+          localStorage.setItem(STORAGE_PAYLOAD, JSON.stringify(payload));
+          localStorage.setItem(STORAGE_NAME, name || "data.json");
+          localStorage.setItem(STORAGE_PREFER, "1");
+        } catch (err) {
+          els.fileLoaderHelp.textContent =
+            "This browser will not remember a file:// selection after reload. " +
+            "Pick the file again, or keep using the bundled data.js.";
+        }
+      }
+
+      function clearPersistedPayload() {
+        try {
+          localStorage.removeItem(STORAGE_PAYLOAD);
+          localStorage.removeItem(STORAGE_NAME);
+          localStorage.removeItem(STORAGE_PREFER);
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      function loadStoredPayload() {
+        try {
+          const raw = localStorage.getItem(STORAGE_PAYLOAD);
+          if (!raw) return null;
+          return {
+            payload: JSON.parse(raw),
+            name: localStorage.getItem(STORAGE_NAME) || "saved file",
+          };
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function mountWithPayload(payload, sourceLabel) {
         state.payload = payload;
         state.selectedHour = 0;
-        state.selectedLatIdx = 0;
-        state.selectedLonIdx = 0;
+        const start = (payload.meta && payload.meta.course && payload.meta.course.start) || [];
+        const seedLat = start[0] != null ? start[0] : payload.climatology.grid.lat[0];
+        const seedLon = start[1] != null ? start[1] : payload.climatology.grid.lon[0];
+        const seed = nearestCellWithWind(seedLat, seedLon);
+        state.selectedLatIdx = seed.latIdx;
+        state.selectedLonIdx = seed.lonIdx;
+        state.routeOn = {};
+        state.routeFocus = null;
+        state.mapRange = null;
+        state.meanWindMax = null;
+        stopHourPlay();
         els.hourSlider.min = "0";
         els.hourSlider.max = String(payload.climatology.by_hour.length - 1);
         els.hourSlider.value = "0";
+        state.mapLayer = "mean_tws_kt";
+        if (els.mapLayer) els.mapLayer.value = state.mapLayer;
         buildWarnings(payload.meta);
         updateTimeModeButtons();
         renderAll();
         bindEvents();
-        setStatus("Loaded dashboard payload from data.json.", false);
-      }
-
-      function setupFileFallback() {
-        els.fileLoader.classList.remove("hidden");
-        setStatus("Direct file fetch failed. Select data.json manually below.", true);
-        els.dataFileInput.onchange = async () => {
-          const file = els.dataFileInput.files && els.dataFileInput.files[0];
-          if (!file) return;
-          try {
-            const text = await file.text();
-            const payload = JSON.parse(text);
-            mountWithPayload(payload);
-            els.fileLoader.classList.add("hidden");
-          } catch (err) {
-            setStatus(`Failed to parse selected JSON: ${String(err)}`, true);
-          }
-        };
+        setStatus(`Loaded dashboard payload (${sourceLabel}).`, false);
+        els.fileLoaderHelp.textContent =
+          `Now showing: ${sourceLabel}. A chosen file is remembered in this browser so reload keeps it.`;
       }
 
       async function init() {
-        const payload = await tryLoadDefaultData();
-        if (payload) {
-          mountWithPayload(payload);
+        bindEvents();
+        const saved = loadStoredPayload();
+        let preferSaved = false;
+        try {
+          preferSaved = Boolean(saved && localStorage.getItem(STORAGE_PREFER) === "1");
+        } catch (err) {
+          preferSaved = false;
+        }
+        if (preferSaved) {
+          mountWithPayload(saved.payload, `Remembered file: ${saved.name}`);
           return;
         }
-        setupFileFallback();
+        if (window.DASHBOARD_PAYLOAD) {
+          mountWithPayload(window.DASHBOARD_PAYLOAD, "Bundled dashboard/data.js");
+          return;
+        }
+        const fetched = await tryLoadDefaultData();
+        if (fetched) {
+          mountWithPayload(fetched, "Bundled dashboard/data.json");
+          return;
+        }
+        if (saved) {
+          mountWithPayload(saved.payload, `Remembered file: ${saved.name}`);
+          return;
+        }
+        setStatus("Could not load bundled data. Select a local data.json below.", true);
+        els.fileLoaderHelp.textContent =
+          "Your browser blocked automatic load of the bundled file. Select dashboard/data.json once; it will be remembered here.";
       }
 
       init();

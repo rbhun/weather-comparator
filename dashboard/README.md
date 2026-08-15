@@ -6,8 +6,9 @@ Offline tactical dashboard for PMC-2026.
 
 - Renders a single-file HTML dashboard from `dashboard/data.json`.
 - Shows calm-risk heatmap (`p_below_5kt`) with route overlays.
-- Renders a pre-cached OpenSeaMap chart underlay beneath calm-risk heatmap
-  using local raster tiles in `dashboard/tiles/` (no network needed at render time).
+- Renders a pre-cached OpenStreetMap base map (CARTO Voyager tiles) plus an
+  OpenSeaMap seamark overlay beneath the calm-risk heatmap, from local raster
+  tiles in `dashboard/tiles/` (no network needed at render time).
 - Shows route distributions and head-to-head margins with percentiles.
 - Shows click-to-inspect point detail by hour.
 - Shows model-skill table with clearly marked `reference_biased` rows.
@@ -27,6 +28,9 @@ Offline tactical dashboard for PMC-2026.
      --output "/workspace/dashboard/data.json"
    ```
 
+   This also writes `dashboard/data.js` so the page can load on `file://`
+   without a file picker.
+
 2. Open `dashboard/index.html` directly from the filesystem (no server).
 
 3. (Optional) Refresh the offline chart-tile cache:
@@ -35,12 +39,15 @@ Offline tactical dashboard for PMC-2026.
    python3 /workspace/dashboard/fetch_openseamap_tiles.py
    ```
 
-   - Downloads OpenSeaMap tiles for lon `6.5..14.5`, lat `37.5..44.0` at zoom 7-9.
-   - Enforces a 30 MB cap for `dashboard/tiles/openseamap/` by dropping the
-     highest zoom level(s) first if needed.
+   - Downloads OpenStreetMap (CARTO Voyager) base tiles and OpenSeaMap
+     seamark tiles for lon `6.5..14.5`, lat `37.5..44.0` at zoom 7-9.
+   - Enforces a 30 MB cap per layer by dropping the highest zoom first.
 
-4. If your browser blocks direct `file://` fetch for `data.json`, use the
-   built-in file picker shown on the page to load the same local `data.json`.
+4. If you pick a different `data.json`, the page stores that payload in
+   `localStorage` and reloads it after refresh. Use **Use bundled data** to
+   go back. Browsers cannot keep a live File handle after reload on `file://`;
+   remembering the JSON contents is the workaround. If a browser blocks
+   `localStorage` on `file://`, pick the file again.
 
 ## What it gets wrong / current limitations
 
@@ -53,5 +60,16 @@ Offline tactical dashboard for PMC-2026.
   message instead of inventing values.
 - This is a tactical comparison dashboard, not a deterministic forecast tool.
   Elapsed-time outputs inherit polar uncertainty below 8 kt TWS.
-- The chart underlay is crowd-sourced seamark information and is explicitly
-  not suitable for navigation.
+- The chart underlay is crowd-sourced OSM/OpenSeaMap information and is
+  explicitly not suitable for navigation.
+- The calm-risk slider is **hour of day** from August climatology (UTC hours
+  0–23, shown in local time). It is not a race-calendar control for 18–23 Aug.
+  Day-specific forecast maps need a live/previous-run payload, which this
+  fixture does not contain.
+- Each graph has +, −, and A (show all) buttons. Click-drag zoom still works;
+  A resets to the full domain.
+- The live dashboard field is currently August 2017 IFS 9 km analysis, 10 m
+  wind. The fetcher only requests sea cells, so islands are empty. Open-Meteo
+  can serve 10 m and 100 m over land if asked; 100 m is not boat-level.
+  Grey on the map is no data, not calm. Some sea cells are still empty
+  because 2017 is not fully downloaded.

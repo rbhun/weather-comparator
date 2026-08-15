@@ -1,0 +1,42 @@
+{
+  "name": "OpenStreetMap base map (CARTO Voyager)",
+  "attribution": "OpenStreetMap contributors, ODbL. Tiles by CARTO.",
+  "warning": "Base map uses OpenStreetMap data via CARTO. Not for navigation.",
+  "bbox": {
+    "lon_min": 6.5,
+    "lon_max": 14.5,
+    "lat_min": 37.5,
+    "lat_max": 44.0
+  },
+  "included_zooms": [
+    7,
+    8,
+    9
+  ],
+  "zoom_ranges": {
+    "7": {
+      "x_min": 66,
+      "x_max": 69,
+      "y_min": 46,
+      "y_max": 49,
+      "count": 16
+    },
+    "8": {
+      "x_min": 132,
+      "x_max": 138,
+      "y_min": 93,
+      "y_max": 99,
+      "count": 36
+    },
+    "9": {
+      "x_min": 265,
+      "x_max": 276,
+      "y_min": 186,
+      "y_max": 198,
+      "count": 83
+    }
+  },
+  "total_bytes": 1527067,
+  "tile_count": 135,
+  "tile_url_template": "tiles/osm/{z}/{x}/{y}.png"
+}

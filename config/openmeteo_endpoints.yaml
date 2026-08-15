@@ -1,10 +1,10 @@
 modes:
   analysis:
-    endpoint: "https://archive-api.open-meteo.com/v1/archive"
-    auth_mode: "none"
+    endpoint: "https://customer-archive-api.open-meteo.com/v1/archive"
+    auth_mode: "require_key"
   previous_runs:
-    endpoint: "https://previous-runs-api.open-meteo.com/v1/forecast"
-    auth_mode: "none"
+    endpoint: "https://customer-previous-runs-api.open-meteo.com/v1/forecast"
+    auth_mode: "require_key"
   live:
     endpoint: "https://customer-api.open-meteo.com/v1/forecast"
     auth_mode: "require_key"
