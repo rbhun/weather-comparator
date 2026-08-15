@@ -9,8 +9,8 @@
     <script src="./tiles/osm_manifest.js"></script>
     <script src="./tiles/openseamap_manifest.js"></script>
     <script src="./tiles/land.js"></script>
-    <script src="./data.js?v=map-chrome"></script>
-    <script src="./yb_results.js"></script>
+    <script src="./data.js?v=skill-20260815"></script>
+    <script src="./yb_results.js?v=skill-20260815"></script>
     <style>
       :root {
         --bg: #0b1020;
@@ -1094,9 +1094,11 @@
         </p>
         <div id="skill-table" class="skill-table-wrap"></div>
         <p id="skill-empty" class="skill-empty hidden">
-          No model-skill rows in this payload yet. Run
-          <code>scripts/compute_model_skill.py --patch-dashboard</code>
-          after previous-runs data is available.
+          No model-skill rows in this payload.
+          Your browser may be remembering an older saved <code>data.json</code>.
+          <button id="skill-use-bundled" type="button" class="chip on" style="margin-top:0.55rem">
+            Load bundled skill data
+          </button>
         </p>
       </section>
     </main>
@@ -2781,14 +2783,18 @@
         const independent = models.filter((m) => !rows.some((r) => String(r.model) === m && r.reference_biased));
         const windowTxt = meta.window_start && meta.window_end
           ? `${meta.window_start} → ${meta.window_end}`
-          : "from payload";
+          : (rows.length ? "from payload" : "no skill rows loaded");
         const nPaired = meta.n_paired != null ? meta.n_paired : "—";
         const nPoints = meta.n_points != null ? meta.n_points : "—";
+        const staleNote = (!rows.length && skillRowCount(window.DASHBOARD_PAYLOAD) > 0)
+          ? `<p class="skill-empty">This browser is showing an old remembered file with empty skill. Tap <strong>Load bundled skill data</strong> below.</p>`
+          : "";
         els.skillMeta.innerHTML = `
           <div class="meta-card"><span class="k">Verification window</span><span class="v">${windowTxt}</span></div>
           <div class="meta-card"><span class="k">Corridor points</span><span class="v">${nPoints}</span></div>
           <div class="meta-card"><span class="k">Paired hours</span><span class="v">${nPaired}</span></div>
           <div class="meta-card"><span class="k">Independent models</span><span class="v">${independent.length ? independent.join(", ") : "—"}</span></div>
+          ${staleNote}
         `;
       }
 
@@ -3627,17 +3633,24 @@
           }
         };
         els.useBundled.onclick = () => {
-          clearPersistedPayload();
-          const bundled = window.DASHBOARD_PAYLOAD;
-          if (bundled) {
-            mountWithPayload(bundled, "Bundled dashboard/data.js");
-            return;
-          }
+          if (useBundledPayload("Bundled dashboard/data.js")) return;
           tryLoadDefaultData().then((payload) => {
-            if (payload) mountWithPayload(payload, "Bundled dashboard/data.json");
-            else setStatus("Bundled data is not available. Select a JSON file.", true);
+            if (payload) {
+              clearPersistedPayload();
+              mountWithPayload(payload, "Bundled dashboard/data.json");
+            } else setStatus("Bundled data is not available. Select a JSON file.", true);
           });
         };
+        const skillUseBundled = document.getElementById("skill-use-bundled");
+        if (skillUseBundled) {
+          skillUseBundled.onclick = () => {
+            if (!useBundledPayload("Bundled dashboard/data.js")) {
+              setStatus("Bundled data is not available.", true);
+              return;
+            }
+            setPage("skill");
+          };
+        }
       }
 
       async function tryLoadDefaultData() {
@@ -3752,6 +3765,11 @@
         els.hourSlider.value = "0";
         state.mapLayer = "mean_tws_kt";
         if (els.mapLayer) els.mapLayer.value = state.mapLayer;
+        state.skillBin = "all";
+        state.skillHideBiased = false;
+        state.skillMetric = "vec_rmse_kt";
+        state.skillModelOn = {};
+        state.skillSort = { key: "vec_rmse_kt", dir: "asc" };
         buildWarnings(payload.meta);
         updateTimeModeButtons();
         renderAll();
@@ -3759,6 +3777,20 @@
         setStatus(`Loaded dashboard payload (${sourceLabel}).`, false);
         els.fileLoaderHelp.textContent =
           `Now showing: ${sourceLabel}. A chosen file is remembered in this browser so reload keeps it.`;
+      }
+
+      function skillRowCount(payload) {
+        return Array.isArray(payload && payload.skill) ? payload.skill.length : 0;
+      }
+
+      function useBundledPayload(label) {
+        clearPersistedPayload();
+        const bundled = window.DASHBOARD_PAYLOAD;
+        if (bundled) {
+          mountWithPayload(bundled, label || "Bundled dashboard/data.js");
+          return true;
+        }
+        return false;
       }
 
       function initAnalytics() {
@@ -3780,18 +3812,30 @@
         initAnalytics();
         bindEvents();
         const saved = loadStoredPayload();
+        const bundled = window.DASHBOARD_PAYLOAD || null;
         let preferSaved = false;
         try {
           preferSaved = Boolean(saved && localStorage.getItem(STORAGE_PREFER) === "1");
         } catch (err) {
           preferSaved = false;
         }
+        // Stale remembered files often predate model skill. Prefer bundled when it
+        // has skill rows and the saved payload does not.
+        if (
+          preferSaved
+          && bundled
+          && skillRowCount(saved.payload) === 0
+          && skillRowCount(bundled) > 0
+        ) {
+          clearPersistedPayload();
+          preferSaved = false;
+        }
         if (preferSaved) {
           mountWithPayload(saved.payload, `Remembered file: ${saved.name}`);
           return;
         }
-        if (window.DASHBOARD_PAYLOAD) {
-          mountWithPayload(window.DASHBOARD_PAYLOAD, "Bundled dashboard/data.js");
+        if (bundled) {
+          mountWithPayload(bundled, "Bundled dashboard/data.js");
           return;
         }
         const fetched = await tryLoadDefaultData();
