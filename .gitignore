@@ -2,6 +2,8 @@
 data/**
 !data/coastline/
 !data/coastline/*.geojson
+!data/skill/
+!data/skill/skill_rows.json
 !data/.gitkeep
 dashboard/data.json
 !dashboard/data.json

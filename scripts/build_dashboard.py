@@ -318,6 +318,18 @@ def _format_transects_for_dashboard(transects: pd.DataFrame) -> list[dict[str, A
     return sorted(output, key=lambda t: t["id"])
 
 
+def _load_skill_rows() -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    path = ROOT / "data/skill/skill_rows.json"
+    if not path.exists():
+        return [], None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, list):
+        return payload, None
+    rows = payload.get("skill") or []
+    meta = payload.get("meta")
+    return list(rows), meta if isinstance(meta, dict) else None
+
+
 def main() -> int:
     wind_path = ROOT / "data/wind/analysis-august.zarr"
     live_wind_path = _find_live_wind_store()
@@ -461,6 +473,7 @@ def main() -> int:
 
         times = pd.to_datetime(wind["time"].values, utc=True)
         august_years = sorted(int(y) for y in np.unique(times[times.month == 8].year))
+        skill_rows, skill_meta = _load_skill_rows()
         meta = {
             "generated_utc": pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ"),
             "display_timezone": course.display_timezone,
@@ -477,12 +490,21 @@ def main() -> int:
                 WARNING_TEXT,
             ],
         }
+        if skill_meta:
+            meta["skill"] = skill_meta
+            bias_warning = (
+                "Model skill scores ECMWF IFS / AIFS against IFS analysis "
+                "(reference-biased). Independent models are comparable to each other; "
+                "biased rows are not."
+            )
+            if bias_warning not in meta["warnings"]:
+                meta["warnings"].append(bias_warning)
 
         payload_path = report_mod.emit(
             climatology_ds=climatology,
             routes_summary=route_summaries,
             head_to_head_df=h2h,
-            skill_rows=[],
+            skill_rows=skill_rows,
             meta=meta,
             output_path=output_path,
             extra_sections={

@@ -196,6 +196,7 @@ def model_skill(
                 "vec_rmse_kt",
                 "speed_bias_kt",
                 "dir_mae_deg",
+                "n_samples",
                 "reference_biased",
             ]
         )
@@ -236,6 +237,7 @@ def model_skill(
                 "vec_rmse_kt": round(float(np.sqrt(np.mean(np.square(vec_err_kt)))), 2),
                 "speed_bias_kt": round(float((frame["pred_speed_kt"] - frame["obs_speed_kt"]).mean()), 2),
                 "dir_mae_deg": round(float(np.mean(np.abs(dir_diff))), 2),
+                "n_samples": int(len(frame)),
                 "reference_biased": _is_reference_biased_model(str(model)),
             }
         )

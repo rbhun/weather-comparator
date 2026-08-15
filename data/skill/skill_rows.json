@@ -1,0 +1,1430 @@
+{
+  "meta": {
+    "reference": "ecmwf_ifs_analysis",
+    "window_start": "2024-01-01",
+    "window_end": "2024-12-31",
+    "n_points": 11,
+    "n_paired": 3246936,
+    "models": [
+      "ecmwf_ifs",
+      "ecmwf_aifs025",
+      "gfs_global",
+      "icon_global",
+      "gem_global",
+      "arpege_europe"
+    ],
+    "leads": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "generated_utc": "2026-08-15T12:44:07Z",
+    "note": "Sparse corridor sample vs IFS analysis. Stratified by observed wind bin. ECMWF/AIFS rows are reference_biased."
+  },
+  "skill": [
+    {
+      "model": "arpege_europe",
+      "lead_days": 1,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 1,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 1,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 1,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 2,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 2,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 2,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 2,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 3,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 3,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 3,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 3,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 4,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 4,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 4,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 4,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 5,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 5,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 5,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 5,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 6,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 6,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 6,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 6,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 7,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.82,
+      "speed_bias_kt": 6.48,
+      "dir_mae_deg": 58.14,
+      "n_samples": 5406,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 7,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 14.66,
+      "speed_bias_kt": 1.61,
+      "dir_mae_deg": 35.27,
+      "n_samples": 17195,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 7,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.26,
+      "speed_bias_kt": -0.61,
+      "dir_mae_deg": 16.86,
+      "n_samples": 59802,
+      "reference_biased": false
+    },
+    {
+      "model": "arpege_europe",
+      "lead_days": 7,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.48,
+      "speed_bias_kt": 3.66,
+      "dir_mae_deg": 45.62,
+      "n_samples": 14023,
+      "reference_biased": false
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 1,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 1,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 1,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 1,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 2,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 2,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 2,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 2,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 3,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 3,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 3,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 3,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 4,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 4,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 4,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 4,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 5,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 5,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 5,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 5,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 6,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 6,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 6,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 6,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 7,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.1,
+      "speed_bias_kt": 5.77,
+      "dir_mae_deg": 63.63,
+      "n_samples": 4593,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 7,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 12.84,
+      "speed_bias_kt": 0.85,
+      "dir_mae_deg": 30.36,
+      "n_samples": 14369,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 7,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.95,
+      "speed_bias_kt": -3.77,
+      "dir_mae_deg": 14.49,
+      "n_samples": 47111,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_aifs025",
+      "lead_days": 7,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 11.87,
+      "speed_bias_kt": 3.2,
+      "dir_mae_deg": 45.09,
+      "n_samples": 11477,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 1,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 1,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 1,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 1,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 2,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 2,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 2,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 2,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 3,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 3,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 3,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 3,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 4,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 4,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 4,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 4,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 5,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 5,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 5,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 5,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 6,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 6,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 6,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 6,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 7,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 5408,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 7,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 17219,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 7,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 59960,
+      "reference_biased": true
+    },
+    {
+      "model": "ecmwf_ifs",
+      "lead_days": 7,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 0.0,
+      "speed_bias_kt": 0.0,
+      "dir_mae_deg": 0.0,
+      "n_samples": 14037,
+      "reference_biased": true
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 1,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 1,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 1,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 1,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 2,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 2,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 2,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 2,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 3,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 3,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 3,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 3,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 4,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 4,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 4,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 4,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 5,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 5,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 5,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 5,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 6,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 6,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 6,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 6,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 7,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 11.93,
+      "speed_bias_kt": 7.38,
+      "dir_mae_deg": 54.93,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 7,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 13.91,
+      "speed_bias_kt": 1.81,
+      "dir_mae_deg": 33.43,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 7,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 18.39,
+      "speed_bias_kt": -1.54,
+      "dir_mae_deg": 17.07,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "gfs_global",
+      "lead_days": 7,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 12.07,
+      "speed_bias_kt": 4.57,
+      "dir_mae_deg": 41.1,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 1,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 1,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 1,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 1,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 2,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 2,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 2,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 2,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 3,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 3,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 3,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 3,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 4,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 4,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 4,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 4,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 5,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 5,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 5,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 5,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 6,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 6,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 6,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 6,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 7,
+      "wind_bin": "0-6kt",
+      "vec_rmse_kt": 9.56,
+      "speed_bias_kt": 5.26,
+      "dir_mae_deg": 55.18,
+      "n_samples": 5408,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 7,
+      "wind_bin": "12-20kt",
+      "vec_rmse_kt": 11.69,
+      "speed_bias_kt": -1.24,
+      "dir_mae_deg": 30.39,
+      "n_samples": 17219,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 7,
+      "wind_bin": "20kt+",
+      "vec_rmse_kt": 15.99,
+      "speed_bias_kt": -4.75,
+      "dir_mae_deg": 13.83,
+      "n_samples": 59960,
+      "reference_biased": false
+    },
+    {
+      "model": "icon_global",
+      "lead_days": 7,
+      "wind_bin": "6-12kt",
+      "vec_rmse_kt": 9.7,
+      "speed_bias_kt": 1.83,
+      "dir_mae_deg": 40.36,
+      "n_samples": 14037,
+      "reference_biased": false
+    }
+  ]
+}

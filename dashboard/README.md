@@ -4,9 +4,13 @@ Offline tactical dashboard for PMC-2026.
 
 ## What it does
 
-- Thin header tabs: **Historical weather**, **Settings**, and **Historical
-  result** (YB tracks). The results tab is built but hidden until publish
-  (`SHOW_RESULTS_TAB` in `dashboard/index.html`). The tab bar stays visible.
+- Thin header tabs: **Historical weather**, **Model skill**, **Settings**, and
+  **Historical result** (YB tracks). The results tab is built but hidden until
+  publish (`SHOW_RESULTS_TAB` in `dashboard/index.html`). The tab bar stays
+  visible.
+- **Model skill** is its own page: winners by lead, RMSE/bias/direction vs lead
+  day, wind-bin and model filters, hide-biased toggle, and a sortable detail
+  table. ECMWF/AIFS rows stay visually separated as reference-biased.
 - **Settings** holds the UTC/local toggle, operational warnings, visitor
   stats (GoatCounter: count, country, phone vs desktop, revisits), and a
   read-only Historical weather block (downloaded years, area, race).
@@ -19,7 +23,10 @@ Offline tactical dashboard for PMC-2026.
   tiles in `dashboard/tiles/` (no network needed at render time).
 - Shows route distributions and head-to-head margins with percentiles.
 - Shows click-to-inspect point detail by hour.
-- Shows model-skill table with clearly marked `reference_biased` rows.
+- Model skill lives on the **Model skill** tab (not buried under Historical
+  weather). Rebuild scores with
+  `python3 scripts/compute_model_skill.py --patch-dashboard` (cached under
+  `data/cache/model_skill/`).
 - Operational warnings live on Settings, including a visualization-only
   disclaimer. Stale follower/year-cube notes are dropped. The polar
   unvalidated note still appears there when `polar_is_validated=false`.

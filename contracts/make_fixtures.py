@@ -243,35 +243,32 @@ def _payload_from_climatology(climo: xr.Dataset) -> dict[str, object]:
                 }
             )
 
-    skill = [
-        {
-            "model": "ecmwf_ifs",
-            "lead_days": 3,
-            "wind_bin": "0-6kt",
-            "vec_rmse_kt": 2.34,
-            "speed_bias_kt": 0.48,
-            "dir_mae_deg": 28.12,
-            "reference_biased": True,
-        },
-        {
-            "model": "aifs",
-            "lead_days": 3,
-            "wind_bin": "0-6kt",
-            "vec_rmse_kt": 2.21,
-            "speed_bias_kt": 0.40,
-            "dir_mae_deg": 27.50,
-            "reference_biased": True,
-        },
-        {
-            "model": "gfs_global",
-            "lead_days": 3,
-            "wind_bin": "0-6kt",
-            "vec_rmse_kt": 2.98,
-            "speed_bias_kt": 0.64,
-            "dir_mae_deg": 35.40,
-            "reference_biased": False,
-        },
+    skill = []
+    models = [
+        ("ecmwf_ifs", True, 2.1, 0.35, 24.0),
+        ("ecmwf_aifs025", True, 2.0, 0.30, 23.0),
+        ("gfs_global", False, 2.8, 0.55, 32.0),
+        ("icon_global", False, 2.6, 0.42, 30.0),
+        ("gem_global", False, 3.0, 0.60, 34.0),
+        ("arpege_europe", False, 2.5, 0.38, 28.0),
     ]
+    wind_bins = ["0-6kt", "6-12kt", "12-20kt", "20kt+"]
+    for model, biased, rmse0, bias0, dir0 in models:
+        for lead in range(1, 8):
+            for bi, wind_bin in enumerate(wind_bins):
+                grow = 1.0 + 0.08 * (lead - 1) + 0.04 * bi
+                skill.append(
+                    {
+                        "model": model,
+                        "lead_days": lead,
+                        "wind_bin": wind_bin,
+                        "vec_rmse_kt": float(np.round(rmse0 * grow, 2)),
+                        "speed_bias_kt": float(np.round(bias0 * (1.0 + 0.05 * (lead - 1)), 2)),
+                        "dir_mae_deg": float(np.round(dir0 * grow, 2)),
+                        "n_samples": int(800 - 40 * lead - 50 * bi),
+                        "reference_biased": biased,
+                    }
+                )
 
     by_hour = []
     for hr in climo["hour"].values.astype(int).tolist():

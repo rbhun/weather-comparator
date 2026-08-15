@@ -844,6 +844,57 @@
         overflow-x: auto;
         margin-top: 0.7rem;
       }
+
+      .skill-banner {
+        border: 1px solid var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-radius: 0.7rem;
+        padding: 0.75rem 0.9rem;
+        margin: 0 0 0.85rem;
+        font-weight: 650;
+      }
+
+      .skill-banner.biased {
+        border-color: var(--bad-border);
+        background: var(--bad-bg);
+        color: #ffd4cf;
+      }
+
+      .skill-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        margin-top: 0.55rem;
+      }
+
+      .skill-controls .filter-row {
+        margin-top: 0;
+      }
+
+      .skill-winner {
+        border-left: 4px solid var(--accent);
+      }
+
+      .skill-table-wrap {
+        overflow-x: auto;
+        margin-top: 0.55rem;
+      }
+
+      .skill-table-wrap th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .skill-table-wrap th.sortable:hover {
+        color: var(--accent);
+      }
+
+      .skill-empty {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0.4rem 0 0;
+      }
     </style>
   </head>
   <body>
@@ -854,6 +905,7 @@
       </div>
       <nav id="app-tabs" class="app-tabs" role="tablist" aria-label="Dashboard pages">
         <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
+        <button id="tab-skill" type="button" role="tab" aria-selected="false">Model skill</button>
         <button id="tab-results" type="button" role="tab" aria-selected="false" class="hidden">Historical result</button>
         <button id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
       </nav>
@@ -973,14 +1025,6 @@
         </p>
       </section>
 
-      <section class="card">
-        <h2>5) Model skill</h2>
-        <p class="subnote">
-          Rows tagged <code>reference_biased=true</code> are visually separated and are not comparable to independent models.
-        </p>
-        <div id="skill-table"></div>
-      </section>
-
       <section id="file-loader" class="card">
         <h3>Load data file</h3>
         <p id="file-loader-help" class="help">
@@ -990,6 +1034,70 @@
           <input id="data-file-input" type="file" accept=".json,application/json" />
           <button id="use-bundled" type="button">Use bundled data</button>
         </div>
+      </section>
+    </main>
+
+    <main id="page-skill" class="container hidden">
+      <section class="card">
+        <h2>Model skill</h2>
+        <p class="subnote">
+          Which forecast models track reality on this course — by lead time and wind strength.
+          Lower vector RMSE and direction MAE is better; speed bias near zero is better.
+        </p>
+        <div id="skill-bias-banner" class="skill-banner biased" role="status">
+          ECMWF IFS and AIFS are scored against IFS analysis (their own family). Those rows are
+          <strong>reference-biased</strong> and must not be compared to GFS / ICON / GEM / ARPEGE.
+          Use independent models when choosing what to trust for race week.
+        </div>
+        <div id="skill-meta" class="meta-grid"></div>
+        <div class="skill-controls">
+          <div class="filter-row">
+            <span class="hour-kicker">Wind</span>
+            <div id="skill-bin-toggles" class="chip-row" role="group" aria-label="Observed wind bin"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Models</span>
+            <div id="skill-model-toggles" class="chip-row" role="group" aria-label="Model filter"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Options</span>
+            <button id="skill-hide-biased" type="button" class="chip" aria-pressed="false">Hide reference-biased</button>
+            <label for="skill-metric" class="help" style="margin:0">Metric</label>
+            <select id="skill-metric">
+              <option value="vec_rmse_kt">Vector RMSE (kt)</option>
+              <option value="speed_bias_kt">Speed bias (kt)</option>
+              <option value="dir_mae_deg">Direction MAE (°)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Who did well</h2>
+        <p class="subnote">Best independent (non-biased) model for the selected wind bin. Percentiles are not means.</p>
+        <div id="skill-winners" class="meta-grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>Skill vs lead time</h2>
+        <p class="subnote">One line per model. Tap a model chip above to hide noisy series.</p>
+        <div class="plot-wrap">
+          <div id="skill-lead-plot" class="plot short"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Detail table</h2>
+        <p class="subnote">
+          Every model × lead × wind bin. Biased rows stay visually separated.
+          Tap a column header to sort.
+        </p>
+        <div id="skill-table" class="skill-table-wrap"></div>
+        <p id="skill-empty" class="skill-empty hidden">
+          No model-skill rows in this payload yet. Run
+          <code>scripts/compute_model_skill.py --patch-dashboard</code>
+          after previous-runs data is available.
+        </p>
       </section>
     </main>
 
@@ -1184,6 +1292,11 @@
         resultsRange: null,
         showResultsLand: true,
         showResultsRhumbline: true,
+        skillBin: "all",
+        skillHideBiased: false,
+        skillMetric: "vec_rmse_kt",
+        skillModelOn: {},
+        skillSort: { key: "vec_rmse_kt", dir: "asc" },
       };
 
       const els = {
@@ -1206,9 +1319,11 @@
         mapPlot: document.getElementById("map-plot"),
         appTabs: document.getElementById("app-tabs"),
         tabWeather: document.getElementById("tab-weather"),
+        tabSkill: document.getElementById("tab-skill"),
         tabResults: document.getElementById("tab-results"),
         tabSettings: document.getElementById("tab-settings"),
         pageWeather: document.getElementById("page-weather"),
+        pageSkill: document.getElementById("page-skill"),
         pageResults: document.getElementById("page-results"),
         pageSettings: document.getElementById("page-settings"),
         settingsTimezone: document.getElementById("settings-timezone"),
@@ -1247,7 +1362,16 @@
         transectSelect: document.getElementById("transect-select"),
         transectPlot: document.getElementById("transect-plot"),
         transectEmpty: document.getElementById("transect-empty"),
+        skillBiasBanner: document.getElementById("skill-bias-banner"),
+        skillMeta: document.getElementById("skill-meta"),
+        skillBinToggles: document.getElementById("skill-bin-toggles"),
+        skillModelToggles: document.getElementById("skill-model-toggles"),
+        skillHideBiased: document.getElementById("skill-hide-biased"),
+        skillMetric: document.getElementById("skill-metric"),
+        skillWinners: document.getElementById("skill-winners"),
+        skillLeadPlot: document.getElementById("skill-lead-plot"),
         skillTable: document.getElementById("skill-table"),
+        skillEmpty: document.getElementById("skill-empty"),
         fileLoader: document.getElementById("file-loader"),
         fileLoaderHelp: document.getElementById("file-loader-help"),
         dataFileInput: document.getElementById("data-file-input"),
@@ -2562,39 +2686,309 @@
       }
 
       function renderSkillTable() {
-        const rows = Array.isArray(state.payload.skill) ? state.payload.skill : [];
-        const body = rows
-          .map((r) => {
-            const cls = r.reference_biased ? "biased-row" : "";
-            const tag = r.reference_biased ? "Yes - not directly comparable" : "No";
-            return `<tr class="${cls}">
-              <td>${r.model}</td>
-              <td>${r.lead_days}</td>
-              <td>${r.wind_bin}</td>
-              <td>${round2(asNum(r.vec_rmse_kt))}</td>
-              <td>${round2(asNum(r.speed_bias_kt))}</td>
-              <td>${round2(asNum(r.dir_mae_deg))}</td>
-              <td>${tag}</td>
-            </tr>`;
-          })
-          .join("");
+        renderSkillPage();
+      }
+
+      const SKILL_BIN_ORDER = ["all", "0-6kt", "6-12kt", "12-20kt", "20kt+"];
+      const SKILL_METRIC_LABEL = {
+        vec_rmse_kt: "Vector RMSE (kt)",
+        speed_bias_kt: "Speed bias (kt)",
+        dir_mae_deg: "Direction MAE (°)",
+      };
+
+      function skillRowsRaw() {
+        return Array.isArray(state.payload && state.payload.skill) ? state.payload.skill : [];
+      }
+
+      function ensureSkillState() {
+        const rows = skillRowsRaw();
+        const models = [...new Set(rows.map((r) => String(r.model)))].sort();
+        models.forEach((model) => {
+          if (state.skillModelOn[model] == null) state.skillModelOn[model] = true;
+        });
+        Object.keys(state.skillModelOn).forEach((model) => {
+          if (!models.includes(model)) delete state.skillModelOn[model];
+        });
+      }
+
+      function skillRowsFiltered() {
+        ensureSkillState();
+        return skillRowsRaw().filter((r) => {
+          if (state.skillHideBiased && r.reference_biased) return false;
+          if (state.skillBin !== "all" && String(r.wind_bin) !== state.skillBin) return false;
+          if (state.skillModelOn[String(r.model)] === false) return false;
+          return true;
+        });
+      }
+
+      function modelColor(model, idx) {
+        return ROUTE_COLORS[idx % ROUTE_COLORS.length];
+      }
+
+      function skillBetter(metric, a, b) {
+        if (metric === "speed_bias_kt") {
+          return Math.abs(a) - Math.abs(b);
+        }
+        return a - b;
+      }
+
+      function renderSkillControls() {
+        ensureSkillState();
+        const rows = skillRowsRaw();
+        const binsPresent = new Set(rows.map((r) => String(r.wind_bin)));
+        const binOpts = SKILL_BIN_ORDER.filter((b) => b === "all" || binsPresent.has(b));
+        if (els.skillBinToggles) {
+          els.skillBinToggles.innerHTML = binOpts.map((bin) => {
+            const label = bin === "all" ? "All bins" : bin;
+            const on = state.skillBin === bin ? "on" : "";
+            return `<button type="button" class="chip ${on}" data-skill-bin="${bin}" aria-pressed="${state.skillBin === bin}">${label}</button>`;
+          }).join("");
+          els.skillBinToggles.querySelectorAll("[data-skill-bin]").forEach((btn) => {
+            btn.onclick = () => {
+              state.skillBin = btn.getAttribute("data-skill-bin");
+              renderSkillPage();
+            };
+          });
+        }
+        const models = Object.keys(state.skillModelOn).sort();
+        if (els.skillModelToggles) {
+          els.skillModelToggles.innerHTML = models.map((model, idx) => {
+            const on = state.skillModelOn[model] !== false;
+            const biased = rows.some((r) => String(r.model) === model && r.reference_biased);
+            const tag = biased ? " · biased" : "";
+            return `<button type="button" class="chip ${on ? "on" : "off"}" data-skill-model="${model}" aria-pressed="${on}" style="border-color:${modelColor(model, idx)}">${model}${tag}</button>`;
+          }).join("");
+          els.skillModelToggles.querySelectorAll("[data-skill-model]").forEach((btn) => {
+            btn.onclick = () => {
+              const model = btn.getAttribute("data-skill-model");
+              state.skillModelOn[model] = !state.skillModelOn[model];
+              renderSkillPage();
+            };
+          });
+        }
+        if (els.skillHideBiased) {
+          els.skillHideBiased.classList.toggle("on", state.skillHideBiased);
+          els.skillHideBiased.setAttribute("aria-pressed", state.skillHideBiased ? "true" : "false");
+        }
+        if (els.skillMetric) els.skillMetric.value = state.skillMetric;
+      }
+
+      function renderSkillMeta() {
+        if (!els.skillMeta) return;
+        const meta = (state.payload && state.payload.meta && state.payload.meta.skill) || {};
+        const rows = skillRowsRaw();
+        const models = [...new Set(rows.map((r) => String(r.model)))].sort();
+        const independent = models.filter((m) => !rows.some((r) => String(r.model) === m && r.reference_biased));
+        const windowTxt = meta.window_start && meta.window_end
+          ? `${meta.window_start} → ${meta.window_end}`
+          : "from payload";
+        const nPaired = meta.n_paired != null ? meta.n_paired : "—";
+        const nPoints = meta.n_points != null ? meta.n_points : "—";
+        els.skillMeta.innerHTML = `
+          <div class="meta-card"><span class="k">Verification window</span><span class="v">${windowTxt}</span></div>
+          <div class="meta-card"><span class="k">Corridor points</span><span class="v">${nPoints}</span></div>
+          <div class="meta-card"><span class="k">Paired hours</span><span class="v">${nPaired}</span></div>
+          <div class="meta-card"><span class="k">Independent models</span><span class="v">${independent.length ? independent.join(", ") : "—"}</span></div>
+        `;
+      }
+
+      function renderSkillWinners() {
+        if (!els.skillWinners) return;
+        const metric = state.skillMetric;
+        const rows = skillRowsFiltered().filter((r) => !r.reference_biased);
+        if (!rows.length) {
+          els.skillWinners.innerHTML = `<p class="skill-empty">No independent-model rows for this filter.</p>`;
+          return;
+        }
+        const byLead = {};
+        rows.forEach((r) => {
+          const lead = Number(r.lead_days);
+          if (!Number.isFinite(lead)) return;
+          const val = asNum(r[metric]);
+          if (val == null) return;
+          if (!byLead[lead] || skillBetter(metric, val, byLead[lead].value) < 0) {
+            byLead[lead] = { model: String(r.model), value: val, wind_bin: r.wind_bin, n: r.n_samples };
+          }
+        });
+        // Overall: average rank across leads for selected bin(s)
+        const modelScores = {};
+        rows.forEach((r) => {
+          const model = String(r.model);
+          const val = asNum(r[metric]);
+          if (val == null) return;
+          if (!modelScores[model]) modelScores[model] = [];
+          const score = metric === "speed_bias_kt" ? Math.abs(val) : val;
+          modelScores[model].push(score);
+        });
+        let overall = null;
+        Object.entries(modelScores).forEach(([model, vals]) => {
+          const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+          if (!overall || mean < overall.mean) overall = { model, mean };
+        });
+
+        const cards = [];
+        if (overall) {
+          cards.push(`<div class="meta-card skill-winner">
+            <span class="k">Best overall (indep.)</span>
+            <span class="v">${overall.model}</span>
+            <span class="help">${SKILL_METRIC_LABEL[metric]} mean ${round2(overall.mean)}</span>
+          </div>`);
+        }
+        Object.keys(byLead).map(Number).sort((a, b) => a - b).forEach((lead) => {
+          const w = byLead[lead];
+          const nTxt = w.n != null ? ` · n=${w.n}` : "";
+          cards.push(`<div class="meta-card">
+            <span class="k">Lead ${lead} d</span>
+            <span class="v">${w.model}</span>
+            <span class="help">${SKILL_METRIC_LABEL[metric]} ${round2(w.value)}${nTxt}</span>
+          </div>`);
+        });
+        els.skillWinners.innerHTML = cards.join("") || `<p class="skill-empty">No winners for this filter.</p>`;
+      }
+
+      function renderSkillLeadPlot() {
+        if (!els.skillLeadPlot || typeof Plotly === "undefined") return;
+        const metric = state.skillMetric;
+        const rows = skillRowsFiltered();
+        if (!rows.length) {
+          Plotly.purge(els.skillLeadPlot);
+          els.skillLeadPlot.innerHTML = `<p class="skill-empty">Nothing to plot for this filter.</p>`;
+          return;
+        }
+        const models = [...new Set(rows.map((r) => String(r.model)))].sort();
+        const traces = models.map((model, idx) => {
+          const byLead = {};
+          rows.filter((r) => String(r.model) === model).forEach((r) => {
+            const lead = Number(r.lead_days);
+            const val = asNum(r[metric]);
+            if (!Number.isFinite(lead) || val == null) return;
+            if (!byLead[lead]) byLead[lead] = [];
+            // If multiple wind bins selected (all), average absolute/value
+            byLead[lead].push(metric === "speed_bias_kt" ? val : val);
+          });
+          const leads = Object.keys(byLead).map(Number).sort((a, b) => a - b);
+          const y = leads.map((lead) => {
+            const vals = byLead[lead];
+            return vals.reduce((a, b) => a + b, 0) / vals.length;
+          });
+          const biased = rows.some((r) => String(r.model) === model && r.reference_biased);
+          return {
+            type: "scatter",
+            mode: "lines+markers",
+            name: biased ? `${model} (biased)` : model,
+            x: leads,
+            y,
+            line: {
+              color: modelColor(model, idx),
+              width: 3,
+              dash: biased ? "dot" : "solid",
+            },
+            marker: { size: 9 },
+          };
+        });
+        const yTitle = SKILL_METRIC_LABEL[metric] || metric;
+        applyPlot(
+          els.skillLeadPlot,
+          traces,
+          {
+            ...plotLayoutBase,
+            title: `${yTitle} vs lead day`,
+            xaxis: { title: "Lead (days)", dtick: 1, automargin: true },
+            yaxis: { title: yTitle, automargin: true, zeroline: metric === "speed_bias_kt" },
+            legend: {
+              orientation: "h",
+              x: 0,
+              xanchor: "left",
+              y: 1.14,
+              yanchor: "bottom",
+              font: { size: 11 },
+              bgcolor: "rgba(19,26,45,0.92)",
+            },
+            margin: { ...plotLayoutBase.margin, t: 78, b: 48 },
+          },
+          { noZoom: true }
+        );
+      }
+
+      function renderSkillDetailTable() {
+        if (!els.skillTable) return;
+        const rows = skillRowsFiltered().slice();
+        const empty = !skillRowsRaw().length;
+        if (els.skillEmpty) els.skillEmpty.classList.toggle("hidden", !empty);
+        if (!rows.length) {
+          els.skillTable.innerHTML = empty ? "" : `<p class="skill-empty">No rows match the current filters.</p>`;
+          return;
+        }
+        const sortKey = state.skillSort.key;
+        const sortDir = state.skillSort.dir === "desc" ? -1 : 1;
+        rows.sort((a, b) => {
+          let av = a[sortKey];
+          let bv = b[sortKey];
+          if (typeof av === "string") av = av.toLowerCase();
+          if (typeof bv === "string") bv = bv.toLowerCase();
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (av < bv) return -1 * sortDir;
+          if (av > bv) return 1 * sortDir;
+          return 0;
+        });
+        const headers = [
+          ["model", "Model"],
+          ["lead_days", "Lead d"],
+          ["wind_bin", "Wind bin"],
+          ["vec_rmse_kt", "Vec RMSE"],
+          ["speed_bias_kt", "Spd bias"],
+          ["dir_mae_deg", "Dir MAE"],
+          ["n_samples", "n"],
+          ["reference_biased", "Biased"],
+        ];
+        const thead = headers.map(([key, label]) => {
+          const mark = state.skillSort.key === key ? (state.skillSort.dir === "asc" ? " ▲" : " ▼") : "";
+          return `<th class="sortable" data-sort="${key}">${label}${mark}</th>`;
+        }).join("");
+        const body = rows.map((r) => {
+          const cls = r.reference_biased ? "biased-row" : "";
+          const tag = r.reference_biased ? "Yes — not comparable" : "No";
+          const n = r.n_samples != null ? r.n_samples : "—";
+          return `<tr class="${cls}">
+            <td>${r.model}</td>
+            <td>${r.lead_days}</td>
+            <td>${r.wind_bin}</td>
+            <td>${round2(asNum(r.vec_rmse_kt))}</td>
+            <td>${round2(asNum(r.speed_bias_kt))}</td>
+            <td>${round2(asNum(r.dir_mae_deg))}</td>
+            <td>${n}</td>
+            <td>${tag}</td>
+          </tr>`;
+        }).join("");
         els.skillTable.innerHTML = `
           <table>
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>Lead days</th>
-                <th>Wind bin</th>
-                <th>Vector RMSE (kt)</th>
-                <th>Speed bias (kt)</th>
-                <th>Direction MAE (deg)</th>
-                <th>Reference biased</th>
-              </tr>
-            </thead>
+            <thead><tr>${thead}</tr></thead>
             <tbody>${body}</tbody>
           </table>
-          <p class="help"><strong>Important:</strong> ECMWF/AIFS rows marked as reference-biased are scored against their own analysis and are not comparable to independent models.</p>
+          <p class="help"><strong>Important:</strong> ECMWF/AIFS rows marked reference-biased are scored against IFS analysis and are not comparable to independent models.</p>
         `;
+        els.skillTable.querySelectorAll("th.sortable").forEach((th) => {
+          th.onclick = () => {
+            const key = th.getAttribute("data-sort");
+            if (state.skillSort.key === key) {
+              state.skillSort.dir = state.skillSort.dir === "asc" ? "desc" : "asc";
+            } else {
+              state.skillSort = { key, dir: key === "model" || key === "wind_bin" ? "asc" : "asc" };
+            }
+            renderSkillDetailTable();
+          };
+        });
+      }
+
+      function renderSkillPage() {
+        if (!els.pageSkill) return;
+        renderSkillControls();
+        renderSkillMeta();
+        renderSkillWinners();
+        renderSkillLeadPlot();
+        renderSkillDetailTable();
       }
 
       function updateTimeModeButtons() {
@@ -2760,11 +3154,16 @@
         state.page = page;
         if (els.tabResults) els.tabResults.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.pageWeather) els.pageWeather.classList.toggle("hidden", page !== "weather");
+        if (els.pageSkill) els.pageSkill.classList.toggle("hidden", page !== "skill");
         if (els.pageResults) els.pageResults.classList.toggle("hidden", page !== "results");
         if (els.pageSettings) els.pageSettings.classList.toggle("hidden", page !== "settings");
         if (els.tabWeather) {
           els.tabWeather.classList.toggle("active", page === "weather");
           els.tabWeather.setAttribute("aria-selected", page === "weather" ? "true" : "false");
+        }
+        if (els.tabSkill) {
+          els.tabSkill.classList.toggle("active", page === "skill");
+          els.tabSkill.setAttribute("aria-selected", page === "skill" ? "true" : "false");
         }
         if (els.tabResults) {
           els.tabResults.classList.toggle("active", page === "results");
@@ -2776,6 +3175,11 @@
         }
         if (page === "weather") {
           renderCalmMap();
+        } else if (page === "skill") {
+          requestAnimationFrame(() => {
+            renderSkillPage();
+            if (els.skillLeadPlot && els.skillLeadPlot.data) Plotly.Plots.resize(els.skillLeadPlot);
+          });
         } else if (page === "results") {
           requestAnimationFrame(() => {
             renderResultsPage();
@@ -2990,7 +3394,7 @@
         renderHeadToHeadTable();
         renderPointDetail();
         renderTransects();
-        renderSkillTable();
+        renderSkillPage();
         if (state.page === "results") renderResultsPage();
         if (state.page === "settings") renderSettingsPage();
       }
@@ -3001,10 +3405,23 @@
         bindMapClick();
         if (els.tabResults) els.tabResults.classList.toggle("hidden", !SHOW_RESULTS_TAB);
         if (els.tabWeather) els.tabWeather.onclick = () => setPage("weather");
+        if (els.tabSkill) els.tabSkill.onclick = () => setPage("skill");
         if (els.tabSettings) els.tabSettings.onclick = () => setPage("settings");
         if (els.tabResults) {
           els.tabResults.onclick = () => {
             if (SHOW_RESULTS_TAB) setPage("results");
+          };
+        }
+        if (els.skillHideBiased) {
+          els.skillHideBiased.onclick = () => {
+            state.skillHideBiased = !state.skillHideBiased;
+            renderSkillPage();
+          };
+        }
+        if (els.skillMetric) {
+          els.skillMetric.onchange = () => {
+            state.skillMetric = els.skillMetric.value;
+            renderSkillPage();
           };
         }
         if (els.yearsAll) {
