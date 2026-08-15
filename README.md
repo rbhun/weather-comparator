@@ -1,5 +1,17 @@
 # weather-comparator
 
+## Dashboard (open from anywhere)
+
+The tactical dashboard lives in `dashboard/`. It remains a self-contained
+offline HTML app (`file://`), and is also published via GitHub Pages:
+
+**https://rbhun.github.io/weather-comparator/**
+
+Enable once under Settings → Pages → Source: **GitHub Actions**. Deploys run
+from `.github/workflows/deploy-dashboard.yml` on pushes to `main` that change
+`dashboard/`. See `dashboard/README.md` for local rebuild steps and caveats
+(private-repo Pages eligibility; published site is public).
+
 ## Coastline data attribution
 
 Primary coastline polygons are derived from OpenStreetMap land polygons
