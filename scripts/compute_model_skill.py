@@ -69,6 +69,12 @@ DEFAULT_MODELS = (
 
 COMMON_HOURS_UTC = (0, 6, 12, 18)
 MS_TO_KT = 1.9438445
+MONTH_FILTERS: dict[str, set[int] | None] = {
+    "all": None,  # Jan 2024 → end
+    "summer": {6, 7, 8, 9},
+    "august": {8},
+}
+MIN_SAMPLE_N = 300
 
 
 def _api_key() -> str | None:
@@ -359,27 +365,41 @@ def fetch_pairs(
     return merged
 
 
-def compute_skill_rows(pairs: pd.DataFrame) -> list[dict[str, Any]]:
+def compute_skill_rows(pairs: pd.DataFrame, *, month_filter: str) -> list[dict[str, Any]]:
     skill = stats_mod.model_skill(pairs)
     rows = skill.to_dict(orient="records")
     for row in rows:
         row["lead_days"] = int(row["lead_days"])
         row["n_samples"] = int(row.get("n_samples", 0))
         row["reference_biased"] = bool(row["reference_biased"])
+        row["month_filter"] = month_filter
         for key in ("vec_rmse_kt", "speed_bias_kt", "dir_mae_deg"):
             row[key] = float(row[key])
     return rows
 
 
-def run_sanity_gates(skill_rows: list[dict[str, Any]]) -> list[str]:
-    """Return a list of human-readable failures. Empty means pass."""
+def filter_pairs_by_months(pairs: pd.DataFrame, months: set[int] | None) -> pd.DataFrame:
+    if months is None:
+        return pairs
+    times = pd.to_datetime(pairs["time"], utc=True)
+    return pairs.loc[times.dt.month.isin(months)].copy()
 
+
+def run_sanity_gates(skill_rows: list[dict[str, Any]]) -> list[str]:
+    """Return a list of human-readable failures. Empty means pass.
+
+    Gates run on the ``all`` month facet when present; otherwise on the full list.
+    """
+
+    scoped = [r for r in skill_rows if str(r.get("month_filter", "all")) == "all"]
+    if not scoped:
+        scoped = skill_rows
     failures: list[str] = []
-    if not skill_rows:
+    if not scoped:
         return ["no skill rows produced"]
 
     by_model: dict[str, list[dict[str, Any]]] = {}
-    for row in skill_rows:
+    for row in scoped:
         by_model.setdefault(str(row["model"]), []).append(row)
 
     # Aggregate RMSE across wind bins (sample-weighted) per model×lead for trend check.
@@ -407,7 +427,6 @@ def run_sanity_gates(skill_rows: list[dict[str, Any]]) -> list[str]:
                     f"(got lead1={r1:.3f} lead7={r7:.3f})"
                 )
         elif not biased and leads_present:
-            # Independent model missing lead7 (e.g. ICON): require max_lead > lead1.
             lo = leads_present[0]
             hi = leads_present[-1]
             if lo != hi:
@@ -426,10 +445,8 @@ def run_sanity_gates(skill_rows: list[dict[str, Any]]) -> list[str]:
             if max(values) <= 0.0:
                 failures.append(f"{model}: vec_rmse is zero at every lead/bin (self-comparison?)")
 
-    # Wind-bin sample counts: pool all models/leads for observed-bin occupancy,
-    # using one model's lead to avoid multi-counting the same obs — use max n per bin.
     bin_n: dict[str, int] = {}
-    for row in skill_rows:
+    for row in scoped:
         wind_bin = str(row["wind_bin"])
         bin_n[wind_bin] = max(bin_n.get(wind_bin, 0), int(row["n_samples"]))
     n_light = bin_n.get("0-6kt", 0)
@@ -439,8 +456,7 @@ def run_sanity_gates(skill_rows: list[dict[str, Any]]) -> list[str]:
             f"wind bins inverted or still wrong units: 0-6kt n={n_light} vs 20kt+ n={n_strong}"
         )
 
-    # Soft range check — report but do not hard-fail unless wildly off.
-    indep = [r for r in skill_rows if not r["reference_biased"] and int(r["lead_days"]) == 1]
+    indep = [r for r in scoped if not r["reference_biased"] and int(r["lead_days"]) == 1]
     if indep:
         rmses = [float(r["vec_rmse_kt"]) for r in indep]
         mean_l1 = sum(rmses) / len(rmses)
@@ -475,7 +491,7 @@ def patch_dashboard(skill_rows: list[dict[str, Any]], meta_extra: dict[str, Any]
     print(f"[skill] patched {data_path} and {js_path} ({len(skill_rows)} rows)")
 
 
-def light_air_table(skill_rows: list[dict[str, Any]]) -> str:
+def light_air_table(skill_rows: list[dict[str, Any]], *, month_filter: str | None = None) -> str:
     lines = [
         "| model | lead | vec_rmse_kt | speed_bias_kt | dir_mae_deg | n |",
         "|---|---:|---:|---:|---:|---:|",
@@ -486,6 +502,7 @@ def light_air_table(skill_rows: list[dict[str, Any]]) -> str:
         if (not r["reference_biased"])
         and str(r["wind_bin"]) == "0-6kt"
         and int(r["lead_days"]) in {2, 3}
+        and (month_filter is None or str(r.get("month_filter", "all")) == month_filter)
     ]
     rows.sort(key=lambda r: (int(r["lead_days"]), str(r["model"])))
     for r in rows:
@@ -501,7 +518,11 @@ def light_air_table(skill_rows: list[dict[str, Any]]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--start", default="2024-01-01")
-    parser.add_argument("--end", default="2024-12-31")
+    parser.add_argument(
+        "--end",
+        default=date.today().isoformat(),
+        help="Inclusive end date (default: today UTC/local date)",
+    )
     parser.add_argument("--leads", default="1,2,3,4,5,6,7")
     parser.add_argument("--models", default=",".join(DEFAULT_MODELS))
     parser.add_argument("--workers", type=int, default=6)
@@ -532,20 +553,28 @@ def main() -> int:
         cache=cache,
         max_workers=args.workers,
     )
-    # Observed speed sanity print (must look like knots, median ~6-10)
     obs_kt = np.hypot(pairs["u10_ref"].to_numpy(), pairs["v10_ref"].to_numpy()) * MS_TO_KT
     print(
         f"[skill] observed kt mean/median/p90="
         f"{float(np.mean(obs_kt)):.2f}/{float(np.median(obs_kt)):.2f}/{float(np.percentile(obs_kt, 90)):.2f}"
     )
 
-    skill_rows = compute_skill_rows(pairs)
+    skill_rows: list[dict[str, Any]] = []
+    paired_by_filter: dict[str, int] = {}
+    for filter_name, months in MONTH_FILTERS.items():
+        subset = filter_pairs_by_months(pairs, months)
+        paired_by_filter[filter_name] = int(len(subset))
+        print(f"[skill] month_filter={filter_name} paired={len(subset)}")
+        if subset.empty:
+            print(f"[skill] WARNING: no pairs for month_filter={filter_name}")
+            continue
+        skill_rows.extend(compute_skill_rows(subset, month_filter=filter_name))
+
     failures = run_sanity_gates(skill_rows)
     if failures:
         print("[skill] SANITY GATES FAILED — not shipping:")
         for msg in failures:
             print(f"  - {msg}")
-        # Still write a debug artifact, but do not patch dashboard.
         debug_path = args.output.with_name(args.output.stem + "_FAILED.json")
         debug_path.parent.mkdir(parents=True, exist_ok=True)
         debug_path.write_text(
@@ -553,8 +582,9 @@ def main() -> int:
             encoding="utf-8",
         )
         print(f"[skill] wrote debug {debug_path}")
-        print("\nLight-air table (for diagnosis):\n")
-        print(light_air_table(skill_rows))
+        for name in MONTH_FILTERS:
+            print(f"\nLight-air table [{name}]:\n")
+            print(light_air_table(skill_rows, month_filter=name))
         return 2
 
     meta_extra = {
@@ -562,6 +592,10 @@ def main() -> int:
         "forecast_columns": "wind_speed_10m_previous_dayN,wind_direction_10m_previous_dayN",
         "wind_speed_unit": "ms",
         "time_grid_utc": list(COMMON_HOURS_UTC),
+        "month_filters": list(MONTH_FILTERS.keys()),
+        "default_month_filter": "summer",
+        "min_sample_n": MIN_SAMPLE_N,
+        "n_paired_by_filter": paired_by_filter,
         "window_start": start.isoformat(),
         "window_end": end.isoformat(),
         "n_points": len(SAMPLE_POINTS),
@@ -571,6 +605,7 @@ def main() -> int:
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "note": (
             "Sparse corridor sample vs IFS analysis on 00/06/12/18 UTC. "
+            "Rows are faceted by month_filter=all|summer|august (no weighting). "
             "ECMWF/AIFS rows are reference_biased. ukmo dropped (API 400). "
             "arpege_europe omitted (no previous_dayN coverage)."
         ),
@@ -582,8 +617,9 @@ def main() -> int:
         encoding="utf-8",
     )
     print(f"[skill] wrote {args.output} rows={len(skill_rows)}")
-    print("\nLight-air table (0-6kt, leads 2–3, independent only):\n")
-    print(light_air_table(skill_rows))
+    for name in MONTH_FILTERS:
+        print(f"\nLight-air table [{name}] (0-6kt, leads 2–3, independent only):\n")
+        print(light_air_table(skill_rows, month_filter=name))
 
     if args.patch_dashboard:
         patch_dashboard(skill_rows, meta_extra)

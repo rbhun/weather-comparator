@@ -9,8 +9,8 @@
     <script src="./tiles/osm_manifest.js"></script>
     <script src="./tiles/openseamap_manifest.js"></script>
     <script src="./tiles/land.js"></script>
-    <script src="./data.js?v=skill-fix-20260815"></script>
-    <script src="./yb_results.js?v=skill-fix-20260815"></script>
+    <script src="./data.js?v=skill-months-20260815"></script>
+    <script src="./yb_results.js?v=skill-months-20260815"></script>
     <style>
       :root {
         --bg: #0b1020;
@@ -895,6 +895,33 @@
         font-size: 1.05rem;
         margin: 0.4rem 0 0;
       }
+
+      .skill-stability {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        background: #101732;
+        padding: 0.75rem 0.9rem;
+        margin: 0.75rem 0 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .skill-stability.warn {
+        border-color: var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+      }
+
+      .skill-low-n,
+      tr.skill-low-n {
+        opacity: 0.45;
+        color: var(--muted);
+      }
+
+      .skill-n {
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
     </style>
   </head>
   <body>
@@ -1050,10 +1077,19 @@
           Use independent models when choosing what to trust for race week.
         </div>
         <div id="skill-meta" class="meta-grid"></div>
+        <div id="skill-stability" class="skill-stability" role="status"></div>
         <div class="skill-controls">
+          <div class="filter-row">
+            <span class="hour-kicker">Months</span>
+            <div id="skill-month-toggles" class="chip-row" role="group" aria-label="Month window"></div>
+          </div>
           <div class="filter-row">
             <span class="hour-kicker">Wind</span>
             <div id="skill-bin-toggles" class="chip-row" role="group" aria-label="Observed wind bin"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Lead</span>
+            <div id="skill-lead-toggles" class="chip-row" role="group" aria-label="Lead day for rankings"></div>
           </div>
           <div class="filter-row">
             <span class="hour-kicker">Models</span>
@@ -1074,7 +1110,7 @@
 
       <section class="card">
         <h2>Who did well</h2>
-        <p class="subnote">Best independent (non-biased) model for the selected wind bin. Percentiles are not means.</p>
+        <p class="subnote">Best independent (non-biased) model for the selected months + wind bin. Cells with n&lt;300 are not ranked.</p>
         <div id="skill-winners" class="meta-grid"></div>
       </section>
 
@@ -1295,6 +1331,8 @@
         showResultsLand: true,
         showResultsRhumbline: true,
         skillBin: "all",
+        skillMonths: "summer",
+        skillLead: 3,
         skillHideBiased: false,
         skillMetric: "vec_rmse_kt",
         skillModelOn: {},
@@ -1366,7 +1404,10 @@
         transectEmpty: document.getElementById("transect-empty"),
         skillBiasBanner: document.getElementById("skill-bias-banner"),
         skillMeta: document.getElementById("skill-meta"),
+        skillStability: document.getElementById("skill-stability"),
+        skillMonthToggles: document.getElementById("skill-month-toggles"),
         skillBinToggles: document.getElementById("skill-bin-toggles"),
+        skillLeadToggles: document.getElementById("skill-lead-toggles"),
         skillModelToggles: document.getElementById("skill-model-toggles"),
         skillHideBiased: document.getElementById("skill-hide-biased"),
         skillMetric: document.getElementById("skill-metric"),
@@ -2692,17 +2733,42 @@
       }
 
       const SKILL_BIN_ORDER = ["all", "0-6kt", "6-12kt", "12-20kt", "20kt+"];
+      const SKILL_MONTH_ORDER = [
+        { id: "all", label: "All months" },
+        { id: "summer", label: "Summer (Jun–Sep)" },
+        { id: "august", label: "August only" },
+      ];
       const SKILL_METRIC_LABEL = {
         vec_rmse_kt: "Vector RMSE (kt)",
         speed_bias_kt: "Speed bias (kt)",
         dir_mae_deg: "Direction MAE (°)",
       };
+      const SKILL_MIN_N = 300;
+
+      function skillMetaInfo() {
+        return (state.payload && state.payload.meta && state.payload.meta.skill) || {};
+      }
+
+      function skillMinN() {
+        const n = asNum(skillMetaInfo().min_sample_n);
+        return n != null ? n : SKILL_MIN_N;
+      }
 
       function skillRowsRaw() {
-        return Array.isArray(state.payload && state.payload.skill) ? state.payload.skill : [];
+        const rows = Array.isArray(state.payload && state.payload.skill) ? state.payload.skill : [];
+        // Backward compat: untagged rows count as "all"
+        return rows.map((r) => ({
+          ...r,
+          month_filter: r.month_filter || "all",
+        }));
       }
 
       function ensureSkillState() {
+        const meta = skillMetaInfo();
+        if (meta.default_month_filter && !state._skillMonthsInit) {
+          state.skillMonths = meta.default_month_filter;
+          state._skillMonthsInit = true;
+        }
         const rows = skillRowsRaw();
         const models = [...new Set(rows.map((r) => String(r.model)))].sort();
         models.forEach((model) => {
@@ -2711,11 +2777,19 @@
         Object.keys(state.skillModelOn).forEach((model) => {
           if (!models.includes(model)) delete state.skillModelOn[model];
         });
+        const leads = [...new Set(rows.map((r) => Number(r.lead_days)).filter(Number.isFinite))].sort((a, b) => a - b);
+        if (leads.length && !leads.includes(state.skillLead)) {
+          state.skillLead = leads.includes(3) ? 3 : leads[0];
+        }
+      }
+
+      function skillRowsForMonths(monthFilter) {
+        return skillRowsRaw().filter((r) => String(r.month_filter) === String(monthFilter));
       }
 
       function skillRowsFiltered() {
         ensureSkillState();
-        return skillRowsRaw().filter((r) => {
+        return skillRowsForMonths(state.skillMonths).filter((r) => {
           if (state.skillHideBiased && r.reference_biased) return false;
           if (state.skillBin !== "all" && String(r.wind_bin) !== state.skillBin) return false;
           if (state.skillModelOn[String(r.model)] === false) return false;
@@ -2734,10 +2808,62 @@
         return a - b;
       }
 
+      function skillInsufficient(n) {
+        return n == null || !Number.isFinite(Number(n)) || Number(n) < skillMinN();
+      }
+
+      function bestIndependentModel(rows, metric, lead, windBin) {
+        const scoped = rows.filter((r) => {
+          if (r.reference_biased) return false;
+          if (Number(r.lead_days) !== Number(lead)) return false;
+          if (windBin !== "all" && String(r.wind_bin) !== windBin) return false;
+          return true;
+        });
+        if (!scoped.length) return null;
+        // If windBin is all, average metric across bins per model (n-weighted for RMSE/MAE)
+        const byModel = {};
+        scoped.forEach((r) => {
+          const model = String(r.model);
+          const val = asNum(r[metric]);
+          const n = asNum(r.n_samples) || 0;
+          if (val == null) return;
+          if (!byModel[model]) byModel[model] = { sum: 0, n: 0, nTotal: 0 };
+          const score = metric === "speed_bias_kt" ? Math.abs(val) : val;
+          byModel[model].sum += score * Math.max(n, 1);
+          byModel[model].n += Math.max(n, 1);
+          byModel[model].nTotal += n;
+        });
+        let best = null;
+        Object.entries(byModel).forEach(([model, agg]) => {
+          const mean = agg.sum / agg.n;
+          if (!best || mean < best.value) {
+            best = { model, value: mean, n: agg.nTotal };
+          }
+        });
+        return best;
+      }
+
       function renderSkillControls() {
         ensureSkillState();
         const rows = skillRowsRaw();
-        const binsPresent = new Set(rows.map((r) => String(r.wind_bin)));
+        const monthPresent = new Set(rows.map((r) => String(r.month_filter)));
+        if (els.skillMonthToggles) {
+          els.skillMonthToggles.innerHTML = SKILL_MONTH_ORDER.map(({ id, label }) => {
+            if (!monthPresent.has(id) && id !== "all") {
+              // still show; may be empty
+            }
+            const on = state.skillMonths === id ? "on" : "";
+            return `<button type="button" class="chip ${on}" data-skill-months="${id}" aria-pressed="${state.skillMonths === id}">${label}</button>`;
+          }).join("");
+          els.skillMonthToggles.querySelectorAll("[data-skill-months]").forEach((btn) => {
+            btn.onclick = () => {
+              state.skillMonths = btn.getAttribute("data-skill-months");
+              renderSkillPage();
+            };
+          });
+        }
+        const monthRows = skillRowsForMonths(state.skillMonths);
+        const binsPresent = new Set(monthRows.map((r) => String(r.wind_bin)));
         const binOpts = SKILL_BIN_ORDER.filter((b) => b === "all" || binsPresent.has(b));
         if (els.skillBinToggles) {
           els.skillBinToggles.innerHTML = binOpts.map((bin) => {
@@ -2748,6 +2874,19 @@
           els.skillBinToggles.querySelectorAll("[data-skill-bin]").forEach((btn) => {
             btn.onclick = () => {
               state.skillBin = btn.getAttribute("data-skill-bin");
+              renderSkillPage();
+            };
+          });
+        }
+        const leads = [...new Set(monthRows.map((r) => Number(r.lead_days)).filter(Number.isFinite))].sort((a, b) => a - b);
+        if (els.skillLeadToggles) {
+          els.skillLeadToggles.innerHTML = leads.map((lead) => {
+            const on = Number(state.skillLead) === lead ? "on" : "";
+            return `<button type="button" class="chip ${on}" data-skill-lead="${lead}" aria-pressed="${Number(state.skillLead) === lead}">${lead} d</button>`;
+          }).join("");
+          els.skillLeadToggles.querySelectorAll("[data-skill-lead]").forEach((btn) => {
+            btn.onclick = () => {
+              state.skillLead = Number(btn.getAttribute("data-skill-lead"));
               renderSkillPage();
             };
           });
@@ -2777,76 +2916,107 @@
 
       function renderSkillMeta() {
         if (!els.skillMeta) return;
-        const meta = (state.payload && state.payload.meta && state.payload.meta.skill) || {};
-        const rows = skillRowsRaw();
-        const models = [...new Set(rows.map((r) => String(r.model)))].sort();
-        const independent = models.filter((m) => !rows.some((r) => String(r.model) === m && r.reference_biased));
+        const meta = skillMetaInfo();
+        const rows = skillRowsFiltered();
+        const models = [...new Set(skillRowsRaw().map((r) => String(r.model)))].sort();
+        const independent = models.filter((m) => !skillRowsRaw().some((r) => String(r.model) === m && r.reference_biased));
         const windowTxt = meta.window_start && meta.window_end
           ? `${meta.window_start} → ${meta.window_end}`
-          : (rows.length ? "from payload" : "no skill rows loaded");
-        const nPaired = meta.n_paired != null ? meta.n_paired : "—";
+          : (skillRowsRaw().length ? "from payload" : "no skill rows loaded");
+        const byFilter = meta.n_paired_by_filter || {};
+        const nPaired = byFilter[state.skillMonths] != null
+          ? byFilter[state.skillMonths]
+          : (meta.n_paired != null ? meta.n_paired : "—");
         const nPoints = meta.n_points != null ? meta.n_points : "—";
-        const staleNote = (!rows.length && skillRowCount(window.DASHBOARD_PAYLOAD) > 0)
+        const nShown = rows.reduce((acc, r) => acc + (asNum(r.n_samples) || 0), 0);
+        const staleNote = (!skillRowsRaw().length && skillRowCount(window.DASHBOARD_PAYLOAD) > 0)
           ? `<p class="skill-empty">This browser is showing an old remembered file with empty skill. Tap <strong>Load bundled skill data</strong> below.</p>`
           : "";
         els.skillMeta.innerHTML = `
           <div class="meta-card"><span class="k">Verification window</span><span class="v">${windowTxt}</span></div>
           <div class="meta-card"><span class="k">Corridor points</span><span class="v">${nPoints}</span></div>
-          <div class="meta-card"><span class="k">Paired hours</span><span class="v">${nPaired}</span></div>
+          <div class="meta-card"><span class="k">Paired hours (${state.skillMonths})</span><span class="v skill-n">${nPaired}</span></div>
           <div class="meta-card"><span class="k">Independent models</span><span class="v">${independent.length ? independent.join(", ") : "—"}</span></div>
+          <div class="meta-card"><span class="k">Rows in view (Σ n)</span><span class="v skill-n">${nShown || "—"}</span></div>
           ${staleNote}
         `;
+      }
+
+      function renderSkillStability() {
+        if (!els.skillStability) return;
+        const metric = state.skillMetric;
+        const windBin = state.skillBin;
+        const lead = state.skillLead;
+        const winners = {};
+        SKILL_MONTH_ORDER.forEach(({ id, label }) => {
+          const best = bestIndependentModel(skillRowsForMonths(id), metric, lead, windBin);
+          winners[id] = best ? { ...best, label } : null;
+        });
+        const present = SKILL_MONTH_ORDER.map(({ id }) => winners[id]).filter(Boolean);
+        if (present.length < 2) {
+          els.skillStability.className = "skill-stability warn";
+          els.skillStability.textContent = `Stability (lead ${lead} d, ${windBin}): not enough month windows with independent-model scores.`;
+          return;
+        }
+        const thin = SKILL_MONTH_ORDER.filter(({ id }) => winners[id] && skillInsufficient(winners[id].n));
+        const models = [...new Set(present.map((w) => w.model))];
+        if (models.length === 1) {
+          els.skillStability.className = "skill-stability";
+          const thinNote = thin.length
+            ? ` (note: ${thin.map((t) => t.label).join(", ")} has n<${skillMinN()})`
+            : "";
+          els.skillStability.textContent =
+            `Ranking stable across all three windows: ${models[0]} best at lead ${lead} d / ${windBin}.${thinNote}`;
+        } else {
+          els.skillStability.className = "skill-stability warn";
+          const parts = SKILL_MONTH_ORDER.map(({ id, label }) => {
+            const w = winners[id];
+            if (!w) return `${label}: —`;
+            const low = skillInsufficient(w.n) ? " (insufficient sample)" : "";
+            return `${label}: ${w.model}${low}`;
+          });
+          els.skillStability.textContent =
+            `Ranking differs across month windows at lead ${lead} d / ${windBin}. ${parts.join(" · ")}`;
+        }
       }
 
       function renderSkillWinners() {
         if (!els.skillWinners) return;
         const metric = state.skillMetric;
-        const rows = skillRowsFiltered().filter((r) => !r.reference_biased);
-        if (!rows.length) {
+        const monthRows = skillRowsForMonths(state.skillMonths).filter((r) => {
+          if (r.reference_biased) return false;
+          if (state.skillHideBiased) return true;
+          return true;
+        }).filter((r) => !r.reference_biased);
+        const leads = [...new Set(monthRows.map((r) => Number(r.lead_days)).filter(Number.isFinite))].sort((a, b) => a - b);
+        if (!leads.length) {
           els.skillWinners.innerHTML = `<p class="skill-empty">No independent-model rows for this filter.</p>`;
           return;
         }
-        const byLead = {};
-        rows.forEach((r) => {
-          const lead = Number(r.lead_days);
-          if (!Number.isFinite(lead)) return;
-          const val = asNum(r[metric]);
-          if (val == null) return;
-          if (!byLead[lead] || skillBetter(metric, val, byLead[lead].value) < 0) {
-            byLead[lead] = { model: String(r.model), value: val, wind_bin: r.wind_bin, n: r.n_samples };
-          }
-        });
-        // Overall: average rank across leads for selected bin(s)
-        const modelScores = {};
-        rows.forEach((r) => {
-          const model = String(r.model);
-          const val = asNum(r[metric]);
-          if (val == null) return;
-          if (!modelScores[model]) modelScores[model] = [];
-          const score = metric === "speed_bias_kt" ? Math.abs(val) : val;
-          modelScores[model].push(score);
-        });
-        let overall = null;
-        Object.entries(modelScores).forEach(([model, vals]) => {
-          const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-          if (!overall || mean < overall.mean) overall = { model, mean };
-        });
-
         const cards = [];
-        if (overall) {
-          cards.push(`<div class="meta-card skill-winner">
-            <span class="k">Best overall (indep.)</span>
-            <span class="v">${overall.model}</span>
-            <span class="help">${SKILL_METRIC_LABEL[metric]} mean ${round2(overall.mean)}</span>
-          </div>`);
-        }
-        Object.keys(byLead).map(Number).sort((a, b) => a - b).forEach((lead) => {
-          const w = byLead[lead];
-          const nTxt = w.n != null ? ` · n=${w.n}` : "";
-          cards.push(`<div class="meta-card">
+        leads.forEach((lead) => {
+          const best = bestIndependentModel(monthRows, metric, lead, state.skillBin);
+          if (!best) {
+            cards.push(`<div class="meta-card skill-low-n">
+              <span class="k">Lead ${lead} d</span>
+              <span class="v">—</span>
+              <span class="help">no independent rows</span>
+            </div>`);
+            return;
+          }
+          if (skillInsufficient(best.n)) {
+            cards.push(`<div class="meta-card skill-low-n">
+              <span class="k">Lead ${lead} d</span>
+              <span class="v">insufficient sample</span>
+              <span class="help">n=<span class="skill-n">${best.n}</span> (need ≥${skillMinN()})</span>
+            </div>`);
+            return;
+          }
+          const focus = Number(lead) === Number(state.skillLead) ? " skill-winner" : "";
+          cards.push(`<div class="meta-card${focus}">
             <span class="k">Lead ${lead} d</span>
-            <span class="v">${w.model}</span>
-            <span class="help">${SKILL_METRIC_LABEL[metric]} ${round2(w.value)}${nTxt}</span>
+            <span class="v">${best.model}</span>
+            <span class="help">${SKILL_METRIC_LABEL[metric]} ${round2(best.value)} · n=<span class="skill-n">${best.n}</span></span>
           </div>`);
         });
         els.skillWinners.innerHTML = cards.join("") || `<p class="skill-empty">No winners for this filter.</p>`;
@@ -2855,10 +3025,10 @@
       function renderSkillLeadPlot() {
         if (!els.skillLeadPlot || typeof Plotly === "undefined") return;
         const metric = state.skillMetric;
-        const rows = skillRowsFiltered();
+        const rows = skillRowsFiltered().filter((r) => !skillInsufficient(r.n_samples));
         if (!rows.length) {
           Plotly.purge(els.skillLeadPlot);
-          els.skillLeadPlot.innerHTML = `<p class="skill-empty">Nothing to plot for this filter.</p>`;
+          els.skillLeadPlot.innerHTML = `<p class="skill-empty">Nothing to plot (all cells below n=${skillMinN()} or empty).</p>`;
           return;
         }
         const models = [...new Set(rows.map((r) => String(r.model)))].sort();
@@ -2869,8 +3039,7 @@
             const val = asNum(r[metric]);
             if (!Number.isFinite(lead) || val == null) return;
             if (!byLead[lead]) byLead[lead] = [];
-            // If multiple wind bins selected (all), average absolute/value
-            byLead[lead].push(metric === "speed_bias_kt" ? val : val);
+            byLead[lead].push(val);
           });
           const leads = Object.keys(byLead).map(Number).sort((a, b) => a - b);
           const y = leads.map((lead) => {
@@ -2893,12 +3062,13 @@
           };
         });
         const yTitle = SKILL_METRIC_LABEL[metric] || metric;
+        const monthLabel = (SKILL_MONTH_ORDER.find((m) => m.id === state.skillMonths) || {}).label || state.skillMonths;
         applyPlot(
           els.skillLeadPlot,
           traces,
           {
             ...plotLayoutBase,
-            title: `${yTitle} vs lead day`,
+            title: `${yTitle} vs lead · ${monthLabel}`,
             xaxis: { title: "Lead (days)", dtick: 1, automargin: true },
             yaxis: { title: yTitle, automargin: true, zeroline: metric === "speed_bias_kt" },
             legend: {
@@ -2919,10 +3089,12 @@
       function renderSkillDetailTable() {
         if (!els.skillTable) return;
         const rows = skillRowsFiltered().slice();
-        const empty = !skillRowsRaw().length;
-        if (els.skillEmpty) els.skillEmpty.classList.toggle("hidden", !empty);
+        const empty = !skillRowsForMonths(state.skillMonths).length;
+        if (els.skillEmpty) els.skillEmpty.classList.toggle("hidden", !empty && skillRowsRaw().length > 0);
         if (!rows.length) {
-          els.skillTable.innerHTML = empty ? "" : `<p class="skill-empty">No rows match the current filters.</p>`;
+          els.skillTable.innerHTML = empty
+            ? ""
+            : `<p class="skill-empty">No rows match the current filters.</p>`;
           return;
         }
         const sortKey = state.skillSort.key;
@@ -2954,17 +3126,25 @@
           return `<th class="sortable" data-sort="${key}">${label}${mark}</th>`;
         }).join("");
         const body = rows.map((r) => {
-          const cls = r.reference_biased ? "biased-row" : "";
+          const low = skillInsufficient(r.n_samples);
+          const cls = [
+            r.reference_biased ? "biased-row" : "",
+            low ? "skill-low-n" : "",
+          ].filter(Boolean).join(" ");
           const tag = r.reference_biased ? "Yes — not comparable" : "No";
           const n = r.n_samples != null ? r.n_samples : "—";
+          const rmse = low ? "—" : round2(asNum(r.vec_rmse_kt));
+          const bias = low ? "—" : round2(asNum(r.speed_bias_kt));
+          const mae = low ? "—" : round2(asNum(r.dir_mae_deg));
+          const note = low ? ` <span class="help">insufficient sample</span>` : "";
           return `<tr class="${cls}">
             <td>${r.model}</td>
             <td>${r.lead_days}</td>
             <td>${r.wind_bin}</td>
-            <td>${round2(asNum(r.vec_rmse_kt))}</td>
-            <td>${round2(asNum(r.speed_bias_kt))}</td>
-            <td>${round2(asNum(r.dir_mae_deg))}</td>
-            <td>${n}</td>
+            <td>${rmse}</td>
+            <td>${bias}</td>
+            <td>${mae}</td>
+            <td class="skill-n">${n}${note}</td>
             <td>${tag}</td>
           </tr>`;
         }).join("");
@@ -2973,7 +3153,7 @@
             <thead><tr>${thead}</tr></thead>
             <tbody>${body}</tbody>
           </table>
-          <p class="help"><strong>Important:</strong> ECMWF/AIFS rows marked reference-biased are scored against IFS analysis and are not comparable to independent models.</p>
+          <p class="help"><strong>Important:</strong> ECMWF/AIFS rows marked reference-biased are scored against IFS analysis and are not comparable to independent models. Cells with n&lt;${skillMinN()} are greyed out.</p>
         `;
         els.skillTable.querySelectorAll("th.sortable").forEach((th) => {
           th.onclick = () => {
@@ -2981,7 +3161,7 @@
             if (state.skillSort.key === key) {
               state.skillSort.dir = state.skillSort.dir === "asc" ? "desc" : "asc";
             } else {
-              state.skillSort = { key, dir: key === "model" || key === "wind_bin" ? "asc" : "asc" };
+              state.skillSort = { key, dir: "asc" };
             }
             renderSkillDetailTable();
           };
@@ -2992,6 +3172,7 @@
         if (!els.pageSkill) return;
         renderSkillControls();
         renderSkillMeta();
+        renderSkillStability();
         renderSkillWinners();
         renderSkillLeadPlot();
         renderSkillDetailTable();
@@ -3766,6 +3947,9 @@
         state.mapLayer = "mean_tws_kt";
         if (els.mapLayer) els.mapLayer.value = state.mapLayer;
         state.skillBin = "all";
+        state.skillMonths = (payload.meta && payload.meta.skill && payload.meta.skill.default_month_filter) || "summer";
+        state._skillMonthsInit = true;
+        state.skillLead = 3;
         state.skillHideBiased = false;
         state.skillMetric = "vec_rmse_kt";
         state.skillModelOn = {};
