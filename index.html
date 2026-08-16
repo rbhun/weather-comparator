@@ -1,0 +1,5046 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <title>PMC 2026 - Weather Decision Dashboard</title>
+    <script src="./vendor/plotly.min.js"></script>
+    <script src="./tiles/osm_manifest.js"></script>
+    <script src="./tiles/openseamap_manifest.js"></script>
+    <script src="./tiles/land.js"></script>
+    <script src="./data.js?v=current-weather-20260816"></script>
+    <script src="./yb_results.js?v=current-weather-20260816"></script>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #131a2d;
+        --panel-border: #243251;
+        --text: #f2f5ff;
+        --muted: #b7c4e5;
+        --accent: #78a6ff;
+        --warn-bg: #3a2b04;
+        --warn-border: #c9951a;
+        --warn-text: #ffe5a8;
+        --bad-bg: #33201e;
+        --bad-border: #8a4f49;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 17px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        border-bottom: 1px solid var(--panel-border);
+        background: rgba(11, 16, 32, 0.96);
+        backdrop-filter: blur(4px);
+        padding: 0.4rem 0.9rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        align-items: stretch;
+      }
+
+      .title-wrap h1 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+
+      .title-wrap p {
+        margin: 0.1rem 0 0;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .app-tabs {
+        display: flex;
+        width: 100%;
+        gap: 0.3rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.65rem;
+        padding: 0.22rem;
+        background: #0f1629;
+      }
+
+      .app-tabs button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 0.5rem 0.85rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 0.95rem;
+        flex: 1 1 0;
+      }
+
+      .app-tabs button.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .settings-dl {
+        display: grid;
+        gap: 0.85rem;
+        margin: 0.85rem 0 0;
+      }
+
+      .settings-dl > div {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.65rem 0.75rem;
+        background: #101732;
+      }
+
+      .settings-dl dt {
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
+      }
+
+      .settings-dl dd {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 650;
+      }
+
+      .settings-dl .help {
+        margin-top: 0.35rem;
+        font-weight: 500;
+      }
+
+      .settings-marks {
+        margin: 0.35rem 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.25rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .time-toggle {
+        display: inline-flex;
+        gap: 0.35rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.35rem;
+        background: #0f1629;
+        margin-top: 0.75rem;
+      }
+
+      .time-toggle button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 0.45rem 0.85rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .time-toggle button.active,
+      .map-tools button.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .map-tools {
+        display: inline-flex;
+        gap: 0.35rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.35rem;
+        background: #0f1629;
+        margin-top: 0.55rem;
+      }
+
+      .map-tools button {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        padding: 0.45rem 0.85rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .map-hit {
+        position: absolute;
+        z-index: 4;
+        cursor: crosshair;
+        background: transparent;
+        touch-action: manipulation;
+      }
+
+      .container {
+        width: min(1400px, calc(100% - 1.5rem));
+        margin: 0.75rem auto 2rem;
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .warning-banner {
+        border: 1px solid var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-radius: 0.8rem;
+        padding: 0.7rem 0.9rem;
+      }
+
+      .warning-banner strong {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      .warning-banner ul {
+        margin: 0;
+        padding-left: 1.3rem;
+      }
+
+      .status {
+        border: 1px solid var(--panel-border);
+        background: var(--panel);
+        border-radius: 0.8rem;
+        padding: 0.85rem 1rem;
+        color: var(--muted);
+      }
+
+      .card {
+        border: 1px solid var(--panel-border);
+        background: var(--panel);
+        border-radius: 0.8rem;
+        padding: 0.9rem;
+      }
+
+      .card h2,
+      .card h3 {
+        margin: 0;
+      }
+
+      .card h2 {
+        font-size: 1.22rem;
+      }
+
+      .subnote {
+        margin-top: 0.3rem;
+        color: var(--muted);
+        font-size: 0.96rem;
+      }
+
+      .controls {
+        margin-top: 0.75rem;
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      label {
+        font-weight: 600;
+      }
+
+      input[type="range"],
+      select {
+        width: 100%;
+      }
+
+      .plot {
+        width: 100%;
+        min-height: 380px;
+      }
+
+      #map-plot {
+        width: 100%;
+        min-height: 0;
+        height: 420px;
+      }
+
+      .plot.short {
+        min-height: 300px;
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 0.85rem;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.7rem;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--panel-border);
+        padding: 0.45rem 0.5rem;
+        text-align: left;
+      }
+
+      th {
+        background: #101832;
+      }
+
+      .biased-row {
+        background: var(--bad-bg);
+        border-left: 4px solid var(--bad-border);
+      }
+
+      #head-to-head-table {
+        overflow-x: auto;
+      }
+
+      .h2h-route {
+        font-weight: 800;
+      }
+
+      .h2h-bar {
+        position: relative;
+        display: flex;
+        min-width: 10.5rem;
+        height: 1.7rem;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #3a4a6d;
+        background: #0f1629;
+      }
+
+      .h2h-bar-a,
+      .h2h-bar-b {
+        height: 100%;
+      }
+
+      .h2h-bar-a {
+        background: #c23b3b;
+      }
+
+      .h2h-bar-b {
+        background: #2f9e6a;
+      }
+
+      .h2h-bar-label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0.5rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #ffffff;
+        text-shadow: 0 1px 2px #000000;
+        pointer-events: none;
+      }
+
+      .h2h-best {
+        font-weight: 800;
+      }
+
+      .badge {
+        display: inline-block;
+        margin: 0.16rem 0.25rem 0.16rem 0;
+        padding: 0.22rem 0.5rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        font-size: 0.83rem;
+      }
+
+      .meta-grid {
+        display: grid;
+        gap: 0.6rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .meta-card {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        padding: 0.6rem;
+        background: #101732;
+      }
+
+      .meta-card .k {
+        color: var(--muted);
+        display: block;
+        font-size: 0.88rem;
+      }
+
+      .meta-card .v {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+
+      .help {
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .chart-note {
+        margin-top: 0.65rem;
+        border: 1px solid var(--panel-border);
+        border-left: 4px solid #8bb6ff;
+        border-radius: 0.6rem;
+        padding: 0.55rem 0.65rem;
+        background: #101832;
+        font-size: 0.93rem;
+        color: #d8e5ff;
+      }
+
+      .hour-control {
+        margin-top: 0.35rem;
+        display: grid;
+        gap: 0.3rem;
+      }
+
+      .hour-readout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.65rem;
+        align-items: baseline;
+      }
+
+      .hour-kicker {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .hour-main {
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.15;
+        color: #ffffff;
+      }
+
+      .hour-sub {
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .hour-slider-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.45rem;
+        align-items: center;
+      }
+
+      #hour-play {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.28rem 0.65rem;
+        font-weight: 800;
+        font-size: 0.85rem;
+        cursor: pointer;
+        min-width: 3.8rem;
+      }
+
+      #hour-play.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .map-layer-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.55rem;
+        align-items: center;
+      }
+
+      #map-layer {
+        width: auto;
+        max-width: 15.5rem;
+        min-width: 11rem;
+        flex: 0 1 auto;
+      }
+
+      .fold {
+        margin-top: 0.55rem;
+      }
+
+      .fold summary {
+        cursor: pointer;
+        font-weight: 800;
+        list-style: none;
+      }
+
+      .fold summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .fold summary::before {
+        content: "> ";
+        color: var(--accent);
+      }
+
+      .fold[open] summary::before {
+        content: "v ";
+      }
+
+      .point-head {
+        display: grid;
+        grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 1.4fr);
+        gap: 0.75rem;
+        align-items: start;
+        margin-bottom: 0.45rem;
+      }
+
+      @media (max-width: 720px) {
+        .point-head {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .point-head .meta-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.4rem;
+      }
+
+      .point-head .meta-card {
+        padding: 0.4rem 0.5rem;
+      }
+
+      .point-head h2 {
+        font-size: 1.1rem;
+      }
+
+      .point-head h3 {
+        margin-top: 0.25rem;
+        font-size: 0.98rem;
+        font-weight: 700;
+      }
+
+      .point-head .subnote {
+        margin-top: 0.2rem;
+        font-size: 0.88rem;
+      }
+
+      .point-head .meta-card .v {
+        font-size: 1rem;
+      }
+
+      .zoom-toolbar button[data-act="select"] {
+        width: auto;
+        min-width: 4.2rem;
+        padding: 0 0.5rem;
+        font-size: 0.72rem;
+      }
+
+      .zoom-toolbar button[data-act="select"].active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .plot-wrap {
+        position: relative;
+        margin-top: 0.45rem;
+      }
+
+      .zoom-toolbar {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        z-index: 5;
+        display: flex;
+        gap: 0.28rem;
+      }
+
+      .zoom-toolbar button {
+        width: 2.1rem;
+        height: 2.1rem;
+        border: 1px solid #6f89b8;
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: #ffffff;
+        font-size: 1.05rem;
+        font-weight: 800;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .zoom-toolbar button:hover {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .map-key {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem 1.2rem;
+        margin-top: 0.45rem;
+        font-weight: 700;
+      }
+
+      .map-key-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.45rem;
+        background: #101732;
+        color: var(--text);
+        font: inherit;
+        font-weight: 700;
+        padding: 0.28rem 0.55rem;
+        cursor: pointer;
+      }
+
+      .map-key-item.off {
+        opacity: 0.4;
+      }
+
+      .map-key-item.static {
+        cursor: default;
+      }
+
+      .map-key-swatch {
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 0.2rem;
+        border: 1px solid #0b1020;
+        flex: 0 0 auto;
+      }
+
+      .map-key-swatch.land {
+        background: #80848a;
+      }
+
+      .map-key-swatch.course {
+        background: #ffffff;
+        height: 0.28rem;
+        border-radius: 0;
+      }
+
+      .map-key-swatch.selected {
+        background: transparent;
+        border: 2px solid #ffffff;
+      }
+
+      .file-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        align-items: center;
+        margin-top: 0.55rem;
+      }
+
+      .file-actions button {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.45rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.45rem 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .route-compare {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+        gap: 0.75rem;
+        align-items: stretch;
+        margin-top: 0.45rem;
+      }
+
+      .route-compare .plot-wrap {
+        height: 100%;
+      }
+
+      #route-plot {
+        min-height: 0;
+        height: 100%;
+      }
+
+      .route-legend-panel {
+        min-width: 0;
+      }
+
+      .route-legend {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .route-legend-row {
+        display: grid;
+        grid-template-columns: auto auto 1fr;
+        gap: 0.55rem;
+        align-items: center;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.55rem;
+        background: #101732;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text);
+        font: inherit;
+        width: 100%;
+      }
+
+      .route-legend-row.on {
+        border-color: #6f89b8;
+      }
+
+      .route-legend-row.focus {
+        outline: 2px solid #ffffff;
+      }
+
+      .route-legend-row.off {
+        opacity: 0.45;
+      }
+
+      .route-swatch {
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 0.2rem;
+        border: 1px solid #0b1020;
+      }
+
+      .route-legend-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 0.45rem;
+      }
+
+      .route-legend-actions button {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.35rem 0.65rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .meta-card.route-card {
+        cursor: pointer;
+      }
+
+      .meta-card.route-card.focus {
+        outline: 2px solid #ffffff;
+      }
+
+      .jump-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        align-items: center;
+        margin-top: 0.55rem;
+      }
+
+      .jump-row a,
+      .jump-row button {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.35rem 0.7rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+
+      .chip {
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        background: #101732;
+        color: var(--text);
+        padding: 0.28rem 0.7rem;
+        font-weight: 800;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+
+      .chip.on {
+        background: var(--accent);
+        color: #041638;
+        border-color: var(--accent);
+      }
+
+      .chip.off {
+        opacity: 0.45;
+      }
+
+      .chip.static {
+        cursor: default;
+      }
+
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-items: center;
+        margin-top: 0.55rem;
+      }
+
+      .filter-row .hour-kicker {
+        min-width: 4.2rem;
+      }
+
+      .class-year {
+        margin-top: 0.45rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 0.55rem;
+        padding: 0.45rem 0.55rem;
+        background: #101732;
+      }
+
+      .class-year h3 {
+        margin: 0 0 0.35rem;
+        font-size: 0.92rem;
+      }
+
+      .ghost-btn {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.4rem;
+        background: #0f1629;
+        color: var(--text);
+        padding: 0.35rem 0.7rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .ghost-btn.active {
+        background: var(--accent);
+        color: #041638;
+      }
+
+      .ghost-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      #results-map {
+        width: 100%;
+        min-height: 0;
+        height: 420px;
+      }
+
+      .results-table-wrap {
+        overflow-x: auto;
+        margin-top: 0.7rem;
+      }
+
+      .skill-banner {
+        border: 1px solid var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-radius: 0.7rem;
+        padding: 0.75rem 0.9rem;
+        margin: 0 0 0.85rem;
+        font-weight: 650;
+      }
+
+      .skill-banner.biased {
+        border-color: var(--bad-border);
+        background: var(--bad-bg);
+        color: #ffd4cf;
+      }
+
+      .skill-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        margin-top: 0.55rem;
+      }
+
+      .skill-controls .filter-row {
+        margin-top: 0;
+      }
+
+      .skill-winner {
+        border-left: 4px solid var(--accent);
+      }
+
+      .skill-table-wrap {
+        overflow-x: auto;
+        margin-top: 0.55rem;
+      }
+
+      .skill-table-wrap th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .skill-table-wrap th.sortable:hover {
+        color: var(--accent);
+      }
+
+      .skill-empty {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0.4rem 0 0;
+      }
+
+      .skill-stability {
+        border: 1px solid var(--panel-border);
+        border-radius: 0.7rem;
+        background: #101732;
+        padding: 0.75rem 0.9rem;
+        margin: 0.75rem 0 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .skill-stability.warn {
+        border-color: var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+      }
+
+      .skill-low-n,
+      tr.skill-low-n {
+        opacity: 0.45;
+        color: var(--muted);
+      }
+
+      .skill-n {
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+
+      .cw-banner {
+        margin: 0.75rem 0 0;
+        padding: 0.85rem 1rem;
+        border: 1px solid #d4a017;
+        background: #3a2e10;
+        color: #ffe9a8;
+        font-size: 1.02rem;
+        line-height: 1.45;
+      }
+
+      .cw-banner strong {
+        color: #fff6d0;
+      }
+
+      .cw-drop {
+        margin-top: 0.75rem;
+        padding: 1.1rem;
+        border: 2px dashed #4a5568;
+        background: #121820;
+        text-align: center;
+        color: #c5d0dc;
+      }
+
+      .cw-drop.dragover {
+        border-color: #7eb6ff;
+        background: #172033;
+      }
+
+      .cw-drop input[type="file"] {
+        display: block;
+        margin: 0.7rem auto 0;
+        max-width: 100%;
+      }
+
+      .cw-table-wrap {
+        overflow: auto;
+        max-height: 28rem;
+      }
+
+      .cw-table-wrap table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.98rem;
+      }
+
+      .cw-table-wrap th,
+      .cw-table-wrap td {
+        padding: 0.45rem 0.55rem;
+        border-bottom: 1px solid #2a3340;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .cw-table-wrap tr.cw-circular {
+        background: #3a2e10;
+      }
+
+      .cw-table-wrap tr.cw-unranked {
+        opacity: 0.55;
+      }
+
+      .cw-refuse {
+        margin: 0.5rem 0 0;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid #6b7280;
+        background: #1a1f27;
+        color: #e5e7eb;
+        font-size: 1.05rem;
+      }
+
+      .cw-counts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+        gap: 0.55rem;
+        margin-top: 0.6rem;
+      }
+
+      .cw-counts div {
+        background: #151b24;
+        border: 1px solid #2a3340;
+        padding: 0.55rem 0.7rem;
+      }
+
+      .cw-counts .k {
+        font-size: 0.8rem;
+        color: #9aa7b5;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .cw-counts .v {
+        font-size: 1.35rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title-wrap">
+        <h1>PMC 2026</h1>
+        <p id="generated-time">Generated: loading...</p>
+      </div>
+      <nav id="app-tabs" class="app-tabs" role="tablist" aria-label="Dashboard pages">
+        <button id="tab-weather" type="button" role="tab" aria-selected="true" class="active">Historical weather</button>
+        <button id="tab-current" type="button" role="tab" aria-selected="false">Current weather</button>
+        <button id="tab-skill" type="button" role="tab" aria-selected="false">Model skill</button>
+        <button id="tab-results" type="button" role="tab" aria-selected="false">Historical result</button>
+        <button id="tab-settings" type="button" role="tab" aria-selected="false">Settings</button>
+      </nav>
+    </header>
+
+    <main id="page-weather" class="container">
+      <section id="status" class="status">Loading dashboard/data.json...</section>
+
+      <section id="calm-risk-map" class="card">
+        <h2>1) Wind map</h2>
+        <div class="hour-control">
+          <div class="hour-readout">
+            <div class="hour-kicker">Hour of day</div>
+            <div id="hour-main" class="hour-main">--:--</div>
+            <div id="hour-sub" class="hour-sub"></div>
+          </div>
+          <div class="hour-slider-row">
+            <button id="hour-play" type="button" aria-pressed="false">Play</button>
+            <input id="hour-slider" type="range" min="0" max="23" step="1" value="0" />
+            <div class="map-layer-row">
+              <label class="help" for="map-layer" id="hour-label">Layer</label>
+              <select id="map-layer">
+                <option value="mean_tws_kt">Mean wind (kt)</option>
+                <option value="mean_tws_dir">Mean wind + direction</option>
+                <option value="p_below_5kt">Calm risk P(&lt;5 kt)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <details class="fold">
+          <summary>Map notes</summary>
+          <p id="chart-layer-note" class="chart-note">
+            Map underlay is OpenStreetMap data (CARTO Voyager) plus a Natural Earth coastline. Crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. Tiles by CARTO.
+          </p>
+        </details>
+        <div class="plot-wrap">
+          <div class="zoom-toolbar" aria-label="Map tools">
+            <button type="button" id="map-tool-select" data-act="select" title="Select cell">Select</button>
+            <button type="button" data-act="in" title="Zoom in">+</button>
+            <button type="button" data-act="out" title="Zoom out">−</button>
+            <button type="button" data-act="all" title="Show all">A</button>
+          </div>
+          <div id="map-plot" class="plot" aria-label="Wind map"></div>
+        </div>
+        <div class="map-key" aria-label="Map key">
+          <button id="map-key-land" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch land"></span>Land
+          </button>
+          <button id="map-key-rhumbline" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch course"></span>Rhumbline
+          </button>
+          <span class="map-key-item static"><span class="map-key-swatch selected"></span>Selected cell</span>
+        </div>
+        <div class="jump-row">
+          <span id="map-selected">Drag to zoom. Select, then tap a cell.</span>
+        </div>
+      </section>
+
+      <section id="point-detail" class="card">
+        <div class="point-head">
+          <div>
+            <h2>2) Point detail</h2>
+            <p class="subnote">Select a cell on the map. Arrows show where the wind is going. Wider polar slice = lower constancy.</p>
+            <h3 id="point-title">Selected cell: --</h3>
+          </div>
+          <div id="point-metrics" class="meta-grid"></div>
+        </div>
+        <div class="grid-2">
+          <div class="plot-wrap">
+            <div id="point-hour-plot" class="plot short"></div>
+          </div>
+          <div class="plot-wrap">
+            <div id="point-rose-plot" class="plot short"></div>
+          </div>
+        </div>
+        <details class="fold">
+          <summary>Hourly details</summary>
+          <div id="point-detail-table"></div>
+        </details>
+      </section>
+
+      <section id="route-comparison" class="card">
+        <h2>3) Route comparison</h2>
+        <p class="subnote">Same lines as the map. Tap a name to highlight; uncheck to hide. Use percentiles, not means.</p>
+        <div class="route-compare">
+          <div class="plot-wrap">
+            <div id="route-plot" class="plot short"></div>
+          </div>
+          <div class="route-legend-panel">
+            <div id="route-legend" class="route-legend"></div>
+            <div class="route-legend-actions">
+              <button id="routes-show-all" type="button">Show all on map</button>
+              <button id="routes-hide-all" type="button">Hide all on map</button>
+              <button id="routes-clear-focus" type="button">Clear highlight</button>
+            </div>
+          </div>
+        </div>
+        <div id="route-summary" class="meta-grid"></div>
+        <details class="fold">
+          <summary>Head-to-head margins</summary>
+          <div id="head-to-head-table"></div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>4) Cross-shore transects</h2>
+        <p class="subnote">Mean wind vs offshore distance, by hour.</p>
+        <div id="transect-controls" class="controls hidden">
+          <label for="transect-select">Transect</label>
+          <select id="transect-select"></select>
+        </div>
+        <div class="plot-wrap">
+          <div id="transect-plot" class="plot short"></div>
+        </div>
+        <p id="transect-empty" class="help hidden">
+          Transect data is not present in this payload. The dashboard can render it when a `transects` section is included in data.json.
+        </p>
+      </section>
+
+      <section id="sar-shadow" class="card">
+        <h2>5) Sentinel-1 SAR lee-shadow test</h2>
+        <p class="subnote">
+          Falsification test of the AROME east-Sardinia wind shadow (0–5 nm vs 7.5–10 nm),
+          paired within each SAR scene. Speed only — direction is not independent evidence.
+        </p>
+        <div id="sar-empty" class="help hidden">
+          SAR shadow-test payload is not present. Run <code>python -m pmc.sar analyse --fixture</code>
+          and merge <code>sar_shadow_test</code> into data.json.
+        </div>
+        <div id="sar-body" class="hidden">
+          <div id="sar-verdict" class="skill-stability" role="status"></div>
+          <div id="sar-inventory" class="meta-grid" aria-label="Scene inventory"></div>
+          <p id="sar-sampling" class="chart-note"></p>
+          <div class="grid-2">
+            <div class="plot-wrap">
+              <div id="sar-diff-plot" class="plot short" aria-label="Paired differentials"></div>
+            </div>
+            <div class="plot-wrap">
+              <div id="sar-buffer-plot" class="plot short" aria-label="Buffer sensitivity"></div>
+            </div>
+          </div>
+          <details class="fold">
+            <summary>Three-way table (SAR · AROME · ERA5) and incidence diagnostic</summary>
+            <div id="sar-three-way"></div>
+            <div class="plot-wrap" style="margin-top:0.75rem">
+              <div id="sar-incidence-plot" class="plot short" aria-label="Incidence diagnostic"></div>
+            </div>
+          </details>
+          <p id="sar-control-note" class="help"></p>
+        </div>
+      </section>
+
+      <section id="file-loader" class="card">
+        <h3>Load data file</h3>
+        <p id="file-loader-help" class="help">
+          Bundled <code>data.js</code> should load automatically. Use this only to switch to another local payload. The last chosen file is remembered in this browser.
+        </p>
+        <div class="file-actions">
+          <input id="data-file-input" type="file" accept=".json,application/json" />
+          <button id="use-bundled" type="button">Use bundled data</button>
+        </div>
+      </section>
+    </main>
+
+    <main id="page-current" class="container hidden">
+      <section class="card">
+        <h2>Current weather</h2>
+        <p class="subnote">
+          Live forecast models vs observations (scatterometer, land stations, Sentinel-1).
+          Distinct from historical Model skill. Default lead view is <strong>48–72 h</strong>.
+        </p>
+        <div id="cw-circularity-banner" class="cw-banner" role="status">
+          <strong>Circularity warning:</strong> 0–12 h scores for IFS / ICON / AROME / ARPEGE
+          measure scatterometer assimilation, not independent skill. Use 48–72 h for decisions.
+          GFS and AIFS do not assimilate these winds — their short-lead scores stay interpretable.
+        </div>
+        <div id="cw-meta" class="meta-grid"></div>
+        <div class="skill-controls">
+          <div class="filter-row">
+            <span class="hour-kicker">Lead</span>
+            <div id="cw-lead-toggles" class="chip-row" role="group" aria-label="Lead bucket"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Instrument</span>
+            <div id="cw-instrument-toggles" class="chip-row" role="group" aria-label="Instrument"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Model</span>
+            <div id="cw-model-toggles" class="chip-row" role="group" aria-label="Model filter"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Scorecard</h2>
+        <p class="subnote">
+          Vector RMSE on u10/v10 (m/s) with bootstrap 95% CI and n.
+          Cells with n below the minimum are shown greyed and are not ranked.
+        </p>
+        <div id="cw-refuse" class="cw-refuse hidden" role="status"></div>
+        <div id="cw-scorecard" class="cw-table-wrap"></div>
+      </section>
+
+      <section class="card">
+        <h2>Expedition calibration</h2>
+        <p class="subnote">
+          From scatterometer 48–72 h only (TWS scale % and signed TWD twist °).
+          Land stations and Sentinel-1 cannot contribute.
+        </p>
+        <div id="cw-calibration" class="cw-table-wrap"></div>
+      </section>
+
+      <section class="card">
+        <h2>Trend</h2>
+        <p class="subnote">Vector RMSE across successive passes (selected instrument, 48–72 h).</p>
+        <div class="plot-wrap">
+          <div id="cw-trend-plot" class="plot short"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Residual map</h2>
+        <p class="subnote">Observation − model vectors (u/v). Reveals a misplaced gradient axis.</p>
+        <div class="filter-row" style="margin-bottom:0.6rem">
+          <label class="help" for="cw-residual-model">Model</label>
+          <select id="cw-residual-model"></select>
+        </div>
+        <div class="plot-wrap">
+          <div id="cw-residual-plot" class="plot"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Pressure &amp; timing</h2>
+        <p class="subnote">MSLP bias per station (land). Wind here is timing-only — never in calibration.</p>
+        <div id="cw-pressure" class="cw-table-wrap"></div>
+        <h3 style="margin-top:1rem">Thermal onset lag</h3>
+        <div id="cw-onset" class="cw-table-wrap"></div>
+      </section>
+
+      <section class="card">
+        <h2>Sentinel-1</h2>
+        <p class="subnote">Opportunistic 1 km wind <em>speed</em> only. Direction is not independent evidence.</p>
+        <div id="cw-sentinel" class="help"></div>
+        <div class="plot-wrap">
+          <div id="cw-sentinel-plot" class="plot short"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Excluded bucket counts</h2>
+        <p class="subnote">Coastal (&lt; land-distance threshold) and sub-3 m/s cells are kept labelled, not mixed into headlines.</p>
+        <div id="cw-bucket-counts" class="cw-counts"></div>
+      </section>
+
+      <section class="card">
+        <h2>Observation upload</h2>
+        <p class="subnote">
+          Drop an operator observation JSON for a dry-run parse report in this page.
+          NetCDF / BUFR / GRIB dry-run: <code>python3 -m pmc.verify ingest FILE --dry-run</code>.
+        </p>
+        <div id="cw-drop" class="cw-drop" tabindex="0">
+          Drop observation JSON here, or choose a file
+          <input id="cw-obs-input" type="file" accept=".json,application/json,.nc,.csv,.txt,.metar" />
+        </div>
+        <pre id="cw-parse-report" class="help" style="white-space:pre-wrap;margin-top:0.75rem"></pre>
+      </section>
+    </main>
+
+    <main id="page-skill" class="container hidden">
+      <section class="card">
+        <h2>Model skill</h2>
+        <p class="subnote">
+          Which forecast models track reality on this course — by lead time and wind strength.
+          Lower vector RMSE and direction MAE is better; speed bias near zero is better.
+        </p>
+        <div id="skill-bias-banner" class="skill-banner biased" role="status">
+          ECMWF IFS and AIFS are scored against IFS analysis (their own family). Those rows are
+          <strong>reference-biased</strong> and must not be compared to GFS / ICON / GEM / ARPEGE.
+          Use independent models when choosing what to trust for race week.
+        </div>
+        <div id="skill-meta" class="meta-grid"></div>
+        <div id="skill-stability" class="skill-stability" role="status"></div>
+        <div class="skill-controls">
+          <div class="filter-row">
+            <span class="hour-kicker">Months</span>
+            <div id="skill-month-toggles" class="chip-row" role="group" aria-label="Month window"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Wind</span>
+            <div id="skill-bin-toggles" class="chip-row" role="group" aria-label="Observed wind bin"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Lead</span>
+            <div id="skill-lead-toggles" class="chip-row" role="group" aria-label="Lead day for rankings"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Models</span>
+            <div id="skill-model-toggles" class="chip-row" role="group" aria-label="Model filter"></div>
+          </div>
+          <div class="filter-row">
+            <span class="hour-kicker">Options</span>
+            <button id="skill-hide-biased" type="button" class="chip" aria-pressed="false">Hide reference-biased</button>
+            <label for="skill-metric" class="help" style="margin:0">Metric</label>
+            <select id="skill-metric">
+              <option value="vec_rmse_kt">Vector RMSE (kt)</option>
+              <option value="speed_bias_kt">Speed bias (kt)</option>
+              <option value="dir_mae_deg">Direction MAE (°)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Who did well</h2>
+        <p class="subnote">Best independent (non-biased) model for the selected months + wind bin. Cells with n&lt;300 are not ranked.</p>
+        <div id="skill-winners" class="meta-grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>Skill vs lead time</h2>
+        <p class="subnote">One line per model. Tap a model chip above to hide noisy series.</p>
+        <div class="plot-wrap">
+          <div id="skill-lead-plot" class="plot short"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Detail table</h2>
+        <p class="subnote">
+          Every model × lead × wind bin. Biased rows stay visually separated.
+          Tap a column header to sort.
+        </p>
+        <div id="skill-table" class="skill-table-wrap"></div>
+        <p id="skill-empty" class="skill-empty hidden">
+          No model-skill rows in this payload.
+          Your browser may be remembering an older saved <code>data.json</code>.
+          <button id="skill-use-bundled" type="button" class="chip on" style="margin-top:0.55rem">
+            Load bundled skill data
+          </button>
+        </p>
+      </section>
+    </main>
+
+    <main id="page-settings" class="container hidden">
+      <section id="warning-banner" class="warning-banner"></section>
+      <section class="card">
+        <h2>Visitors</h2>
+        <p class="subnote">
+          Anonymous counts only: how many people opened the page, country, phone vs desktop, and whether they came back. No names, no login.
+        </p>
+        <p>
+          <a id="analytics-link" href="https://rbhun-pmc.goatcounter.com" target="_blank" rel="noopener">Open visitor stats</a>
+        </p>
+        <p class="help">
+          One-time setup: create a free GoatCounter site with code <code>rbhun-pmc</code> at
+          <a href="https://www.goatcounter.com" target="_blank" rel="noopener">goatcounter.com</a>,
+          then that link shows the numbers. Offline / <code>file://</code> opens are not counted.
+        </p>
+      </section>
+      <section class="card">
+        <h2>Display time</h2>
+        <p class="subnote">
+          Switches every timestamp on the dashboard at once, including axis labels. Default is local time from the loaded payload.
+        </p>
+        <div class="time-toggle" role="group" aria-label="Time display mode">
+          <button id="mode-local" class="active" type="button">Local time</button>
+          <button id="mode-utc" type="button">UTC</button>
+        </div>
+        <p id="settings-timezone" class="help"></p>
+      </section>
+      <section class="card">
+        <h2>Historical weather</h2>
+        <p class="subnote">
+          Dataset currently loaded. This is display only — year, area, and race selection will come later.
+        </p>
+        <dl class="settings-dl">
+          <div>
+            <dt>Race</dt>
+            <dd id="settings-race">—</dd>
+          </div>
+          <div>
+            <dt>Years</dt>
+            <dd>
+              <div id="settings-years" class="chip-row"></div>
+              <p id="settings-years-note" class="help"></p>
+            </dd>
+          </div>
+          <div>
+            <dt>Area</dt>
+            <dd id="settings-area">—</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+
+    <main id="page-results" class="container hidden">
+      <section class="card">
+        <h2>Historical result</h2>
+        <p class="subnote">
+          Actual YB tracks from previous Palermo–Montecarlo editions. Both filters use uncorrected clock time: who got to Monaco first. Top 3 absolute is line honours. Top 3 per class is the three fastest elapsed times inside each selected class — not the handicap (corrected-time) winner.
+        </p>
+        <div class="plot-wrap">
+          <div class="zoom-toolbar" aria-label="Results map tools">
+            <button type="button" data-results-act="in" title="Zoom in">+</button>
+            <button type="button" data-results-act="out" title="Zoom out">−</button>
+            <button type="button" data-results-act="all" title="Show all">A</button>
+          </div>
+          <div id="results-map" class="plot" aria-label="Historical result map"></div>
+        </div>
+        <div class="map-key" aria-label="Results map key">
+          <button id="results-key-land" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch land"></span>Land
+          </button>
+          <button id="results-key-rhumbline" type="button" class="map-key-item" aria-pressed="true">
+            <span class="map-key-swatch course"></span>Rhumbline
+          </button>
+        </div>
+        <div id="results-legend" class="chip-row" style="margin-top:0.55rem"></div>
+        <p id="results-note" class="subnote"></p>
+        <div class="filter-row">
+          <span class="hour-kicker">Years</span>
+          <div id="year-toggles" class="chip-row"></div>
+          <button id="years-all" class="ghost-btn" type="button">All years</button>
+          <button id="years-none" class="ghost-btn" type="button">None</button>
+        </div>
+        <div id="class-filters"></div>
+        <div class="filter-row">
+          <button id="filter-top3-abs" class="ghost-btn" type="button" aria-pressed="true">Top 3 absolute</button>
+          <button id="filter-top3-class" class="ghost-btn" type="button" aria-pressed="false">Top 3 per class</button>
+          <button id="filter-year-weather" class="ghost-btn" type="button" aria-pressed="false">Year weather</button>
+          <label class="help" for="weather-year">Weather year</label>
+          <select id="weather-year"></select>
+        </div>
+        <div id="results-table" class="results-table-wrap"></div>
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      const STORAGE_PAYLOAD = "pmc.dashboard.payload.v2";
+      const STORAGE_NAME = "pmc.dashboard.payloadName.v2";
+      // Flip to true when publishing the YB historical-result tab on Pages.
+      const SHOW_RESULTS_TAB = true;
+      const GOATCOUNTER_SITE = "rbhun-pmc";
+      const STORAGE_PREFER = "pmc.dashboard.preferSaved.v2";
+      const plotConfig = { displayModeBar: false, responsive: true, doubleClick: "reset" };
+      const threeToneScale = [
+        [0, "#08306b"],
+        [0.5, "#f7f7f7"],
+        [1, "#cc4c02"],
+      ];
+      const YEAR_COLORS = {
+        2017: "#E69F00",
+        2018: "#56B4E9",
+        2019: "#009E73",
+        2021: "#F0E442",
+        2022: "#0072B2",
+        2023: "#D55E00",
+        2024: "#CC79A7",
+        2025: "#A0A0A0",
+      };
+      const ROUTE_COLORS = [
+        "#E69F00",
+        "#56B4E9",
+        "#009E73",
+        "#F0E442",
+        "#0072B2",
+        "#D55E00",
+        "#CC79A7",
+        "#A0A0A0",
+      ];
+
+      function routeId(route, idx) {
+        return route.id || route.label || `route-${idx}`;
+      }
+
+      function routeColor(idx) {
+        return ROUTE_COLORS[idx % ROUTE_COLORS.length];
+      }
+
+      function routeLookup(key) {
+        const routes = (state.payload && state.payload.routes) || [];
+        const idx = routes.findIndex((route, i) => {
+          const id = routeId(route, i);
+          return id === key || route.id === key || route.label === key;
+        });
+        if (idx < 0) {
+          return { id: key, label: key, color: "#A0A0A0", p50: null };
+        }
+        const route = routes[idx];
+        return {
+          id: routeId(route, idx),
+          label: route.label || routeId(route, idx),
+          color: routeColor(idx),
+          p50: asNum(route.elapsed_hours && route.elapsed_hours.p50),
+        };
+      }
+
+      function ensureRouteState(routes) {
+        routes.forEach((route, idx) => {
+          const id = routeId(route, idx);
+          if (state.routeOn[id] == null) state.routeOn[id] = true;
+        });
+      }
+
+      const state = {
+        payload: null,
+        timeMode: "local",
+        selectedHour: 0,
+        mapLayer: "mean_tws_kt",
+        selectedLatIdx: 0,
+        selectedLonIdx: 0,
+        routeOn: {},
+        routeFocus: null,
+        eventsBound: false,
+        mapImages: null,
+        mapRange: null,
+        mapTool: "zoom",
+        showLand: true,
+        showRhumbline: true,
+        meanWindMax: null,
+        hourPlaying: false,
+        hourTimer: null,
+        page: "weather",
+        yearOn: {},
+        classOn: {},
+        top3Abs: true,
+        top3Class: false,
+        showYearWeather: false,
+        weatherYear: null,
+        resultsRange: null,
+        showResultsLand: true,
+        showResultsRhumbline: true,
+        skillBin: "all",
+        skillMonths: "summer",
+        skillLead: 3,
+        skillHideBiased: false,
+        skillMetric: "vec_rmse_kt",
+        skillModelOn: {},
+        skillSort: { key: "vec_rmse_kt", dir: "asc" },
+        cwLead: "48-72",
+        cwInstrument: "ascat_metop_b",
+        cwModelOn: {},
+        cwResidualModel: null,
+      };
+
+      const els = {
+        status: document.getElementById("status"),
+        warningBanner: document.getElementById("warning-banner"),
+        generatedTime: document.getElementById("generated-time"),
+        hourSlider: document.getElementById("hour-slider"),
+        hourPlay: document.getElementById("hour-play"),
+        hourLabel: document.getElementById("hour-label"),
+        mapLayer: document.getElementById("map-layer"),
+        hourMain: document.getElementById("hour-main"),
+        hourSub: document.getElementById("hour-sub"),
+        modeLocal: document.getElementById("mode-local"),
+        modeUtc: document.getElementById("mode-utc"),
+        chartLayerNote: document.getElementById("chart-layer-note"),
+        mapSelected: document.getElementById("map-selected"),
+        mapToolSelect: document.getElementById("map-tool-select"),
+        mapKeyLand: document.getElementById("map-key-land"),
+        mapKeyRhumbline: document.getElementById("map-key-rhumbline"),
+        mapPlot: document.getElementById("map-plot"),
+        appTabs: document.getElementById("app-tabs"),
+        tabWeather: document.getElementById("tab-weather"),
+        tabCurrent: document.getElementById("tab-current"),
+        tabSkill: document.getElementById("tab-skill"),
+        tabResults: document.getElementById("tab-results"),
+        tabSettings: document.getElementById("tab-settings"),
+        pageWeather: document.getElementById("page-weather"),
+        pageCurrent: document.getElementById("page-current"),
+        pageSkill: document.getElementById("page-skill"),
+        pageResults: document.getElementById("page-results"),
+        pageSettings: document.getElementById("page-settings"),
+        cwCircularityBanner: document.getElementById("cw-circularity-banner"),
+        cwMeta: document.getElementById("cw-meta"),
+        cwLeadToggles: document.getElementById("cw-lead-toggles"),
+        cwInstrumentToggles: document.getElementById("cw-instrument-toggles"),
+        cwModelToggles: document.getElementById("cw-model-toggles"),
+        cwRefuse: document.getElementById("cw-refuse"),
+        cwScorecard: document.getElementById("cw-scorecard"),
+        cwCalibration: document.getElementById("cw-calibration"),
+        cwTrendPlot: document.getElementById("cw-trend-plot"),
+        cwResidualModel: document.getElementById("cw-residual-model"),
+        cwResidualPlot: document.getElementById("cw-residual-plot"),
+        cwPressure: document.getElementById("cw-pressure"),
+        cwOnset: document.getElementById("cw-onset"),
+        cwSentinel: document.getElementById("cw-sentinel"),
+        cwSentinelPlot: document.getElementById("cw-sentinel-plot"),
+        cwBucketCounts: document.getElementById("cw-bucket-counts"),
+        cwDrop: document.getElementById("cw-drop"),
+        cwObsInput: document.getElementById("cw-obs-input"),
+        cwParseReport: document.getElementById("cw-parse-report"),
+        settingsTimezone: document.getElementById("settings-timezone"),
+        settingsRace: document.getElementById("settings-race"),
+        settingsYears: document.getElementById("settings-years"),
+        settingsYearsNote: document.getElementById("settings-years-note"),
+        settingsArea: document.getElementById("settings-area"),
+        analyticsLink: document.getElementById("analytics-link"),
+        yearToggles: document.getElementById("year-toggles"),
+        classFilters: document.getElementById("class-filters"),
+        yearsAll: document.getElementById("years-all"),
+        yearsNone: document.getElementById("years-none"),
+        filterTop3Abs: document.getElementById("filter-top3-abs"),
+        filterTop3Class: document.getElementById("filter-top3-class"),
+        filterYearWeather: document.getElementById("filter-year-weather"),
+        weatherYear: document.getElementById("weather-year"),
+        resultsNote: document.getElementById("results-note"),
+        resultsMap: document.getElementById("results-map"),
+        resultsKeyLand: document.getElementById("results-key-land"),
+        resultsKeyRhumbline: document.getElementById("results-key-rhumbline"),
+        resultsLegend: document.getElementById("results-legend"),
+        resultsTable: document.getElementById("results-table"),
+        routePlot: document.getElementById("route-plot"),
+        routeLegend: document.getElementById("route-legend"),
+        routesShowAll: document.getElementById("routes-show-all"),
+        routesHideAll: document.getElementById("routes-hide-all"),
+        routesClearFocus: document.getElementById("routes-clear-focus"),
+        routeSummary: document.getElementById("route-summary"),
+        headToHeadTable: document.getElementById("head-to-head-table"),
+        pointTitle: document.getElementById("point-title"),
+        pointMetrics: document.getElementById("point-metrics"),
+        pointDetailTable: document.getElementById("point-detail-table"),
+        pointHourPlot: document.getElementById("point-hour-plot"),
+        pointRosePlot: document.getElementById("point-rose-plot"),
+        transectControls: document.getElementById("transect-controls"),
+        transectSelect: document.getElementById("transect-select"),
+        transectPlot: document.getElementById("transect-plot"),
+        transectEmpty: document.getElementById("transect-empty"),
+        sarEmpty: document.getElementById("sar-empty"),
+        sarBody: document.getElementById("sar-body"),
+        sarVerdict: document.getElementById("sar-verdict"),
+        sarInventory: document.getElementById("sar-inventory"),
+        sarSampling: document.getElementById("sar-sampling"),
+        sarDiffPlot: document.getElementById("sar-diff-plot"),
+        sarBufferPlot: document.getElementById("sar-buffer-plot"),
+        sarThreeWay: document.getElementById("sar-three-way"),
+        sarIncidencePlot: document.getElementById("sar-incidence-plot"),
+        sarControlNote: document.getElementById("sar-control-note"),
+        skillBiasBanner: document.getElementById("skill-bias-banner"),
+        skillMeta: document.getElementById("skill-meta"),
+        skillStability: document.getElementById("skill-stability"),
+        skillMonthToggles: document.getElementById("skill-month-toggles"),
+        skillBinToggles: document.getElementById("skill-bin-toggles"),
+        skillLeadToggles: document.getElementById("skill-lead-toggles"),
+        skillModelToggles: document.getElementById("skill-model-toggles"),
+        skillHideBiased: document.getElementById("skill-hide-biased"),
+        skillMetric: document.getElementById("skill-metric"),
+        skillWinners: document.getElementById("skill-winners"),
+        skillLeadPlot: document.getElementById("skill-lead-plot"),
+        skillTable: document.getElementById("skill-table"),
+        skillEmpty: document.getElementById("skill-empty"),
+        fileLoader: document.getElementById("file-loader"),
+        fileLoaderHelp: document.getElementById("file-loader-help"),
+        dataFileInput: document.getElementById("data-file-input"),
+        useBundled: document.getElementById("use-bundled"),
+      };
+
+      const plotLayoutBase = {
+        paper_bgcolor: "#131a2d",
+        plot_bgcolor: "#131a2d",
+        font: { color: "#f2f5ff", size: 14 },
+        margin: { l: 50, r: 20, t: 40, b: 60 },
+        hovermode: false,
+      };
+
+      function asNum(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function nearestIdx(values, target) {
+        return values.reduce((bestIdx, val, idx) => {
+          const cur = Math.abs(Number(val) - target);
+          const best = Math.abs(Number(values[bestIdx]) - target);
+          return cur < best ? idx : bestIdx;
+        }, 0);
+      }
+
+      function selectedCellLabel() {
+        if (!state.payload) return "No cell selected.";
+        const lat = asNum(state.payload.climatology.grid.lat[state.selectedLatIdx]);
+        const lon = asNum(state.payload.climatology.grid.lon[state.selectedLonIdx]);
+        return `Selected cell: ${round2(lat)} N, ${round2(lon)} E`;
+      }
+
+      function updateSelectedReadout() {
+        if (!els.mapSelected) return;
+        const tool = state.mapTool === "select" ? "Select is on — tap a cell." : "Drag a box or + / − / A to zoom.";
+        els.mapSelected.textContent = `${selectedCellLabel()}. ${tool}`;
+      }
+
+      function updateMapKeyButtons() {
+        if (els.mapKeyLand) {
+          els.mapKeyLand.classList.toggle("off", !state.showLand);
+          els.mapKeyLand.setAttribute("aria-pressed", state.showLand ? "true" : "false");
+        }
+        if (els.mapKeyRhumbline) {
+          els.mapKeyRhumbline.classList.toggle("off", !state.showRhumbline);
+          els.mapKeyRhumbline.setAttribute("aria-pressed", state.showRhumbline ? "true" : "false");
+        }
+      }
+
+      function updateMapToolButtons() {
+        if (els.mapToolSelect) els.mapToolSelect.classList.toggle("active", state.mapTool === "select");
+        updateSelectedReadout();
+      }
+
+      function setMapTool(tool) {
+        state.mapTool = tool === "select" ? "select" : "zoom";
+        updateMapToolButtons();
+        if (els.mapToolSelect) els.mapToolSelect.blur();
+        if (els.mapPlot && els.mapPlot.layout) {
+          Plotly.relayout(els.mapPlot, { dragmode: state.mapTool === "zoom" ? "zoom" : false });
+        }
+        syncMapHitLayer();
+      }
+
+      function cellHasWind(latIdx, lonIdx) {
+        const hours = (state.payload && state.payload.climatology && state.payload.climatology.by_hour) || [];
+        return hours.some((row) => {
+          const field = row.mean_tws_kt || row.p_below_5kt;
+          const val = field && field[latIdx] && field[latIdx][lonIdx];
+          return asNum(val) != null;
+        });
+      }
+
+      function nearestCellWithWind(lat, lon) {
+        const lats = state.payload.climatology.grid.lat;
+        const lons = state.payload.climatology.grid.lon;
+        let best = { latIdx: nearestIdx(lats, lat), lonIdx: nearestIdx(lons, lon), dist: Infinity };
+        if (cellHasWind(best.latIdx, best.lonIdx)) return best;
+        for (let i = 0; i < lats.length; i++) {
+          for (let j = 0; j < lons.length; j++) {
+            if (!cellHasWind(i, j)) continue;
+            const d = Math.hypot(Number(lats[i]) - lat, Number(lons[j]) - lon);
+            if (d < best.dist) best = { latIdx: i, lonIdx: j, dist: d };
+          }
+        }
+        return best;
+      }
+
+      function selectCellFromLatLon(lat, lon) {
+        const lats = state.payload.climatology.grid.lat;
+        const lons = state.payload.climatology.grid.lon;
+        state.selectedLatIdx = nearestIdx(lats, lat);
+        state.selectedLonIdx = nearestIdx(lons, lon);
+        renderCalmMap();
+        renderPointDetail();
+      }
+
+      function plotAreaRect(gd) {
+        const area = gd.querySelector(".nsewdrag") || gd.querySelector(".xy") || gd.querySelector(".bglayer");
+        return area ? area.getBoundingClientRect() : null;
+      }
+
+      function latLonFromMapPointer(ev) {
+        const gd = els.mapPlot;
+        const full = gd && gd._fullLayout;
+        if (!full || !full.xaxis || !full.yaxis) return null;
+        const box = plotAreaRect(gd);
+        if (!box || box.width < 2 || box.height < 2) return null;
+        if (ev.clientX < box.left || ev.clientX > box.right || ev.clientY < box.top || ev.clientY > box.bottom) {
+          return null;
+        }
+        const xr = full.xaxis.range;
+        const yr = full.yaxis.range;
+        if (!xr || !yr) return null;
+        const lon = xr[0] + (xr[1] - xr[0]) * ((ev.clientX - box.left) / box.width);
+        const lat = yr[0] + (yr[1] - yr[0]) * (1 - (ev.clientY - box.top) / box.height);
+        return { lon, lat };
+      }
+
+      function rememberMapRange(gd) {
+        const xa = gd && gd._fullLayout && gd._fullLayout.xaxis;
+        const ya = gd && gd._fullLayout && gd._fullLayout.yaxis;
+        if (!xa || !ya || !xa.range || !ya.range) return;
+        state.mapRange = { x: xa.range.slice(), y: ya.range.slice() };
+      }
+
+      function rememberResultsRange(gd) {
+        const xa = gd && gd._fullLayout && gd._fullLayout.xaxis;
+        const ya = gd && gd._fullLayout && gd._fullLayout.yaxis;
+        if (!xa || !ya || !xa.range || !ya.range) return;
+        state.resultsRange = { x: xa.range.slice(), y: ya.range.slice() };
+      }
+
+      function bindMapHit(hit) {
+        let down = null;
+        hit.addEventListener("pointerdown", (ev) => {
+          down = { x: ev.clientX, y: ev.clientY };
+        });
+        hit.addEventListener("pointerup", (ev) => {
+          if (state.mapTool !== "select") return;
+          if (!down) return;
+          const moved = Math.hypot(ev.clientX - down.x, ev.clientY - down.y);
+          down = null;
+          if (moved > 10) return;
+          const pos = latLonFromMapPointer(ev);
+          if (pos) selectCellFromLatLon(pos.lat, pos.lon);
+        });
+      }
+
+      function syncMapHitLayer() {
+        const wrap = els.mapPlot && els.mapPlot.parentElement;
+        if (!wrap) return;
+        let hit = wrap.querySelector(".map-hit");
+        if (!hit) {
+          hit = document.createElement("div");
+          hit.className = "map-hit";
+          hit.setAttribute("aria-hidden", "true");
+          wrap.appendChild(hit);
+          bindMapHit(hit);
+        }
+        if (state.mapTool !== "select") {
+          hit.style.display = "none";
+          return;
+        }
+        const box = plotAreaRect(els.mapPlot);
+        const wrapBox = wrap.getBoundingClientRect();
+        if (!box) {
+          hit.style.display = "none";
+          return;
+        }
+        hit.style.display = "block";
+        hit.style.left = `${box.left - wrapBox.left}px`;
+        hit.style.top = `${box.top - wrapBox.top}px`;
+        hit.style.width = `${box.width}px`;
+        hit.style.height = `${box.height}px`;
+      }
+
+      function formatParts(dateUtc, timeZone, opts) {
+        const fmt = new Intl.DateTimeFormat("en-GB", {
+          timeZone,
+          hour12: false,
+          ...opts,
+        });
+        const byType = {};
+        fmt.formatToParts(dateUtc).forEach((p) => {
+          byType[p.type] = (byType[p.type] || "") + p.value;
+        });
+        return byType;
+      }
+
+      function formatTimeWithZone(dateUtc, timeZone) {
+        const p = formatParts(dateUtc, timeZone, {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+        });
+        return `${p.day} ${p.month} ${p.hour}:${p.minute} ${p.timeZoneName}`;
+      }
+
+      function formatClock(dateUtc, timeZone) {
+        const p = formatParts(dateUtc, timeZone, {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+        });
+        return `${p.hour}:${p.minute} ${p.timeZoneName}`;
+      }
+
+      function formatClockNoZone(dateUtc, timeZone) {
+        const p = formatParts(dateUtc, timeZone, {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `${p.hour}:${p.minute}`;
+      }
+
+      function hourAxisLabel(utcHour) {
+        const date = hourDate(utcHour);
+        if (state.timeMode === "utc") return formatClockNoZone(date, "UTC");
+        const tz = (state.payload && state.payload.meta.display_timezone) || "Europe/Rome";
+        return formatClockNoZone(date, tz);
+      }
+
+      function hourAxisTicks(hours) {
+        const vals = hours.filter((hr) => Number(hr) % 3 === 0);
+        return {
+          tickvals: vals,
+          ticktext: vals.map((hr) => hourAxisLabel(hr)),
+        };
+      }
+
+      function mapViewRanges(rangeState) {
+        const lat = (state.payload.climatology.grid.lat || []).map(Number);
+        const lon = (state.payload.climatology.grid.lon || []).map(Number);
+        if (!lat.length || !lon.length) return null;
+        const xRange = (rangeState && rangeState.x) || [Math.min(...lon), Math.max(...lon)];
+        const yRange = (rangeState && rangeState.y) || [Math.min(...lat), Math.max(...lat)];
+        return {
+          xRange,
+          yRange,
+          lonSpan: Math.abs(xRange[1] - xRange[0]) || 1,
+          latSpan: Math.abs(yRange[1] - yRange[0]) || 1,
+        };
+      }
+
+      function syncMapPlotSize(el, rangeState) {
+        const target = el || els.mapPlot;
+        if (!target || !state.payload || !state.payload.climatology) return;
+        const view = mapViewRanges(rangeState || (target === els.resultsMap ? state.resultsRange : state.mapRange));
+        if (!view) return;
+        const width = target.clientWidth || (target.parentElement && target.parentElement.clientWidth) || 0;
+        if (width < 40) return;
+        // Keep 1° lon = 1° lat on screen so the chart cannot stretch.
+        const marginL = 34;
+        const marginR = 46;
+        const marginT = 28;
+        const marginB = 36;
+        const plotW = Math.max(80, width - marginL - marginR);
+        const plotH = plotW * (view.latSpan / view.lonSpan);
+        const totalH = Math.round(plotH + marginT + marginB);
+        target.style.height = `${Math.max(260, totalH)}px`;
+      }
+
+      function mapEqualAspectLayout(title, xRange, yRange) {
+        return {
+          title: typeof title === "string"
+            ? { text: title, font: { size: 13, color: "#d8e5ff" }, x: 0, xanchor: "left" }
+            : title,
+          margin: { l: 34, r: 46, t: 28, b: 36 },
+          autosize: true,
+          xaxis: {
+            title: {
+              text: "Lon °E",
+              font: { size: 10, color: "#9eb0d6" },
+              standoff: 2,
+            },
+            zeroline: false,
+            range: xRange,
+            constrain: "domain",
+            tickfont: { size: 11 },
+            automargin: false,
+          },
+          yaxis: {
+            title: { text: "" },
+            zeroline: false,
+            range: yRange,
+            scaleanchor: "x",
+            scaleratio: 1,
+            constrain: "domain",
+            tickfont: { size: 11 },
+            automargin: false,
+          },
+        };
+      }
+
+      function formatTimestamp(isoUtc) {
+        const date = new Date(isoUtc);
+        if (state.timeMode === "utc") {
+          return formatTimeWithZone(date, "UTC");
+        }
+        return formatTimeWithZone(date, state.payload.meta.display_timezone);
+      }
+
+      function hourDate(utcHour) {
+        // Date is only for timezone math. Race starts 18 Aug; the date is never shown.
+        return new Date(Date.UTC(2026, 7, 18, Number(utcHour), 0, 0));
+      }
+
+      function hourClocks(utcHour) {
+        const date = hourDate(utcHour);
+        const tz = (state.payload && state.payload.meta.display_timezone) || "Europe/Rome";
+        return {
+          local: formatClock(date, tz),
+          utc: formatClock(date, "UTC"),
+        };
+      }
+
+      function hourLabel(hour) {
+        const clocks = hourClocks(hour);
+        return state.timeMode === "utc" ? clocks.utc : clocks.local;
+      }
+
+      function captureHome(gd) {
+        if (!gd || gd._pmcHome || !gd._fullLayout) return;
+        const home = {};
+        if (gd._fullLayout.polar) {
+          const r = gd._fullLayout.polar.radialaxis && gd._fullLayout.polar.radialaxis.range;
+          if (r) home["polar.radialaxis.range"] = r.slice();
+          else home["polar.radialaxis.autorange"] = true;
+          gd._pmcHome = home;
+          return;
+        }
+        ["xaxis", "yaxis", "yaxis2"].forEach((axis) => {
+          const ax = gd._fullLayout[axis];
+          if (!ax) return;
+          if (ax.range) home[`${axis}.range`] = ax.range.slice();
+          else home[`${axis}.autorange`] = true;
+        });
+        gd._pmcHome = home;
+      }
+
+      function applyPlot(el, traces, layout, opts) {
+        const noZoom = Boolean(opts && opts.noZoom);
+        const mapSelect = Boolean(opts && opts.mapSelect);
+        const withRev = { uirevision: el.id || "pmc", dragmode: "zoom", ...layout };
+        if (noZoom) {
+          withRev.dragmode = false;
+          withRev.xaxis = { ...(withRev.xaxis || {}), fixedrange: true };
+          withRev.yaxis = { ...(withRev.yaxis || {}), fixedrange: true };
+        } else if (mapSelect) {
+          withRev.dragmode = state.mapTool === "zoom" ? "zoom" : false;
+        }
+        const config = noZoom
+          ? { ...plotConfig, scrollZoom: false, doubleClick: false }
+          : mapSelect
+            ? { ...plotConfig, doubleClick: false }
+            : plotConfig;
+        return Plotly.react(el, traces, withRev, config).then(() => {
+          if (!noZoom) captureHome(el);
+          if (mapSelect) syncMapHitLayer();
+        });
+      }
+
+      function zoomPlot(gd, factor) {
+        if (!gd || !gd._fullLayout) return;
+        if (gd._fullLayout.polar) {
+          const r = (gd._fullLayout.polar.radialaxis && gd._fullLayout.polar.radialaxis.range) || [0, 1];
+          Plotly.relayout(gd, { "polar.radialaxis.range": [0, r[1] * factor] });
+          return;
+        }
+        const updates = {};
+        ["xaxis", "yaxis", "yaxis2"].forEach((axis) => {
+          const ax = gd._fullLayout[axis];
+          if (!ax || !ax.range) return;
+          const mid = (ax.range[0] + ax.range[1]) / 2;
+          const half = ((ax.range[1] - ax.range[0]) / 2) * factor;
+          updates[`${axis}.range`] = [mid - half, mid + half];
+          updates[`${axis}.autorange`] = false;
+        });
+        if (Object.keys(updates).length) Plotly.relayout(gd, updates);
+      }
+
+      function resetPlot(gd) {
+        if (!gd) return;
+        if (gd._pmcHome) {
+          Plotly.relayout(gd, gd._pmcHome);
+          return;
+        }
+        if (gd._fullLayout && gd._fullLayout.polar) {
+          Plotly.relayout(gd, { "polar.radialaxis.autorange": true });
+          return;
+        }
+        Plotly.relayout(gd, { "xaxis.autorange": true, "yaxis.autorange": true });
+      }
+
+      function setStatus(msg, isError) {
+        els.status.textContent = msg;
+        els.status.style.color = isError ? "#ffd0d0" : "#b7c4e5";
+      }
+
+      function round2(v) {
+        return v == null ? "N/A" : (Math.round(v * 100) / 100).toFixed(2);
+      }
+
+      function windDirFromUv(u, v) {
+        if (u == null || v == null) return null;
+        const rad = Math.atan2(-u, -v);
+        const deg = ((rad * 180) / Math.PI + 360) % 360;
+        return deg;
+      }
+
+      function dirLabel(deg) {
+        if (deg == null) return "N/A";
+        const names = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        const wrapped = ((deg % 360) + 360) % 360;
+        const i = Math.round(wrapped / 22.5) % 16;
+        return `${Math.round(wrapped)}° ${names[i]}`;
+      }
+
+      function constancySliceTraces(dirDeg, constancy) {
+        const c = constancy == null ? 0 : Math.max(0, Math.min(1, constancy));
+        const width = Math.max(10, (1 - c) * 180);
+        const half = width / 2;
+        const n = 48;
+        const theta = [];
+        const r = [];
+        const col = [];
+        for (let i = 0; i < n; i++) {
+          const a = -half + (width * (i + 0.5)) / n;
+          theta.push((dirDeg + a + 360) % 360);
+          r.push(1);
+          col.push(1 - Math.abs(a) / half);
+        }
+        return [
+          {
+            type: "barpolar",
+            theta,
+            r,
+            width: Array(n).fill(width / n),
+            marker: {
+              color: col,
+              colorscale: threeToneScale,
+              cmin: 0,
+              cmax: 1,
+              showscale: false,
+            },
+            hoverinfo: "skip",
+            name: "Constancy slice",
+          },
+          {
+            type: "scatterpolar",
+            mode: "lines",
+            r: [0, 1.08],
+            theta: [dirDeg, dirDeg],
+            line: { color: "#ffffff", width: 4 },
+            hoverinfo: "skip",
+            name: "Mean direction",
+          },
+        ];
+      }
+
+      function isStaleWarning(text) {
+        const value = String(text).toLowerCase();
+        return (
+          value.includes("years present")
+          || value.includes("wind cube")
+          || value.includes("leg 1 is mostly upwind")
+          || value.includes("leg-1 comparisons")
+          || value.includes("shift-playing")
+        );
+      }
+
+      function buildWarnings(meta) {
+        const viz = "Data here is not guaranteed. It is for visualization and comparison only — not as the sole basis for a race decision.";
+        const incoming = Array.isArray(meta && meta.warnings) ? meta.warnings : [];
+        const warnings = incoming.filter((w) => !isStaleWarning(w));
+        if (!warnings.some((w) => String(w).toLowerCase().includes("not guaranteed"))) {
+          warnings.unshift(viz);
+        }
+        if (meta && meta.polar_is_validated === false) {
+          const txt = "Polar is a VPP table, not measured, and is unvalidated below 8 kt. Elapsed times are relative comparisons, not predictions.";
+          if (!warnings.some((w) => String(w).toLowerCase().includes("polar"))) {
+            warnings.push(txt);
+          }
+        }
+        if (!els.warningBanner) return;
+        const lis = warnings.map((w) => `<li>${String(w)}</li>`).join("");
+        els.warningBanner.innerHTML = `<strong>Operational warnings</strong><ul>${lis}</ul>`;
+      }
+
+      function getByHour(hour) {
+        return state.payload.climatology.by_hour.find((row) => Number(row.hour) === Number(hour));
+      }
+
+      function fixedMeanWindMax() {
+        if (state.meanWindMax != null) return state.meanWindMax;
+        let max = 0;
+        const hours = (state.payload && state.payload.climatology && state.payload.climatology.by_hour) || [];
+        hours.forEach((row) => {
+          (row.mean_tws_kt || []).forEach((line) => {
+            (line || []).forEach((v) => {
+              const n = asNum(v);
+              if (n != null && n > max) max = n;
+            });
+          });
+        });
+        state.meanWindMax = Math.max(10, Math.ceil(max / 2) * 2);
+        return state.meanWindMax;
+      }
+
+      function hourCount() {
+        const hours = state.payload && state.payload.climatology && state.payload.climatology.by_hour;
+        return hours && hours.length ? hours.length : 24;
+      }
+
+      function applySelectedHour(hour) {
+        state.selectedHour = ((Number(hour) % hourCount()) + hourCount()) % hourCount();
+        els.hourSlider.value = String(state.selectedHour);
+        renderCalmMap();
+        refreshTimeLabelsOnly();
+        renderPointDetail();
+        renderTransects();
+      }
+
+      function updateHourPlayButton() {
+        if (!els.hourPlay) return;
+        els.hourPlay.textContent = state.hourPlaying ? "Pause" : "Play";
+        els.hourPlay.classList.toggle("active", state.hourPlaying);
+        els.hourPlay.setAttribute("aria-pressed", state.hourPlaying ? "true" : "false");
+      }
+
+      function stopHourPlay() {
+        state.hourPlaying = false;
+        if (state.hourTimer != null) {
+          clearInterval(state.hourTimer);
+          state.hourTimer = null;
+        }
+        updateHourPlayButton();
+      }
+
+      function startHourPlay() {
+        if (state.hourPlaying) return;
+        state.hourPlaying = true;
+        updateHourPlayButton();
+        state.hourTimer = setInterval(() => {
+          applySelectedHour(state.selectedHour + 1);
+        }, 450);
+      }
+
+      function toggleHourPlay() {
+        if (state.hourPlaying) stopHourPlay();
+        else startHourPlay();
+      }
+
+      function getCellSeries(field) {
+        return state.payload.climatology.by_hour.map((row) => {
+          const matrix = row[field];
+          if (!Array.isArray(matrix)) return null;
+          const latRow = matrix[state.selectedLatIdx];
+          if (!Array.isArray(latRow)) return null;
+          return asNum(latRow[state.selectedLonIdx]);
+        });
+      }
+
+      function refreshTimeLabelsOnly() {
+        if (!state.payload) return;
+        els.generatedTime.textContent = `Generated: ${formatTimestamp(state.payload.meta.generated_utc)}`;
+        const clocks = hourClocks(state.selectedHour);
+        const primary = state.timeMode === "utc" ? clocks.utc : clocks.local;
+        const secondary = state.timeMode === "utc" ? clocks.local : clocks.utc;
+        els.hourMain.textContent = primary;
+        els.hourSub.textContent = `${secondary} · hour of day, not race date`;
+      }
+
+      function tileXToLon(x, z) {
+        return (x / Math.pow(2, z)) * 360 - 180;
+      }
+
+      function tileYToLat(y, z) {
+        const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, z);
+        return (180 / Math.PI) * Math.atan(Math.sinh(n));
+      }
+
+      function pickDisplayZoom(manifest) {
+        const ranges = manifest.zoom_ranges || {};
+        if (ranges["8"] && Number(ranges["8"].count) >= 45) return 8;
+        if (ranges["7"]) return 7;
+        const zooms = (manifest.included_zooms || []).map(Number).sort((a, b) => a - b);
+        return zooms.length ? zooms[0] : null;
+      }
+
+      function buildTileImages(manifest, opts) {
+        if (!manifest || !Array.isArray(manifest.included_zooms) || manifest.included_zooms.length === 0) {
+          return [];
+        }
+        const zoom = pickDisplayZoom(manifest);
+        const zr = manifest.zoom_ranges && manifest.zoom_ranges[String(zoom)];
+        if (zoom == null || !zr) return [];
+        const embedded = Array.isArray(manifest.embedded_tiles)
+          ? manifest.embedded_tiles.filter((t) => Number(t.z) === zoom)
+          : [];
+        const byKey = new Map(embedded.map((t) => [`${t.x}/${t.y}`, t.source_data_uri]));
+        const images = [];
+        for (let x = zr.x_min; x <= zr.x_max; x++) {
+          for (let y = zr.y_min; y <= zr.y_max; y++) {
+            const source = byKey.get(`${x}/${y}`);
+            if (!source) continue;
+            images.push({
+              source,
+              xref: "x",
+              yref: "y",
+              x: tileXToLon(x, zoom),
+              y: tileYToLat(y, zoom),
+              sizex: tileXToLon(x + 1, zoom) - tileXToLon(x, zoom),
+              sizey: tileYToLat(y, zoom) - tileYToLat(y + 1, zoom),
+              sizing: "stretch",
+              opacity: opts.opacity,
+              layer: opts.layer,
+              xanchor: "left",
+              yanchor: "top",
+            });
+          }
+        }
+        return images;
+      }
+
+      function getMapImages() {
+        if (state.mapImages) return state.mapImages;
+        const osm = window.OPEN_STREET_MAP_MANIFEST || {
+          included_zooms: [8],
+          zoom_ranges: { "8": { x_min: 132, x_max: 138, y_min: 93, y_max: 99, count: 49 } },
+          tile_url_template: "tiles/osm/{z}/{x}/{y}.png",
+          total_bytes: 0,
+        };
+        const osmImages = buildTileImages(osm, {
+          opacity: 1,
+          layer: "below",
+          fallbackTemplate: "tiles/osm/{z}/{x}/{y}.png",
+        });
+        const osmMb = ((osm && Number(osm.total_bytes)) || 0) / (1024 * 1024);
+        const landCount = (window.LAND_RINGS && window.LAND_RINGS.rings && window.LAND_RINGS.rings.length) || 0;
+        if (osmImages.length === 0 && landCount === 0) {
+          els.chartLayerNote.textContent =
+            "No map underlay is available. Run dashboard/embed_map_assets.py, then reload.";
+        } else {
+          els.chartLayerNote.textContent =
+            "Map underlay is OpenStreetMap data (CARTO Voyager) plus a Natural Earth coastline. " +
+            "Crowd-sourced, NOT for navigation. Attribution: OpenStreetMap contributors, ODbL. Tiles by CARTO. " +
+            `Embedded OSM tiles: ${osmImages.length} (${osmMb.toFixed(2)} MB). Coastline rings: ${landCount}.`;
+        }
+        state.mapImages = osmImages;
+        return state.mapImages;
+      }
+
+      function windArrowTrace(lat, lon, byHour) {
+        const u = byHour.vector_mean_u;
+        const v = byHour.vector_mean_v;
+        if (!Array.isArray(u) || !Array.isArray(v)) return null;
+        const xs = [];
+        const ys = [];
+        const angles = [];
+        const strideI = Math.max(3, Math.round(lat.length / 12));
+        const strideJ = Math.max(3, Math.round(lon.length / 14));
+        const i0 = Math.floor(strideI / 2);
+        const j0 = Math.floor(strideJ / 2);
+        for (let i = i0; i < lat.length; i += strideI) {
+          for (let j = j0; j < lon.length; j += strideJ) {
+            const from = windDirFromUv(asNum(u[i] && u[i][j]), asNum(v[i] && v[i][j]));
+            if (from == null) continue;
+            xs.push(lon[j]);
+            ys.push(lat[i]);
+            angles.push((from + 180) % 360);
+          }
+        }
+        if (!xs.length) return null;
+        return {
+          type: "scatter",
+          mode: "markers",
+          x: xs,
+          y: ys,
+          marker: {
+            symbol: "arrow",
+            size: 12,
+            color: "#0b1020",
+            line: { color: "#ffffff", width: 1.2 },
+            angleref: "up",
+            angle: angles,
+          },
+          hoverinfo: "skip",
+          showlegend: false,
+          name: "Mean direction",
+        };
+      }
+
+      function landTraces() {
+        const rings = (window.LAND_RINGS && Array.isArray(window.LAND_RINGS.rings)) ? window.LAND_RINGS.rings : [];
+        return rings.map((ring, idx) => ({
+          type: "scatter",
+          mode: "lines",
+          x: ring.map((pt) => pt[0]),
+          y: ring.map((pt) => pt[1]),
+          fill: "toself",
+          fillcolor: "rgba(128, 132, 138, 0.92)",
+          line: { color: "#d5d8de", width: 1.2 },
+          hoverinfo: "skip",
+          showlegend: false,
+          name: "Land",
+        }));
+      }
+
+      function missingMask(field) {
+        return (field || []).map((row) =>
+          (row || []).map((v) => (asNum(v) == null ? 1 : null))
+        );
+      }
+
+      function fillEnclosedSeaHoles(field) {
+        const rows = (field || []).map((row) => (row || []).map((v) => asNum(v)));
+        const h = rows.length;
+        if (!h) return rows;
+        const out = rows.map((row) => row.slice());
+        const dirs = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+        ];
+        for (let i = 0; i < h; i++) {
+          for (let j = 0; j < rows[i].length; j++) {
+            if (rows[i][j] != null) continue;
+            let sum = 0;
+            let n = 0;
+            dirs.forEach(([di, dj]) => {
+              const row = rows[i + di];
+              const val = row ? row[j + dj] : null;
+              if (val != null) {
+                sum += val;
+                n += 1;
+              }
+            });
+            if (n === 4) out[i][j] = sum / 4;
+          }
+        }
+        return out;
+      }
+
+      function renderCalmMap() {
+        const byHour = getByHour(state.selectedHour) || state.payload.climatology.by_hour[0];
+        const z = byHour.p_below_5kt;
+        const lat = state.payload.climatology.grid.lat;
+        const lon = state.payload.climatology.grid.lon;
+        const course = state.payload.meta.course || {};
+        const routes = Array.isArray(state.payload.routes) ? state.payload.routes : [];
+
+        ensureRouteState(routes);
+        const routeTraces = routes.map((route, idx) => {
+          const id = routeId(route, idx);
+          const on = state.routeOn[id] !== false;
+          const focus = state.routeFocus === id;
+          const dim = state.routeFocus && !focus;
+          return {
+            type: "scatter",
+            mode: "lines",
+            x: (route.legs || []).map((pt) => pt[1]),
+            y: (route.legs || []).map((pt) => pt[0]),
+            name: route.label || id,
+            line: {
+              width: focus ? 5 : 2.4,
+              color: routeColor(idx),
+            },
+            opacity: !on ? 0 : dim ? 0.22 : 1,
+            hoverinfo: "skip",
+            showlegend: false,
+            visible: on,
+          };
+        });
+        const keyRoute = [
+          [course.start && course.start[0], course.start && course.start[1]],
+          [course.gate && course.gate[0], course.gate && course.gate[1]],
+          [course.finish && course.finish[0], course.finish && course.finish[1]],
+        ].filter((pt) => pt[0] != null && pt[1] != null);
+
+        const isDirLayer = state.mapLayer === "mean_tws_dir";
+        const layer = state.mapLayer === "p_below_5kt" ? "p_below_5kt" : "mean_tws_kt";
+        const field = byHour[layer] || byHour.mean_tws_kt || z;
+        const finite = [];
+        (field || []).forEach((row) => {
+          (row || []).forEach((v) => {
+            const n = asNum(v);
+            if (n != null) finite.push(n);
+          });
+        });
+        const isProb = layer === "p_below_5kt";
+        const zmin = isProb ? 0 : 0;
+        const zmax = isProb ? 1 : fixedMeanWindMax();
+        const painted = fillEnclosedSeaHoles(field);
+        const traces = [
+          {
+            type: "heatmap",
+            z: missingMask(field),
+            x: lon,
+            y: lat,
+            zmin: 0,
+            zmax: 1,
+            colorscale: [
+              [0, "rgba(0,0,0,0)"],
+              [1, "#7f848c"],
+            ],
+            showscale: false,
+            hoverinfo: "skip",
+            name: "Land",
+            visible: state.showLand,
+          },
+          {
+            type: "heatmap",
+            z: painted,
+            x: lon,
+            y: lat,
+            zmin,
+            zmax,
+            colorscale: threeToneScale,
+            colorbar: {
+              title: {
+                text: isProb ? "P(<5 kt)" : "kt",
+                side: "right",
+                font: { size: 11, color: "#d8e5ff" },
+              },
+              tick0: zmin,
+              dtick: isProb ? 0.25 : 2,
+              thickness: 12,
+              len: 0.92,
+              x: 1.0,
+              xpad: 2,
+              ypad: 0,
+              tickfont: { size: 11 },
+            },
+            zsmooth: false,
+            xgap: 1,
+            ygap: 1,
+            opacity: 0.95,
+            hoverinfo: "skip",
+            visible: finite.length > 0,
+          },
+          ...(state.showLand ? landTraces() : []),
+          ...routeTraces,
+          ...(isDirLayer ? [windArrowTrace(lat, lon, byHour)].filter(Boolean) : []),
+          {
+            type: "scatter",
+            mode: "lines+markers",
+            x: keyRoute.map((pt) => pt[1]),
+            y: keyRoute.map((pt) => pt[0]),
+            name: "Rhumbline",
+            line: { width: 3, color: "#ffffff" },
+            marker: { size: 7, color: "#ffffff" },
+            hoverinfo: "skip",
+            showlegend: false,
+            visible: state.showRhumbline,
+          },
+          {
+            type: "scatter",
+            mode: "markers",
+            x: [lon[state.selectedLonIdx]],
+            y: [lat[state.selectedLatIdx]],
+            name: "Selected cell",
+            marker: {
+              size: 16,
+              color: "rgba(0,0,0,0)",
+              line: { width: 3, color: "#ffffff" },
+              symbol: "x",
+            },
+            hoverinfo: "skip",
+            showlegend: false,
+          },
+        ];
+
+        const layerTitle = isProb
+          ? `Calm risk P(<5 kt) at ${hourLabel(state.selectedHour)}`
+          : isDirLayer
+            ? `Mean wind + direction (toward) at ${hourLabel(state.selectedHour)}`
+            : `Mean wind (kt) at ${hourLabel(state.selectedHour)}`;
+        const xRange = (state.mapRange && state.mapRange.x) || [Math.min(...lon), Math.max(...lon)];
+        const yRange = (state.mapRange && state.mapRange.y) || [Math.min(...lat), Math.max(...lat)];
+        syncMapPlotSize();
+        const layout = {
+          ...plotLayoutBase,
+          title: { text: layerTitle, font: { size: 13, color: "#d8e5ff" }, x: 0, xanchor: "left" },
+          margin: { l: 34, r: 46, t: 28, b: 36 },
+          autosize: true,
+          xaxis: {
+            title: {
+              text: "Lon °E",
+              font: { size: 10, color: "#9eb0d6" },
+              standoff: 2,
+            },
+            zeroline: false,
+            range: xRange,
+            constrain: "domain",
+            tickfont: { size: 11 },
+            automargin: false,
+          },
+          yaxis: {
+            title: { text: "" },
+            zeroline: false,
+            range: yRange,
+            scaleanchor: "x",
+            scaleratio: 1,
+            constrain: "domain",
+            tickfont: { size: 11 },
+            automargin: false,
+          },
+          images: getMapImages(),
+          showlegend: false,
+        };
+        applyPlot(els.mapPlot, traces, layout, { mapSelect: true });
+      }
+
+      function renderRouteLegend() {
+        const routes = Array.isArray(state.payload && state.payload.routes) ? state.payload.routes : [];
+        ensureRouteState(routes);
+        if (!els.routeLegend) return;
+        els.routeLegend.innerHTML = routes
+          .map((route, idx) => {
+            const id = routeId(route, idx);
+            const on = state.routeOn[id] !== false;
+            const focus = state.routeFocus === id;
+            const cls = `route-legend-row ${on ? "on" : "off"} ${focus ? "focus" : ""}`;
+            return `<div class="${cls}" data-route-id="${id}" role="button" tabindex="0">
+              <input type="checkbox" data-route-toggle="${id}" ${on ? "checked" : ""} />
+              <span class="route-swatch" style="background:${routeColor(idx)}"></span>
+              <span>${route.label || id}</span>
+            </div>`;
+          })
+          .join("");
+      }
+
+      function renderRouteComparison() {
+        const routes = Array.isArray(state.payload.routes) ? state.payload.routes : [];
+        ensureRouteState(routes);
+        renderRouteLegend();
+        const traces = routes.map((route, idx) => {
+          const id = routeId(route, idx);
+          const on = state.routeOn[id] !== false;
+          const color = routeColor(idx);
+          return {
+            type: "box",
+            y: (route.elapsed_hours && route.elapsed_hours.samples) || [],
+            name: route.label || id,
+            boxpoints: false,
+            marker: { color },
+            fillcolor: color,
+            opacity: on ? 1 : 0.25,
+            line: { color, width: state.routeFocus === id ? 3 : 1.5 },
+            hoverinfo: "skip",
+            showlegend: false,
+          };
+        });
+        const panel = document.querySelector(".route-legend-panel");
+        const matchedHeight = Math.max(
+          panel ? Math.round(panel.getBoundingClientRect().height) : 0,
+          360
+        );
+        const layout = {
+          ...plotLayoutBase,
+          title: "Elapsed-time distributions (hours) with full sample uncertainty",
+          height: matchedHeight,
+          yaxis: { title: "Elapsed hours" },
+          xaxis: { tickangle: -25, showticklabels: false },
+        };
+        applyPlot(els.routePlot, traces, layout, { noZoom: true });
+
+        els.routeSummary.innerHTML = routes
+          .map((route, idx) => {
+            const id = routeId(route, idx);
+            const e = route.elapsed_hours || {};
+            const color = routeColor(idx);
+            return `
+              <div class="meta-card route-card ${state.routeFocus === id ? "focus" : ""}" data-route-id="${id}" style="border-left: 6px solid ${color}">
+                <span class="k">${route.label || id}</span>
+                <div class="v">${round2(asNum(e.p50))} h median</div>
+                <div class="badge">P10 ${round2(asNum(e.p10))} h</div>
+                <div class="badge">P90 ${round2(asNum(e.p90))} h</div>
+                <div class="badge">Stall rate ${round2(asNum(route.stall_rate) * 100)}%</div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function renderHeadToHeadTable() {
+        const rows = Array.isArray(state.payload.head_to_head) ? state.payload.head_to_head : [];
+        const body = rows
+          .map((r) => {
+            const a = routeLookup(r.a);
+            const b = routeLookup(r.b);
+            const aWin = asNum(r.a_wins_pct);
+            const aPct = aWin == null ? 50 : Math.max(0, Math.min(100, aWin));
+            const bPct = 100 - aPct;
+            const aBest = a.p50 != null && b.p50 != null && a.p50 < b.p50;
+            const bBest = a.p50 != null && b.p50 != null && b.p50 < a.p50;
+            const aMedianStyle = aBest
+              ? ` class="h2h-best" style="background:${a.color};color:#0b1020"`
+              : "";
+            const bMedianStyle = bBest
+              ? ` class="h2h-best" style="background:${b.color};color:#0b1020"`
+              : "";
+            return `<tr>
+              <td><span class="h2h-route" style="color:${a.color}">${a.label}</span></td>
+              <td><span class="h2h-route" style="color:${b.color}">${b.label}</span></td>
+              <td>
+                <div class="h2h-bar" role="img" aria-label="A wins ${round2(aPct)} percent, B wins ${round2(bPct)} percent">
+                  <div class="h2h-bar-a" style="width:${aPct}%"></div>
+                  <div class="h2h-bar-b" style="width:${bPct}%"></div>
+                  <div class="h2h-bar-label"><span>A ${round2(aPct)}%</span><span>B ${round2(bPct)}%</span></div>
+                </div>
+              </td>
+              <td${aMedianStyle}>${round2(a.p50)} h</td>
+              <td${bMedianStyle}>${round2(b.p50)} h</td>
+              <td>${round2(asNum(r.p10_margin_hours))} h</td>
+              <td>${round2(asNum(r.p90_margin_hours))} h</td>
+              <td>${r.n}</td>
+            </tr>`;
+          })
+          .join("");
+        els.headToHeadTable.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Route A</th>
+                <th>Route B</th>
+                <th>A wins ← → B wins</th>
+                <th>A median</th>
+                <th>B median</th>
+                <th>P10 margin</th>
+                <th>P90 margin</th>
+                <th>N</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        `;
+      }
+
+      function renderPointDetail() {
+        const lat = state.payload.climatology.grid.lat[state.selectedLatIdx];
+        const lon = state.payload.climatology.grid.lon[state.selectedLonIdx];
+        const selected = getByHour(state.selectedHour);
+        const p5 = selected && selected.p_below_5kt ? asNum(selected.p_below_5kt[state.selectedLatIdx][state.selectedLonIdx]) : null;
+        const speed = selected && selected.mean_tws_kt ? asNum(selected.mean_tws_kt[state.selectedLatIdx][state.selectedLonIdx]) : null;
+        const dconst =
+          selected && selected.directional_const
+            ? asNum(selected.directional_const[state.selectedLatIdx][state.selectedLonIdx])
+            : null;
+        const uSel = selected && selected.vector_mean_u
+          ? asNum(selected.vector_mean_u[state.selectedLatIdx][state.selectedLonIdx])
+          : null;
+        const vSel = selected && selected.vector_mean_v
+          ? asNum(selected.vector_mean_v[state.selectedLatIdx][state.selectedLonIdx])
+          : null;
+        const dirSel = windDirFromUv(uSel, vSel);
+        const nSamples =
+          selected && selected.n_samples ? asNum(selected.n_samples[state.selectedLatIdx][state.selectedLonIdx]) : null;
+
+        els.pointTitle.textContent = selectedCellLabel();
+        updateSelectedReadout();
+        const noWind = speed == null && p5 == null;
+        els.pointMetrics.innerHTML = `
+          <div class="meta-card"><span class="k">Mean wind</span><div class="v">${speed == null ? "No data" : `${round2(speed)} kt`}</div></div>
+          <div class="meta-card"><span class="k">Calm risk</span><div class="v">${p5 == null ? "No data" : `${round2(p5 * 100)}%`}</div></div>
+          <div class="meta-card"><span class="k">Mean direction</span><div class="v">${dirSel == null ? "No data" : dirLabel(dirSel)}</div></div>
+          <div class="meta-card"><span class="k">Directional constancy</span><div class="v">${dconst == null ? "No data" : round2(dconst)}</div></div>
+          <div class="meta-card"><span class="k">Samples</span><div class="v">${nSamples == null ? "No data" : Math.round(nSamples)}</div></div>
+          ${noWind ? `<p class="chart-note">This cell is grey on the map — no wind was stored here (land or missing sea cell), not 0 kt.</p>` : ""}
+        `;
+
+        const xHours = state.payload.climatology.by_hour.map((row) => Number(row.hour));
+        const hourTicks = hourAxisTicks(xHours);
+        const meanSeries = getCellSeries("mean_tws_kt");
+        const p5Series = getCellSeries("p_below_5kt").map((v) => (v == null ? null : v * 100));
+        const dconstSeries = getCellSeries("directional_const");
+        const sampleSeries = getCellSeries("n_samples");
+        const uSeries = getCellSeries("vector_mean_u");
+        const vSeries = getCellSeries("vector_mean_v");
+        const dirSeries = uSeries.map((u, i) => windDirFromUv(u, vSeries[i]));
+
+        applyPlot(
+          els.pointHourPlot,
+          [
+            {
+              type: "scatter",
+              mode: "lines+markers",
+              x: xHours,
+              y: meanSeries,
+              name: "Mean wind (kt)",
+              line: { color: "#8dd3ff", width: 2 },
+              marker: { size: 5, color: "#8dd3ff" },
+              hoverinfo: "skip",
+            },
+            {
+              type: "scatter",
+              mode: "markers",
+              x: xHours,
+              y: meanSeries,
+              name: "Mean dir (toward)",
+              marker: {
+                symbol: "arrow",
+                size: 14,
+                color: "#ffffff",
+                angleref: "up",
+                angle: dirSeries.map((d) => (d == null ? 0 : (d + 180) % 360)),
+              },
+              hoverinfo: "skip",
+            },
+            {
+              type: "scatter",
+              mode: "text",
+              x: xHours.filter((_, i) => i % 3 === 0),
+              y: meanSeries.filter((_, i) => i % 3 === 0).map((v) => (v == null ? null : v)),
+              text: dirSeries.filter((_, i) => i % 3 === 0).map((d) => (d == null ? "" : dirLabel(d))),
+              textposition: "top center",
+              textfont: { color: "#d8e5ff", size: 11 },
+              hoverinfo: "skip",
+              showlegend: false,
+            },
+            {
+              type: "scatter",
+              mode: "lines+markers",
+              x: xHours,
+              y: p5Series,
+              yaxis: "y2",
+              name: "P(<5 kt) %",
+              line: { color: "#ffd166", width: 2 },
+              marker: { size: 5 },
+              hoverinfo: "skip",
+            },
+          ],
+          {
+            ...plotLayoutBase,
+            title: "By-hour wind, direction (arrows = toward), and calm probability",
+            xaxis: {
+              title: "Hour of day",
+              tickvals: hourTicks.tickvals,
+              ticktext: hourTicks.ticktext,
+              tickangle: 0,
+              automargin: true,
+            },
+            yaxis: { title: "Mean wind (kt)", automargin: true },
+            yaxis2: {
+              title: "P(<5 kt) %",
+              overlaying: "y",
+              side: "right",
+              range: [0, 100],
+              automargin: true,
+            },
+            legend: {
+              orientation: "h",
+              x: 0,
+              xanchor: "left",
+              y: 1.14,
+              yanchor: "bottom",
+              bgcolor: "rgba(19,26,45,0.92)",
+            },
+            margin: { ...plotLayoutBase.margin, t: 78, b: 48, r: 56 },
+          },
+          { noZoom: true }
+        );
+
+        const rowHtml = xHours
+          .map((hr, i) => {
+            return `<tr>
+              <td>${hourLabel(hr)}</td>
+              <td>${round2(meanSeries[i])}</td>
+              <td>${round2(p5Series[i])}%</td>
+              <td>${dirSeries[i] == null ? "N/A" : dirLabel(dirSeries[i])}</td>
+              <td>${round2(dconstSeries[i])}</td>
+              <td>${sampleSeries[i] == null ? "N/A" : Math.round(sampleSeries[i])}</td>
+            </tr>`;
+          })
+          .join("");
+        els.pointDetailTable.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Hour</th><th>Mean kt</th><th>P&lt;5 kt</th><th>Dir from</th><th>Dir const.</th><th>N</th></tr>
+            </thead>
+            <tbody>${rowHtml}</tbody>
+          </table>
+        `;
+
+        if (dirSel == null) {
+          Plotly.purge(els.pointRosePlot);
+          els.pointRosePlot._pmcHome = null;
+          els.pointRosePlot.innerHTML =
+            "<p class='help'>No vector wind at this cell and hour, so the constancy slice cannot be drawn.</p>";
+          return;
+        }
+        const sliceWidth = Math.max(10, (1 - Math.max(0, Math.min(1, dconst == null ? 0 : dconst))) * 180);
+        applyPlot(
+          els.pointRosePlot,
+          constancySliceTraces(dirSel, dconst),
+          {
+            ...plotLayoutBase,
+            title: `Direction and constancy at ${hourLabel(state.selectedHour)} · ${dirLabel(dirSel)} · C=${round2(dconst)} · slice ${Math.round(sliceWidth)}°`,
+            showlegend: false,
+            polar: {
+              bgcolor: "#131a2d",
+              radialaxis: { range: [0, 1.15], showticklabels: false, ticks: "", color: "#f2f5ff" },
+              angularaxis: {
+                color: "#f2f5ff",
+                direction: "clockwise",
+                rotation: 90,
+                thetaunit: "degrees",
+                tickvals: [0, 45, 90, 135, 180, 225, 270, 315],
+                ticktext: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+              },
+            },
+            annotations: [
+              {
+                text: "Wider slice = lower constancy. White line = mean direction the wind comes FROM.",
+                showarrow: false,
+                xref: "paper",
+                yref: "paper",
+                x: 0.5,
+                y: -0.12,
+                font: { color: "#b7c4e5", size: 12 },
+              },
+            ],
+            margin: { ...plotLayoutBase.margin, t: 60, b: 70 },
+          },
+          { noZoom: true }
+        );
+      }
+
+      function normalizeTransects(raw) {
+        if (!Array.isArray(raw)) return [];
+        return raw
+          .map((t) => {
+            if (!t || typeof t !== "object") return null;
+            const dist = Array.isArray(t.distance_nm)
+              ? t.distance_nm
+              : Array.isArray(t.dist_nm)
+              ? t.dist_nm
+              : Array.isArray(t.distance_offshore_nm)
+              ? t.distance_offshore_nm
+              : null;
+            const byHour = Array.isArray(t.by_hour) ? t.by_hour : null;
+            if (!dist || !byHour) return null;
+            return {
+              name: t.name || t.id || "transect",
+              distance_nm: dist.map(asNum),
+              by_hour: byHour,
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function renderTransects() {
+        const transects = normalizeTransects(state.payload.transects || state.payload.cross_shore_transects);
+        if (transects.length === 0) {
+          els.transectControls.classList.add("hidden");
+          els.transectEmpty.classList.remove("hidden");
+          Plotly.purge(els.transectPlot);
+          els.transectPlot._pmcHome = null;
+          els.transectPlot.innerHTML = "";
+          return;
+        }
+
+        els.transectEmpty.classList.add("hidden");
+        els.transectControls.classList.remove("hidden");
+        els.transectSelect.innerHTML = transects
+          .map((t, i) => `<option value="${i}">${t.name}</option>`)
+          .join("");
+
+        const draw = () => {
+          const idx = Number(els.transectSelect.value || 0);
+          const t = transects[idx];
+          const traces = t.by_hour.map((row) => ({
+            type: "scatter",
+            mode: "lines",
+            x: t.distance_nm,
+            y: Array.isArray(row.mean_tws_kt) ? row.mean_tws_kt.map(asNum) : [],
+            name: hourLabel(Number(row.hour)),
+            line: { width: Number(row.hour) === state.selectedHour ? 3 : 1.4 },
+            hoverinfo: "skip",
+          }));
+          applyPlot(
+            els.transectPlot,
+            traces,
+            {
+              ...plotLayoutBase,
+              title: `Cross-shore transect: ${t.name}`,
+              xaxis: { title: "Distance offshore (nm)", automargin: true },
+              yaxis: { title: "Mean wind (kt)", automargin: true },
+              legend: {
+                orientation: "h",
+                x: 0,
+                xanchor: "left",
+                y: 1.12,
+                yanchor: "bottom",
+                font: { size: 11 },
+                bgcolor: "rgba(19,26,45,0.92)",
+              },
+              margin: { ...plotLayoutBase.margin, t: 72, b: 48 },
+            },
+            { noZoom: true }
+          );
+        };
+        els.transectSelect.onchange = draw;
+        draw();
+      }
+
+      function renderSarShadow() {
+        if (!els.sarBody || !els.sarEmpty) return;
+        const sar = state.payload && state.payload.sar_shadow_test;
+        if (!sar || typeof sar !== "object") {
+          els.sarEmpty.classList.remove("hidden");
+          els.sarBody.classList.add("hidden");
+          if (els.sarDiffPlot) {
+            Plotly.purge(els.sarDiffPlot);
+            els.sarDiffPlot.innerHTML = "";
+          }
+          if (els.sarBufferPlot) {
+            Plotly.purge(els.sarBufferPlot);
+            els.sarBufferPlot.innerHTML = "";
+          }
+          if (els.sarIncidencePlot) {
+            Plotly.purge(els.sarIncidencePlot);
+            els.sarIncidencePlot.innerHTML = "";
+          }
+          return;
+        }
+        els.sarEmpty.classList.add("hidden");
+        els.sarBody.classList.remove("hidden");
+
+        const n = Number(sar.n_scenes_retained || 0);
+        const thr = Number(sar.min_scenes_threshold || 15);
+        const verdict = String(sar.verdict || "insufficient sample");
+        const pipelineOk = sar.pipeline_valid !== false;
+        let verdictClass = "skill-stability";
+        if (verdict === "supported" && pipelineOk) verdictClass += "";
+        else if (verdict === "contradicted") verdictClass += " warn";
+        else verdictClass += " warn";
+        els.sarVerdict.className = verdictClass;
+        els.sarVerdict.innerHTML =
+          `<strong>Verdict: ${verdict}</strong>` +
+          ` · retained scenes n=${n} (threshold ${thr})` +
+          (pipelineOk ? "" : " · <strong>pipeline invalid</strong> (control corridor failed — Sardinian mean suppressed)");
+
+        const inv = sar.scene_inventory || {};
+        const byYear = inv.by_year_retained || inv.by_year || {};
+        const yearBits = Object.keys(byYear)
+          .sort()
+          .map((y) => `<div><strong>${y}</strong><span>${byYear[y]} scenes</span></div>`)
+          .join("");
+        els.sarInventory.innerHTML =
+          `<div><strong>Raw scenes</strong><span>${inv.total_raw ?? "—"}</span></div>` +
+          `<div><strong>Retained (both bands)</strong><span>${inv.retained ?? n}</span></div>` +
+          yearBits;
+
+        els.sarSampling.textContent = String(
+          sar.sampling_limitation ||
+            "Sentinel-1 samples near dawn/dusk local; mid-afternoon is largely missed."
+        );
+
+        const diffs = sar.paired_differentials_kt || {};
+        const ctrl = (sar.control && sar.control.paired_differential_kt) || {};
+        const series = [
+          { name: "SAR", key: "sar", color: "#78a6ff" },
+          { name: "AROME", key: "arome", color: "#f0c674" },
+          { name: "ERA5", key: "era5", color: "#b7c4e5" },
+          { name: "Control", stats: ctrl, color: "#9adbc6" },
+        ];
+        const traces = [];
+        const showMeans = n >= thr && pipelineOk && verdict !== "insufficient sample";
+        series.forEach((s) => {
+          const st = s.stats || diffs[s.key] || {};
+          const samples = Array.isArray(st.samples) ? st.samples.map(asNum) : [];
+          if (showMeans && samples.length) {
+            traces.push({
+              type: "box",
+              name: s.name,
+              y: samples,
+              marker: { color: s.color },
+              boxpoints: false,
+              hoverinfo: "skip",
+            });
+          }
+        });
+        if (!showMeans) {
+          // Explicit empty state — do not plot a mean when under-powered.
+          applyPlot(
+            els.sarDiffPlot,
+            [
+              {
+                type: "scatter",
+                x: [0],
+                y: [0],
+                mode: "text",
+                text: [
+                  n < thr
+                    ? `n=${n} < ${thr}: insufficient sample — mean not plotted`
+                    : "Mean suppressed (pipeline invalid or insufficient sample)",
+                ],
+                textfont: { color: "#ffe5a8", size: 14 },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title: "Paired differential (0–5 nm − 7.5–10 nm)",
+              xaxis: { visible: false },
+              yaxis: { visible: false },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        } else {
+          applyPlot(
+            els.sarDiffPlot,
+            traces,
+            {
+              title: "Paired differential (kt) · inshore − offshore",
+              yaxis: { title: "kt (negative = inshore weaker)", zeroline: true, automargin: true },
+              showlegend: true,
+              legend: { orientation: "h", y: 1.12 },
+              margin: { ...plotLayoutBase.margin, t: 72 },
+              annotations: [
+                {
+                  text: "Hypothesis: −3 to −4 kt. CIs via bootstrap on scene pairs.",
+                  showarrow: false,
+                  xref: "paper",
+                  yref: "paper",
+                  x: 0,
+                  y: -0.18,
+                  font: { color: "#b7c4e5", size: 12 },
+                },
+              ],
+            },
+            { noZoom: true }
+          );
+        }
+
+        const buffers = Array.isArray(sar.buffer_sensitivity) ? sar.buffer_sensitivity : [];
+        const bx = buffers.map((b) => asNum(b.buffer_km));
+        const by = buffers.map((b) => (b.mean_kt == null ? null : asNum(b.mean_kt)));
+        const blo = buffers.map((b) => (b.ci95_kt && b.ci95_kt[0] != null ? asNum(b.ci95_kt[0]) : null));
+        const bhi = buffers.map((b) => (b.ci95_kt && b.ci95_kt[1] != null ? asNum(b.ci95_kt[1]) : null));
+        if (buffers.length && by.some((v) => v != null)) {
+          applyPlot(
+            els.sarBufferPlot,
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: bx,
+                y: by,
+                name: "mean",
+                line: { color: "#78a6ff", width: 2 },
+                marker: { size: 9 },
+                error_y: {
+                  type: "data",
+                  symmetric: false,
+                  array: by.map((v, i) => (v == null || bhi[i] == null ? 0 : bhi[i] - v)),
+                  arrayminus: by.map((v, i) => (v == null || blo[i] == null ? 0 : v - blo[i])),
+                  color: "#b7c4e5",
+                },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title: "Land-buffer sensitivity",
+              xaxis: { title: "Buffer (km)", automargin: true },
+              yaxis: { title: "Paired diff (kt)", zeroline: true, automargin: true },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        } else {
+          applyPlot(
+            els.sarBufferPlot,
+            [
+              {
+                type: "scatter",
+                x: bx.length ? bx : [1, 1.5, 2],
+                y: bx.map(() => 0),
+                mode: "markers",
+                marker: { color: "#b7c4e5", size: 8 },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title: "Land-buffer sensitivity (means withheld — insufficient sample)",
+              xaxis: { title: "Buffer (km)" },
+              yaxis: { title: "Paired diff (kt)", zeroline: true },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        }
+
+        const table = Array.isArray(sar.three_way_table) ? sar.three_way_table : [];
+        const rows = table
+          .slice(0, 40)
+          .map((r) => {
+            const fmt = (v) => (v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(2));
+            return `<tr><td>${r.time_utc || "—"}</td><td>${fmt(r.sar_diff_kt)}</td><td>${fmt(
+              r.arome_diff_kt
+            )}</td><td>${fmt(r.era5_diff_kt)}</td></tr>`;
+          })
+          .join("");
+        els.sarThreeWay.innerHTML = `
+          <p class="help">${sar.era5_caveat || "ERA5 is a low-resolution baseline, not truth."}</p>
+          <table>
+            <thead><tr><th>Scene (UTC)</th><th>SAR Δkt</th><th>AROME Δkt</th><th>ERA5 Δkt</th></tr></thead>
+            <tbody>${rows || "<tr><td colspan=4>No retained scenes.</td></tr>"}</tbody>
+          </table>`;
+
+        const inc = sar.incidence_diagnostic || {};
+        const pts = Array.isArray(inc.points) ? inc.points : [];
+        if (pts.length) {
+          applyPlot(
+            els.sarIncidencePlot,
+            [
+              {
+                type: "scatter",
+                mode: "markers",
+                x: pts.map((p) => asNum(p.incidence_delta_deg)),
+                y: pts.map((p) => asNum(p.speed_diff_kt)),
+                marker: { color: "#f0c674", size: 7 },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title:
+                "Incidence Δ vs speed Δ" +
+                (inc.corr_incidence_delta_vs_speed_diff == null
+                  ? ""
+                  : ` · corr=${Number(inc.corr_incidence_delta_vs_speed_diff).toFixed(2)}`),
+              xaxis: { title: "Inshore − offshore incidence (°)", automargin: true },
+              yaxis: { title: "Speed paired diff (kt)", zeroline: true, automargin: true },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        } else if (els.sarIncidencePlot) {
+          Plotly.purge(els.sarIncidencePlot);
+          els.sarIncidencePlot.innerHTML = "";
+        }
+
+        const cMean = ctrl.mean;
+        const cCi = ctrl.ci95 || [null, null];
+        els.sarControlNote.textContent =
+          `Control (${(sar.control && sar.control.label) || "Tyrrhenian"}): ` +
+          (cMean == null
+            ? "no estimate."
+            : `mean ${Number(cMean).toFixed(2)} kt, 95% CI [${Number(cCi[0]).toFixed(2)}, ${Number(
+                cCi[1]
+              ).toFixed(2)}] kt. `) +
+          (sar.control_indistinguishable_from_zero
+            ? "Indistinguishable from zero — pipeline valid."
+            : "NOT indistinguishable from zero — Sardinian result suppressed.") +
+          (sar.fixture_note ? ` ${sar.fixture_note}` : "");
+      }
+
+      function renderSkillTable() {
+        renderSkillPage();
+      }
+
+      const SKILL_BIN_ORDER = ["all", "0-6kt", "6-12kt", "12-20kt", "20kt+"];
+      const SKILL_MONTH_ORDER = [
+        { id: "all", label: "All months" },
+        { id: "summer", label: "Summer (Jun–Sep)" },
+        { id: "august", label: "August only" },
+      ];
+      const SKILL_METRIC_LABEL = {
+        vec_rmse_kt: "Vector RMSE (kt)",
+        speed_bias_kt: "Speed bias (kt)",
+        dir_mae_deg: "Direction MAE (°)",
+      };
+      const SKILL_MIN_N = 300;
+
+      function skillMetaInfo() {
+        return (state.payload && state.payload.meta && state.payload.meta.skill) || {};
+      }
+
+      function skillMinN() {
+        const n = asNum(skillMetaInfo().min_sample_n);
+        return n != null ? n : SKILL_MIN_N;
+      }
+
+      function skillRowsRaw() {
+        const rows = Array.isArray(state.payload && state.payload.skill) ? state.payload.skill : [];
+        // Backward compat: untagged rows count as "all"
+        return rows.map((r) => ({
+          ...r,
+          month_filter: r.month_filter || "all",
+        }));
+      }
+
+      function ensureSkillState() {
+        const meta = skillMetaInfo();
+        if (meta.default_month_filter && !state._skillMonthsInit) {
+          state.skillMonths = meta.default_month_filter;
+          state._skillMonthsInit = true;
+        }
+        const rows = skillRowsRaw();
+        const models = [...new Set(rows.map((r) => String(r.model)))].sort();
+        models.forEach((model) => {
+          if (state.skillModelOn[model] == null) state.skillModelOn[model] = true;
+        });
+        Object.keys(state.skillModelOn).forEach((model) => {
+          if (!models.includes(model)) delete state.skillModelOn[model];
+        });
+        const leads = [...new Set(rows.map((r) => Number(r.lead_days)).filter(Number.isFinite))].sort((a, b) => a - b);
+        if (leads.length && !leads.includes(state.skillLead)) {
+          state.skillLead = leads.includes(3) ? 3 : leads[0];
+        }
+      }
+
+      function skillRowsForMonths(monthFilter) {
+        return skillRowsRaw().filter((r) => String(r.month_filter) === String(monthFilter));
+      }
+
+      function skillRowsFiltered() {
+        ensureSkillState();
+        return skillRowsForMonths(state.skillMonths).filter((r) => {
+          if (state.skillHideBiased && r.reference_biased) return false;
+          if (state.skillBin !== "all" && String(r.wind_bin) !== state.skillBin) return false;
+          if (state.skillModelOn[String(r.model)] === false) return false;
+          return true;
+        });
+      }
+
+      function modelColor(model, idx) {
+        return ROUTE_COLORS[idx % ROUTE_COLORS.length];
+      }
+
+      function skillBetter(metric, a, b) {
+        if (metric === "speed_bias_kt") {
+          return Math.abs(a) - Math.abs(b);
+        }
+        return a - b;
+      }
+
+      function skillInsufficient(n) {
+        return n == null || !Number.isFinite(Number(n)) || Number(n) < skillMinN();
+      }
+
+      function bestIndependentModel(rows, metric, lead, windBin) {
+        const scoped = rows.filter((r) => {
+          if (r.reference_biased) return false;
+          if (Number(r.lead_days) !== Number(lead)) return false;
+          if (windBin !== "all" && String(r.wind_bin) !== windBin) return false;
+          return true;
+        });
+        if (!scoped.length) return null;
+        // If windBin is all, average metric across bins per model (n-weighted for RMSE/MAE)
+        const byModel = {};
+        scoped.forEach((r) => {
+          const model = String(r.model);
+          const val = asNum(r[metric]);
+          const n = asNum(r.n_samples) || 0;
+          if (val == null) return;
+          if (!byModel[model]) byModel[model] = { sum: 0, n: 0, nTotal: 0 };
+          const score = metric === "speed_bias_kt" ? Math.abs(val) : val;
+          byModel[model].sum += score * Math.max(n, 1);
+          byModel[model].n += Math.max(n, 1);
+          byModel[model].nTotal += n;
+        });
+        let best = null;
+        Object.entries(byModel).forEach(([model, agg]) => {
+          const mean = agg.sum / agg.n;
+          if (!best || mean < best.value) {
+            best = { model, value: mean, n: agg.nTotal };
+          }
+        });
+        return best;
+      }
+
+      function renderSkillControls() {
+        ensureSkillState();
+        const rows = skillRowsRaw();
+        const monthPresent = new Set(rows.map((r) => String(r.month_filter)));
+        if (els.skillMonthToggles) {
+          els.skillMonthToggles.innerHTML = SKILL_MONTH_ORDER.map(({ id, label }) => {
+            if (!monthPresent.has(id) && id !== "all") {
+              // still show; may be empty
+            }
+            const on = state.skillMonths === id ? "on" : "";
+            return `<button type="button" class="chip ${on}" data-skill-months="${id}" aria-pressed="${state.skillMonths === id}">${label}</button>`;
+          }).join("");
+          els.skillMonthToggles.querySelectorAll("[data-skill-months]").forEach((btn) => {
+            btn.onclick = () => {
+              state.skillMonths = btn.getAttribute("data-skill-months");
+              renderSkillPage();
+            };
+          });
+        }
+        const monthRows = skillRowsForMonths(state.skillMonths);
+        const binsPresent = new Set(monthRows.map((r) => String(r.wind_bin)));
+        const binOpts = SKILL_BIN_ORDER.filter((b) => b === "all" || binsPresent.has(b));
+        if (els.skillBinToggles) {
+          els.skillBinToggles.innerHTML = binOpts.map((bin) => {
+            const label = bin === "all" ? "All bins" : bin;
+            const on = state.skillBin === bin ? "on" : "";
+            return `<button type="button" class="chip ${on}" data-skill-bin="${bin}" aria-pressed="${state.skillBin === bin}">${label}</button>`;
+          }).join("");
+          els.skillBinToggles.querySelectorAll("[data-skill-bin]").forEach((btn) => {
+            btn.onclick = () => {
+              state.skillBin = btn.getAttribute("data-skill-bin");
+              renderSkillPage();
+            };
+          });
+        }
+        const leads = [...new Set(monthRows.map((r) => Number(r.lead_days)).filter(Number.isFinite))].sort((a, b) => a - b);
+        if (els.skillLeadToggles) {
+          els.skillLeadToggles.innerHTML = leads.map((lead) => {
+            const on = Number(state.skillLead) === lead ? "on" : "";
+            return `<button type="button" class="chip ${on}" data-skill-lead="${lead}" aria-pressed="${Number(state.skillLead) === lead}">${lead} d</button>`;
+          }).join("");
+          els.skillLeadToggles.querySelectorAll("[data-skill-lead]").forEach((btn) => {
+            btn.onclick = () => {
+              state.skillLead = Number(btn.getAttribute("data-skill-lead"));
+              renderSkillPage();
+            };
+          });
+        }
+        const models = Object.keys(state.skillModelOn).sort();
+        if (els.skillModelToggles) {
+          els.skillModelToggles.innerHTML = models.map((model, idx) => {
+            const on = state.skillModelOn[model] !== false;
+            const biased = rows.some((r) => String(r.model) === model && r.reference_biased);
+            const tag = biased ? " · biased" : "";
+            return `<button type="button" class="chip ${on ? "on" : "off"}" data-skill-model="${model}" aria-pressed="${on}" style="border-color:${modelColor(model, idx)}">${model}${tag}</button>`;
+          }).join("");
+          els.skillModelToggles.querySelectorAll("[data-skill-model]").forEach((btn) => {
+            btn.onclick = () => {
+              const model = btn.getAttribute("data-skill-model");
+              state.skillModelOn[model] = !state.skillModelOn[model];
+              renderSkillPage();
+            };
+          });
+        }
+        if (els.skillHideBiased) {
+          els.skillHideBiased.classList.toggle("on", state.skillHideBiased);
+          els.skillHideBiased.setAttribute("aria-pressed", state.skillHideBiased ? "true" : "false");
+        }
+        if (els.skillMetric) els.skillMetric.value = state.skillMetric;
+      }
+
+      function renderSkillMeta() {
+        if (!els.skillMeta) return;
+        const meta = skillMetaInfo();
+        const rows = skillRowsFiltered();
+        const models = [...new Set(skillRowsRaw().map((r) => String(r.model)))].sort();
+        const independent = models.filter((m) => !skillRowsRaw().some((r) => String(r.model) === m && r.reference_biased));
+        const windowTxt = meta.window_start && meta.window_end
+          ? `${meta.window_start} → ${meta.window_end}`
+          : (skillRowsRaw().length ? "from payload" : "no skill rows loaded");
+        const byFilter = meta.n_paired_by_filter || {};
+        const nPaired = byFilter[state.skillMonths] != null
+          ? byFilter[state.skillMonths]
+          : (meta.n_paired != null ? meta.n_paired : "—");
+        const nPoints = meta.n_points != null ? meta.n_points : "—";
+        const nShown = rows.reduce((acc, r) => acc + (asNum(r.n_samples) || 0), 0);
+        const staleNote = (!skillRowsRaw().length && skillRowCount(window.DASHBOARD_PAYLOAD) > 0)
+          ? `<p class="skill-empty">This browser is showing an old remembered file with empty skill. Tap <strong>Load bundled skill data</strong> below.</p>`
+          : "";
+        els.skillMeta.innerHTML = `
+          <div class="meta-card"><span class="k">Verification window</span><span class="v">${windowTxt}</span></div>
+          <div class="meta-card"><span class="k">Corridor points</span><span class="v">${nPoints}</span></div>
+          <div class="meta-card"><span class="k">Paired hours (${state.skillMonths})</span><span class="v skill-n">${nPaired}</span></div>
+          <div class="meta-card"><span class="k">Independent models</span><span class="v">${independent.length ? independent.join(", ") : "—"}</span></div>
+          <div class="meta-card"><span class="k">Rows in view (Σ n)</span><span class="v skill-n">${nShown || "—"}</span></div>
+          ${staleNote}
+        `;
+      }
+
+      function renderSkillStability() {
+        if (!els.skillStability) return;
+        const metric = state.skillMetric;
+        const windBin = state.skillBin;
+        const lead = state.skillLead;
+        const winners = {};
+        SKILL_MONTH_ORDER.forEach(({ id, label }) => {
+          const best = bestIndependentModel(skillRowsForMonths(id), metric, lead, windBin);
+          winners[id] = best ? { ...best, label } : null;
+        });
+        const present = SKILL_MONTH_ORDER.map(({ id }) => winners[id]).filter(Boolean);
+        if (present.length < 2) {
+          els.skillStability.className = "skill-stability warn";
+          els.skillStability.textContent = `Stability (lead ${lead} d, ${windBin}): not enough month windows with independent-model scores.`;
+          return;
+        }
+        const thin = SKILL_MONTH_ORDER.filter(({ id }) => winners[id] && skillInsufficient(winners[id].n));
+        const models = [...new Set(present.map((w) => w.model))];
+        if (models.length === 1) {
+          els.skillStability.className = "skill-stability";
+          const thinNote = thin.length
+            ? ` (note: ${thin.map((t) => t.label).join(", ")} has n<${skillMinN()})`
+            : "";
+          els.skillStability.textContent =
+            `Ranking stable across all three windows: ${models[0]} best at lead ${lead} d / ${windBin}.${thinNote}`;
+        } else {
+          els.skillStability.className = "skill-stability warn";
+          const parts = SKILL_MONTH_ORDER.map(({ id, label }) => {
+            const w = winners[id];
+            if (!w) return `${label}: —`;
+            const low = skillInsufficient(w.n) ? " (insufficient sample)" : "";
+            return `${label}: ${w.model}${low}`;
+          });
+          els.skillStability.textContent =
+            `Ranking differs across month windows at lead ${lead} d / ${windBin}. ${parts.join(" · ")}`;
+        }
+      }
+
+      function renderSkillWinners() {
+        if (!els.skillWinners) return;
+        const metric = state.skillMetric;
+        const monthRows = skillRowsForMonths(state.skillMonths).filter((r) => {
+          if (r.reference_biased) return false;
+          if (state.skillHideBiased) return true;
+          return true;
+        }).filter((r) => !r.reference_biased);
+        const leads = [...new Set(monthRows.map((r) => Number(r.lead_days)).filter(Number.isFinite))].sort((a, b) => a - b);
+        if (!leads.length) {
+          els.skillWinners.innerHTML = `<p class="skill-empty">No independent-model rows for this filter.</p>`;
+          return;
+        }
+        const cards = [];
+        leads.forEach((lead) => {
+          const best = bestIndependentModel(monthRows, metric, lead, state.skillBin);
+          if (!best) {
+            cards.push(`<div class="meta-card skill-low-n">
+              <span class="k">Lead ${lead} d</span>
+              <span class="v">—</span>
+              <span class="help">no independent rows</span>
+            </div>`);
+            return;
+          }
+          if (skillInsufficient(best.n)) {
+            cards.push(`<div class="meta-card skill-low-n">
+              <span class="k">Lead ${lead} d</span>
+              <span class="v">insufficient sample</span>
+              <span class="help">n=<span class="skill-n">${best.n}</span> (need ≥${skillMinN()})</span>
+            </div>`);
+            return;
+          }
+          const focus = Number(lead) === Number(state.skillLead) ? " skill-winner" : "";
+          cards.push(`<div class="meta-card${focus}">
+            <span class="k">Lead ${lead} d</span>
+            <span class="v">${best.model}</span>
+            <span class="help">${SKILL_METRIC_LABEL[metric]} ${round2(best.value)} · n=<span class="skill-n">${best.n}</span></span>
+          </div>`);
+        });
+        els.skillWinners.innerHTML = cards.join("") || `<p class="skill-empty">No winners for this filter.</p>`;
+      }
+
+      function renderSkillLeadPlot() {
+        if (!els.skillLeadPlot || typeof Plotly === "undefined") return;
+        const metric = state.skillMetric;
+        const rows = skillRowsFiltered().filter((r) => !skillInsufficient(r.n_samples));
+        if (!rows.length) {
+          Plotly.purge(els.skillLeadPlot);
+          els.skillLeadPlot.innerHTML = `<p class="skill-empty">Nothing to plot (all cells below n=${skillMinN()} or empty).</p>`;
+          return;
+        }
+        const models = [...new Set(rows.map((r) => String(r.model)))].sort();
+        const traces = models.map((model, idx) => {
+          const byLead = {};
+          rows.filter((r) => String(r.model) === model).forEach((r) => {
+            const lead = Number(r.lead_days);
+            const val = asNum(r[metric]);
+            if (!Number.isFinite(lead) || val == null) return;
+            if (!byLead[lead]) byLead[lead] = [];
+            byLead[lead].push(val);
+          });
+          const leads = Object.keys(byLead).map(Number).sort((a, b) => a - b);
+          const y = leads.map((lead) => {
+            const vals = byLead[lead];
+            return vals.reduce((a, b) => a + b, 0) / vals.length;
+          });
+          const biased = rows.some((r) => String(r.model) === model && r.reference_biased);
+          return {
+            type: "scatter",
+            mode: "lines+markers",
+            name: biased ? `${model} (biased)` : model,
+            x: leads,
+            y,
+            line: {
+              color: modelColor(model, idx),
+              width: 3,
+              dash: biased ? "dot" : "solid",
+            },
+            marker: { size: 9 },
+          };
+        });
+        const yTitle = SKILL_METRIC_LABEL[metric] || metric;
+        const monthLabel = (SKILL_MONTH_ORDER.find((m) => m.id === state.skillMonths) || {}).label || state.skillMonths;
+        applyPlot(
+          els.skillLeadPlot,
+          traces,
+          {
+            ...plotLayoutBase,
+            title: `${yTitle} vs lead · ${monthLabel}`,
+            xaxis: { title: "Lead (days)", dtick: 1, automargin: true },
+            yaxis: { title: yTitle, automargin: true, zeroline: metric === "speed_bias_kt" },
+            legend: {
+              orientation: "h",
+              x: 0,
+              xanchor: "left",
+              y: 1.14,
+              yanchor: "bottom",
+              font: { size: 11 },
+              bgcolor: "rgba(19,26,45,0.92)",
+            },
+            margin: { ...plotLayoutBase.margin, t: 78, b: 48 },
+          },
+          { noZoom: true }
+        );
+      }
+
+      function renderSkillDetailTable() {
+        if (!els.skillTable) return;
+        const rows = skillRowsFiltered().slice();
+        const empty = !skillRowsForMonths(state.skillMonths).length;
+        if (els.skillEmpty) els.skillEmpty.classList.toggle("hidden", !empty && skillRowsRaw().length > 0);
+        if (!rows.length) {
+          els.skillTable.innerHTML = empty
+            ? ""
+            : `<p class="skill-empty">No rows match the current filters.</p>`;
+          return;
+        }
+        const sortKey = state.skillSort.key;
+        const sortDir = state.skillSort.dir === "desc" ? -1 : 1;
+        rows.sort((a, b) => {
+          let av = a[sortKey];
+          let bv = b[sortKey];
+          if (typeof av === "string") av = av.toLowerCase();
+          if (typeof bv === "string") bv = bv.toLowerCase();
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (av < bv) return -1 * sortDir;
+          if (av > bv) return 1 * sortDir;
+          return 0;
+        });
+        const headers = [
+          ["model", "Model"],
+          ["lead_days", "Lead d"],
+          ["wind_bin", "Wind bin"],
+          ["vec_rmse_kt", "Vec RMSE"],
+          ["speed_bias_kt", "Spd bias"],
+          ["dir_mae_deg", "Dir MAE"],
+          ["n_samples", "n"],
+          ["reference_biased", "Biased"],
+        ];
+        const thead = headers.map(([key, label]) => {
+          const mark = state.skillSort.key === key ? (state.skillSort.dir === "asc" ? " ▲" : " ▼") : "";
+          return `<th class="sortable" data-sort="${key}">${label}${mark}</th>`;
+        }).join("");
+        const body = rows.map((r) => {
+          const low = skillInsufficient(r.n_samples);
+          const cls = [
+            r.reference_biased ? "biased-row" : "",
+            low ? "skill-low-n" : "",
+          ].filter(Boolean).join(" ");
+          const tag = r.reference_biased ? "Yes — not comparable" : "No";
+          const n = r.n_samples != null ? r.n_samples : "—";
+          const rmse = low ? "—" : round2(asNum(r.vec_rmse_kt));
+          const bias = low ? "—" : round2(asNum(r.speed_bias_kt));
+          const mae = low ? "—" : round2(asNum(r.dir_mae_deg));
+          const note = low ? ` <span class="help">insufficient sample</span>` : "";
+          return `<tr class="${cls}">
+            <td>${r.model}</td>
+            <td>${r.lead_days}</td>
+            <td>${r.wind_bin}</td>
+            <td>${rmse}</td>
+            <td>${bias}</td>
+            <td>${mae}</td>
+            <td class="skill-n">${n}${note}</td>
+            <td>${tag}</td>
+          </tr>`;
+        }).join("");
+        els.skillTable.innerHTML = `
+          <table>
+            <thead><tr>${thead}</tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+          <p class="help"><strong>Important:</strong> ECMWF/AIFS rows marked reference-biased are scored against IFS analysis and are not comparable to independent models. Cells with n&lt;${skillMinN()} are greyed out.</p>
+        `;
+        els.skillTable.querySelectorAll("th.sortable").forEach((th) => {
+          th.onclick = () => {
+            const key = th.getAttribute("data-sort");
+            if (state.skillSort.key === key) {
+              state.skillSort.dir = state.skillSort.dir === "asc" ? "desc" : "asc";
+            } else {
+              state.skillSort = { key, dir: "asc" };
+            }
+            renderSkillDetailTable();
+          };
+        });
+      }
+
+      function currentWeather() {
+        return (state.payload && state.payload.current_weather) || null;
+      }
+
+      function msToKt(ms) {
+        return Number(ms) * 1.9438445;
+      }
+
+      function fmtCi(ci, digits) {
+        if (!Array.isArray(ci) || ci.length < 2) return "—";
+        const a = Number(ci[0]);
+        const b = Number(ci[1]);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return "—";
+        return `[${a.toFixed(digits)}, ${b.toFixed(digits)}]`;
+      }
+
+      function ensureCurrentWeatherState() {
+        const cw = currentWeather();
+        if (!cw) return;
+        const instruments = [...new Set((cw.scorecard || []).map((r) => r.instrument))].sort();
+        if (!instruments.includes(state.cwInstrument)) {
+          state.cwInstrument = instruments[0] || "ascat_metop_b";
+        }
+        const models = [...new Set((cw.scorecard || []).map((r) => r.model))].sort();
+        models.forEach((m) => {
+          if (state.cwModelOn[m] === undefined) state.cwModelOn[m] = true;
+        });
+        if (!state.cwLead) state.cwLead = (cw.meta && cw.meta.default_lead_bucket) || "48-72";
+        if (!state.cwResidualModel || !models.includes(state.cwResidualModel)) {
+          state.cwResidualModel = models.includes("gfs_global") ? "gfs_global" : models[0] || null;
+        }
+      }
+
+      function renderCurrentWeatherPage() {
+        if (!els.pageCurrent) return;
+        const cw = currentWeather();
+        if (!cw) {
+          if (els.cwScorecard) {
+            els.cwScorecard.innerHTML =
+              "<p class='skill-empty'>No <code>current_weather</code> section in this payload.</p>";
+          }
+          return;
+        }
+        ensureCurrentWeatherState();
+        const meta = cw.meta || {};
+        if (els.cwMeta) {
+          const en = meta.equivalent_neutral_correction ? "applied" : "not applied";
+          els.cwMeta.innerHTML = [
+            `<div><span class="k">Generated</span><div class="v">${meta.generated_utc || "—"}</div></div>`,
+            `<div><span class="k">Default lead</span><div class="v">${meta.default_lead_bucket || "48-72"}</div></div>`,
+            `<div><span class="k">Min n to rank</span><div class="v">${meta.min_rank_n ?? 30}</div></div>`,
+            `<div><span class="k">EN correction</span><div class="v">${en}</div></div>`,
+          ].join("");
+        }
+        const leads = ["0-12", "12-24", "24-48", "48-72"];
+        if (els.cwLeadToggles) {
+          els.cwLeadToggles.innerHTML = leads
+            .map((lead) => {
+              const on = state.cwLead === lead;
+              const circ = lead === "0-12" ? " (circular)" : "";
+              return `<button type="button" class="chip ${on ? "on" : "off"}" data-cw-lead="${lead}">${lead}h${circ}</button>`;
+            })
+            .join("");
+          els.cwLeadToggles.querySelectorAll("[data-cw-lead]").forEach((btn) => {
+            btn.onclick = () => {
+              state.cwLead = btn.getAttribute("data-cw-lead");
+              renderCurrentWeatherPage();
+            };
+          });
+        }
+        const instruments = [...new Set((cw.scorecard || []).map((r) => r.instrument))].sort();
+        if (els.cwInstrumentToggles) {
+          els.cwInstrumentToggles.innerHTML = instruments
+            .map((inst) => {
+              const on = state.cwInstrument === inst;
+              return `<button type="button" class="chip ${on ? "on" : "off"}" data-cw-inst="${inst}">${inst}</button>`;
+            })
+            .join("");
+          els.cwInstrumentToggles.querySelectorAll("[data-cw-inst]").forEach((btn) => {
+            btn.onclick = () => {
+              state.cwInstrument = btn.getAttribute("data-cw-inst");
+              renderCurrentWeatherPage();
+            };
+          });
+        }
+        const models = [...new Set((cw.scorecard || []).map((r) => r.model))].sort();
+        if (els.cwModelToggles) {
+          els.cwModelToggles.innerHTML = models
+            .map((m) => {
+              const on = state.cwModelOn[m] !== false;
+              return `<button type="button" class="chip ${on ? "on" : "off"}" data-cw-model="${m}">${m}</button>`;
+            })
+            .join("");
+          els.cwModelToggles.querySelectorAll("[data-cw-model]").forEach((btn) => {
+            btn.onclick = () => {
+              const m = btn.getAttribute("data-cw-model");
+              state.cwModelOn[m] = !(state.cwModelOn[m] !== false);
+              renderCurrentWeatherPage();
+            };
+          });
+        }
+
+        const rows = (cw.scorecard || []).filter(
+          (r) =>
+            r.lead_bucket === state.cwLead &&
+            r.instrument === state.cwInstrument &&
+            r.region === "all" &&
+            r.speed_bucket === "all" &&
+            state.cwModelOn[r.model] !== false
+        );
+        const minN = Number(meta.min_rank_n || 30);
+        const rankable = rows.filter((r) => r.rankable && r.n >= minN);
+        if (els.cwRefuse) {
+          if (rows.length && rankable.length === 0) {
+            els.cwRefuse.classList.remove("hidden");
+            els.cwRefuse.textContent =
+              `Refusing to rank: every model has n < ${minN} for ${state.cwInstrument} / ${state.cwLead}h. Wait for more passes.`;
+          } else {
+            els.cwRefuse.classList.add("hidden");
+            els.cwRefuse.textContent = "";
+          }
+        }
+        if (els.cwScorecard) {
+          const sorted = [...rows].sort((a, b) => {
+            if (a.rankable !== b.rankable) return a.rankable ? -1 : 1;
+            return a.vec_rmse_ms - b.vec_rmse_ms;
+          });
+          els.cwScorecard.innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Vec RMSE (m/s)</th>
+                  <th>95% CI</th>
+                  <th>Speed bias (m/s)</th>
+                  <th>Bias CI</th>
+                  <th>Dir MAE (°)</th>
+                  <th>n</th>
+                  <th>kt RMSE</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sorted
+                  .map((r) => {
+                    const cls = [
+                      r.circularity_contaminated ? "cw-circular" : "",
+                      r.rankable ? "" : "cw-unranked",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+                    const note = r.circularity_contaminated ? " ⚠ circular" : "";
+                    const refuse = r.rankable ? "" : " (not ranked)";
+                    return `<tr class="${cls}">
+                      <td>${r.model}${note}${refuse}</td>
+                      <td>${Number(r.vec_rmse_ms).toFixed(2)}</td>
+                      <td>${fmtCi(r.vec_rmse_ci95, 2)}</td>
+                      <td>${Number(r.speed_bias_ms).toFixed(2)}</td>
+                      <td>${fmtCi(r.speed_bias_ci95, 2)}</td>
+                      <td>${r.dir_mae_deg == null ? "—" : Number(r.dir_mae_deg).toFixed(1)}</td>
+                      <td class="skill-n">${r.n}</td>
+                      <td>${msToKt(r.vec_rmse_ms).toFixed(2)}</td>
+                    </tr>`;
+                  })
+                  .join("")}
+              </tbody>
+            </table>`;
+        }
+
+        // Calibration — scatterometer 48-72 only; filter instrument
+        const cal = (cw.expedition_calibration || []).filter(
+          (c) => !c.instrument || c.instrument === state.cwInstrument
+        );
+        if (els.cwCalibration) {
+          els.cwCalibration.innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Instrument</th>
+                  <th>TWS scale %</th>
+                  <th>Scale CI</th>
+                  <th>TWD twist °</th>
+                  <th>Twist CI</th>
+                  <th>n</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${cal
+                  .map((c) => {
+                    const low = c.n < minN;
+                    return `<tr class="${low ? "cw-unranked" : ""}">
+                      <td>${c.model}</td>
+                      <td>${c.instrument || "—"}</td>
+                      <td>${Number(c.tws_scale_pct).toFixed(1)}</td>
+                      <td>${fmtCi(c.tws_scale_ci95, 1)}</td>
+                      <td>${Number(c.twd_twist_deg).toFixed(1)}</td>
+                      <td>${fmtCi(c.twd_twist_ci95, 1)}</td>
+                      <td class="skill-n">${c.n}</td>
+                      <td>${c.source}</td>
+                    </tr>`;
+                  })
+                  .join("")}
+              </tbody>
+            </table>`;
+        }
+
+        // Trend plot
+        if (els.cwTrendPlot && window.Plotly) {
+          const trend = (cw.trend || []).filter(
+            (t) =>
+              t.lead_bucket === "48-72" &&
+              t.instrument === state.cwInstrument &&
+              state.cwModelOn[t.model] !== false
+          );
+          const byModel = {};
+          trend.forEach((t) => {
+            if (!byModel[t.model]) byModel[t.model] = { x: [], y: [], n: [] };
+            byModel[t.model].x.push(t.pass_time_utc || t.pass_id);
+            byModel[t.model].y.push(t.vec_rmse_ms);
+            byModel[t.model].n.push(t.n);
+          });
+          const traces = Object.keys(byModel).map((m) => ({
+            x: byModel[m].x,
+            y: byModel[m].y,
+            name: m,
+            mode: "lines+markers",
+            type: "scatter",
+            text: byModel[m].n.map((n) => `n=${n}`),
+          }));
+          Plotly.newPlot(
+            els.cwTrendPlot,
+            traces,
+            {
+              paper_bgcolor: "rgba(0,0,0,0)",
+              plot_bgcolor: "rgba(0,0,0,0)",
+              font: { color: "#e8eef5", size: 14 },
+              margin: { t: 20, r: 10, b: 50, l: 50 },
+              xaxis: { title: "Pass (UTC)" },
+              yaxis: { title: "Vec RMSE (m/s)" },
+              showlegend: true,
+              legend: { orientation: "h" },
+            },
+            { displayModeBar: false, responsive: true }
+          );
+        }
+
+        // Residual map
+        if (els.cwResidualModel) {
+          const resModels = [...new Set((cw.residuals || []).map((r) => r.model))].sort();
+          els.cwResidualModel.innerHTML = resModels
+            .map(
+              (m) =>
+                `<option value="${m}" ${m === state.cwResidualModel ? "selected" : ""}>${m}</option>`
+            )
+            .join("");
+          els.cwResidualModel.onchange = () => {
+            state.cwResidualModel = els.cwResidualModel.value;
+            renderCurrentWeatherPage();
+          };
+        }
+        if (els.cwResidualPlot && window.Plotly) {
+          const res = (cw.residuals || []).filter((r) => r.model === state.cwResidualModel);
+          const lats = res.map((r) => r.lat);
+          const lons = res.map((r) => r.lon);
+          const du = res.map((r) => r.du_ms);
+          const dv = res.map((r) => r.dv_ms);
+          const mag = res.map((r) => Math.hypot(r.du_ms, r.dv_ms));
+          Plotly.newPlot(
+            els.cwResidualPlot,
+            [
+              {
+                type: "scatter",
+                mode: "markers",
+                x: lons,
+                y: lats,
+                marker: {
+                  size: mag.map((m) => 6 + Math.min(14, m * 3)),
+                  color: mag,
+                  colorscale: "Viridis",
+                  colorbar: { title: "|δ| m/s" },
+                },
+                text: res.map(
+                  (r) =>
+                    `δu=${r.du_ms.toFixed(2)} δv=${r.dv_ms.toFixed(2)} m/s<br>${r.obs_time_utc}`
+                ),
+                hovertemplate: "%{text}<extra></extra>",
+              },
+              {
+                type: "scatter",
+                mode: "lines",
+                x: lons.flatMap((lon, i) => [lon, lon + du[i] * 0.05, null]),
+                y: lats.flatMap((lat, i) => [lat, lat + dv[i] * 0.05, null]),
+                line: { color: "#f0e6c8", width: 1 },
+                hoverinfo: "skip",
+                showlegend: false,
+              },
+            ],
+            {
+              paper_bgcolor: "rgba(0,0,0,0)",
+              plot_bgcolor: "rgba(0,0,0,0)",
+              font: { color: "#e8eef5", size: 14 },
+              margin: { t: 20, r: 10, b: 40, l: 50 },
+              xaxis: { title: "Lon", range: [6.5, 14.5] },
+              yaxis: { title: "Lat", range: [37.5, 44.0], scaleanchor: "x", scaleratio: 1 },
+            },
+            { displayModeBar: false, responsive: true }
+          );
+        }
+
+        // Pressure
+        const pressure = cw.pressure || {};
+        if (els.cwPressure) {
+          const scores = pressure.mslp_scores || [];
+          els.cwPressure.innerHTML = scores.length
+            ? `<table><thead><tr><th>Station</th><th>Model</th><th>Lead</th><th>Bias hPa</th><th>RMSE hPa</th><th>n</th></tr></thead><tbody>${scores
+                .map(
+                  (s) =>
+                    `<tr><td>${s.station_id}</td><td>${s.model}</td><td>${s.lead_bucket}</td><td>${s.bias_hpa}</td><td>${s.rmse_hpa}</td><td>${s.n}</td></tr>`
+                )
+                .join("")}</tbody></table>`
+            : "<p class='help'>No MSLP scores in this payload yet.</p>";
+        }
+        if (els.cwOnset) {
+          const lags = pressure.onset_lags || [];
+          els.cwOnset.innerHTML = lags.length
+            ? `<table><thead><tr><th>Station</th><th>Day</th><th>Model</th><th>Lag min</th><th>Kind</th></tr></thead><tbody>${lags
+                .map(
+                  (o) =>
+                    `<tr><td>${o.station_id}</td><td>${o.day_utc}</td><td>${o.model}</td><td>${o.lag_minutes}</td><td>${o.kind}</td></tr>`
+                )
+                .join("")}</tbody></table>`
+            : "<p class='help'>No onset-lag rows yet.</p>";
+        }
+
+        // Sentinel
+        const sen = cw.sentinel || {};
+        if (els.cwSentinel) {
+          if (sen.status === "available") {
+            els.cwSentinel.textContent = `Acquisition ${sen.acquisition_utc || "—"} (speed only).`;
+          } else {
+            els.cwSentinel.textContent = "No acquisition in the preceding 24 h.";
+          }
+        }
+        if (els.cwSentinelPlot && window.Plotly) {
+          if (sen.status === "available" && sen.speed_field) {
+            const z = sen.speed_field.speed_ms;
+            Plotly.newPlot(
+              els.cwSentinelPlot,
+              [
+                {
+                  type: "heatmap",
+                  x: sen.speed_field.lon,
+                  y: sen.speed_field.lat,
+                  z,
+                  colorscale: "Viridis",
+                  colorbar: { title: "m/s" },
+                },
+              ],
+              {
+                paper_bgcolor: "rgba(0,0,0,0)",
+                plot_bgcolor: "rgba(0,0,0,0)",
+                font: { color: "#e8eef5", size: 14 },
+                margin: { t: 20, r: 10, b: 40, l: 50 },
+                xaxis: { title: "Lon" },
+                yaxis: { title: "Lat", scaleanchor: "x", scaleratio: 1 },
+              },
+              { displayModeBar: false, responsive: true }
+            );
+          } else {
+            Plotly.purge(els.cwSentinelPlot);
+            els.cwSentinelPlot.innerHTML = "";
+          }
+        }
+
+        // Bucket counts
+        if (els.cwBucketCounts) {
+          const bc = cw.bucket_counts || {};
+          els.cwBucketCounts.innerHTML = ["headline", "coastal", "light_air", "qc_reject"]
+            .map(
+              (k) =>
+                `<div><div class="k">${k}</div><div class="v">${bc[k] ?? 0}</div></div>`
+            )
+            .join("");
+        }
+      }
+
+      function dryRunObservationFile(file, text) {
+        const name = file.name || "upload";
+        const lower = name.toLowerCase();
+        if (lower.endsWith(".nc") || lower.endsWith(".grib") || lower.endsWith(".bufr")) {
+          return {
+            detected_format: lower.split(".").pop(),
+            dry_run: true,
+            message:
+              "Binary formats need the CLI dry-run: python3 -m pmc.verify ingest FILE --dry-run",
+            n_cells: null,
+          };
+        }
+        let raw;
+        try {
+          raw = JSON.parse(text);
+        } catch (err) {
+          return { detected_format: "unknown", dry_run: true, error: String(err), n_cells: 0 };
+        }
+        if (raw.current_weather || raw.climatology) {
+          return {
+            detected_format: "dashboard_payload",
+            dry_run: true,
+            message: "This looks like a full dashboard data.json — use Load data file on Historical weather / Settings.",
+            n_cells: null,
+          };
+        }
+        const obsClass = raw.obs_class || "unknown";
+        const cells = Array.isArray(raw.cells) ? raw.cells : [];
+        const rejected = cells.filter(
+          (c) => c.land_flag || c.ice_flag || c.rain_flag || c.quality_flag
+        ).length;
+        return {
+          detected_format: "json",
+          obs_class: obsClass,
+          instrument: raw.instrument || null,
+          n_cells: cells.length - rejected,
+          n_rejected_qc: rejected,
+          dry_run: true,
+          messages: [
+            `Parsed ${cells.length} cells; ${rejected} QC rejects; would keep ${cells.length - rejected}.`,
+            "Dry-run only — nothing persisted from the browser.",
+          ],
+        };
+      }
+
+      async function handleObservationUpload(file) {
+        if (!file || !els.cwParseReport) return;
+        const text = await file.text();
+        const report = dryRunObservationFile(file, text);
+        els.cwParseReport.textContent = JSON.stringify(report, null, 2);
+      }
+
+      function renderSkillPage() {
+        if (!els.pageSkill) return;
+        renderSkillControls();
+        renderSkillMeta();
+        renderSkillStability();
+        renderSkillWinners();
+        renderSkillLeadPlot();
+        renderSkillDetailTable();
+      }
+
+      function updateTimeModeButtons() {
+        const local = state.timeMode === "local";
+        if (els.modeLocal) els.modeLocal.classList.toggle("active", local);
+        if (els.modeUtc) els.modeUtc.classList.toggle("active", !local);
+      }
+
+      function fmtLat(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "—";
+        return `${Math.abs(n).toFixed(2)}°${n >= 0 ? "N" : "S"}`;
+      }
+
+      function fmtLon(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "—";
+        return `${Math.abs(n).toFixed(2)}°${n >= 0 ? "E" : "W"}`;
+      }
+
+      function climatologyYears(payload) {
+        const listed = payload && payload.meta && payload.meta.climatology_years;
+        if (Array.isArray(listed) && listed.length) {
+          return listed.map(Number).filter((year) => year > 1900);
+        }
+        const warnings = (payload && payload.meta && payload.meta.warnings) || [];
+        for (let i = 0; i < warnings.length; i += 1) {
+          const match = String(warnings[i]).match(/years present[^:]*:\s*([0-9, ]+)/i);
+          if (match) {
+            return match[1].split(/,\s*/).map(Number).filter((year) => year > 1900);
+          }
+        }
+        return [];
+      }
+
+      function renderSettingsPage() {
+        const payload = state.payload;
+        const tz = (payload && payload.meta && payload.meta.display_timezone) || "UTC";
+        const modeLabel = state.timeMode === "utc" ? "UTC" : `Local (${tz})`;
+        if (els.settingsTimezone) {
+          els.settingsTimezone.textContent = `Current mode: ${modeLabel}.`;
+        }
+        const course = (payload && payload.meta && payload.meta.course) || {};
+        const marks = [
+          ["Start", "Palermo", course.start],
+          ["Gate", "Porto Cervo", course.gate],
+          ["Finish", "Monaco", course.finish],
+        ].filter((row) => row[2] && row[2][0] != null && row[2][1] != null);
+        if (els.settingsRace) {
+          const list = marks
+            .map((row) => `<li>${row[0]} · ${row[1]} · ${fmtLat(row[2][0])} ${fmtLon(row[2][1])}</li>`)
+            .join("");
+          els.settingsRace.innerHTML = `
+            Palermo–Montecarlo
+            ${list ? `<ul class="settings-marks">${list}</ul>` : `<p class="help">Course marks are not in this payload.</p>`}
+          `;
+        }
+        const years = climatologyYears(payload);
+        if (els.settingsYears) {
+          els.settingsYears.innerHTML = years.length
+            ? years.map((year) => `<span class="chip on static">${year}</span>`).join("")
+            : `<span class="help">Years are not listed in this payload.</span>`;
+        }
+        if (els.settingsYearsNote) {
+          els.settingsYearsNote.textContent = years.length
+            ? `August climatology, ${years.length} year${years.length === 1 ? "" : "s"} downloaded.`
+            : "";
+        }
+        if (els.settingsArea) {
+          const lat = payload && payload.climatology && payload.climatology.grid && payload.climatology.grid.lat;
+          const lon = payload && payload.climatology && payload.climatology.grid && payload.climatology.grid.lon;
+          if (lat && lat.length && lon && lon.length) {
+            const dlat = lat.length > 1 ? Math.abs(Number(lat[1]) - Number(lat[0])) : null;
+            const step = dlat != null && Number.isFinite(dlat) ? ` · ${dlat.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}° grid` : "";
+            els.settingsArea.textContent =
+              `${fmtLat(Math.min(...lat.map(Number)))}–${fmtLat(Math.max(...lat.map(Number)))}, ` +
+              `${fmtLon(Math.min(...lon.map(Number)))}–${fmtLon(Math.max(...lon.map(Number)))}${step}`;
+          } else {
+            els.settingsArea.textContent = "Grid bounds are not in this payload.";
+          }
+        }
+      }
+
+      function ybData() {
+        return window.YB_RESULTS || { editions: [] };
+      }
+
+      function ensureResultsState() {
+        const editions = ybData().editions || [];
+        editions.forEach((ed) => {
+          if (state.yearOn[ed.year] == null) state.yearOn[ed.year] = true;
+          if (!state.classOn[ed.year]) state.classOn[ed.year] = {};
+          (ed.classes || []).forEach((cls) => {
+            if (state.classOn[ed.year][cls.id] == null) state.classOn[ed.year][cls.id] = true;
+          });
+        });
+        if (state.weatherYear == null && editions.length) {
+          state.weatherYear = editions[editions.length - 1].year;
+        }
+      }
+
+      function classElapsedRanks(edition) {
+        if (edition._elapsedRanks) return edition._elapsedRanks;
+        const ranks = {};
+        const classIds = new Set();
+        (edition.boats || []).forEach((boat) => {
+          (boat.classes || []).forEach((cls) => classIds.add(cls.id));
+        });
+        classIds.forEach((classId) => {
+          const peers = (edition.boats || []).filter((boat) => (
+            boat.finished
+            && boat.elapsed_s != null
+            && (boat.classes || []).some((cls) => cls.id === classId)
+          ));
+          peers.sort((a, b) => (
+            (a.elapsed_s - b.elapsed_s)
+            || (a.absolute_rank || 99) - (b.absolute_rank || 99)
+            || String(a.name).localeCompare(String(b.name))
+          ));
+          ranks[classId] = {};
+          peers.forEach((boat, index) => {
+            ranks[classId][boat.id] = index + 1;
+          });
+        });
+        edition._elapsedRanks = ranks;
+        return ranks;
+      }
+
+      function classElapsedRank(edition, boat, cls) {
+        if (cls && cls.elapsed_rank != null) return cls.elapsed_rank;
+        const byClass = classElapsedRanks(edition)[cls.id] || {};
+        return byClass[boat.id] || null;
+      }
+
+      function visibleResultBoats() {
+        ensureResultsState();
+        const rows = [];
+        (ybData().editions || []).forEach((ed) => {
+          if (!state.yearOn[ed.year]) return;
+          (ed.boats || []).forEach((boat) => {
+            const selectedClasses = (boat.classes || []).filter((cls) => state.classOn[ed.year][cls.id]);
+            if (!selectedClasses.length) return;
+            const topAbs = Boolean(boat.finished && boat.absolute_rank && boat.absolute_rank <= 3);
+            const topClass = selectedClasses.some((cls) => {
+              const rank = classElapsedRank(ed, boat, cls);
+              return Boolean(boat.finished && rank && rank <= 3);
+            });
+            if (state.top3Abs && state.top3Class) {
+              if (!topAbs && !topClass) return;
+            } else if (state.top3Abs && !topAbs) {
+              return;
+            } else if (state.top3Class && !topClass) {
+              return;
+            }
+            rows.push({ edition: ed, boat, classes: selectedClasses });
+          });
+        });
+        return rows;
+      }
+
+      function setPage(page) {
+        if (page === "results" && !SHOW_RESULTS_TAB) page = "weather";
+        state.page = page;
+        if (els.tabResults) els.tabResults.classList.toggle("hidden", !SHOW_RESULTS_TAB);
+        if (els.pageWeather) els.pageWeather.classList.toggle("hidden", page !== "weather");
+        if (els.pageCurrent) els.pageCurrent.classList.toggle("hidden", page !== "current");
+        if (els.pageSkill) els.pageSkill.classList.toggle("hidden", page !== "skill");
+        if (els.pageResults) els.pageResults.classList.toggle("hidden", page !== "results");
+        if (els.pageSettings) els.pageSettings.classList.toggle("hidden", page !== "settings");
+        if (els.tabWeather) {
+          els.tabWeather.classList.toggle("active", page === "weather");
+          els.tabWeather.setAttribute("aria-selected", page === "weather" ? "true" : "false");
+        }
+        if (els.tabCurrent) {
+          els.tabCurrent.classList.toggle("active", page === "current");
+          els.tabCurrent.setAttribute("aria-selected", page === "current" ? "true" : "false");
+        }
+        if (els.tabSkill) {
+          els.tabSkill.classList.toggle("active", page === "skill");
+          els.tabSkill.setAttribute("aria-selected", page === "skill" ? "true" : "false");
+        }
+        if (els.tabResults) {
+          els.tabResults.classList.toggle("active", page === "results");
+          els.tabResults.setAttribute("aria-selected", page === "results" ? "true" : "false");
+        }
+        if (els.tabSettings) {
+          els.tabSettings.classList.toggle("active", page === "settings");
+          els.tabSettings.setAttribute("aria-selected", page === "settings" ? "true" : "false");
+        }
+        if (page === "weather") {
+          renderCalmMap();
+        } else if (page === "current") {
+          requestAnimationFrame(() => {
+            renderCurrentWeatherPage();
+            if (els.cwTrendPlot && els.cwTrendPlot.data) Plotly.Plots.resize(els.cwTrendPlot);
+            if (els.cwResidualPlot && els.cwResidualPlot.data) Plotly.Plots.resize(els.cwResidualPlot);
+            if (els.cwSentinelPlot && els.cwSentinelPlot.data) Plotly.Plots.resize(els.cwSentinelPlot);
+          });
+        } else if (page === "skill") {
+          requestAnimationFrame(() => {
+            renderSkillPage();
+            if (els.skillLeadPlot && els.skillLeadPlot.data) Plotly.Plots.resize(els.skillLeadPlot);
+          });
+        } else if (page === "results") {
+          requestAnimationFrame(() => {
+            renderResultsPage();
+            if (els.resultsMap && els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
+          });
+        } else if (page === "settings") {
+          renderSettingsPage();
+        }
+      }
+
+      function renderResultsControls() {
+        ensureResultsState();
+        const editions = ybData().editions || [];
+        if (els.yearToggles) {
+          els.yearToggles.innerHTML = editions
+            .map((ed) => {
+              const on = state.yearOn[ed.year];
+              return `<button type="button" class="chip ${on ? "on" : "off"}" data-year="${ed.year}">${ed.year}</button>`;
+            })
+            .join("");
+        }
+        if (els.classFilters) {
+          els.classFilters.innerHTML = editions
+            .filter((ed) => state.yearOn[ed.year])
+            .map((ed) => {
+              const chips = (ed.classes || [])
+                .map((cls) => {
+                  const on = state.classOn[ed.year][cls.id];
+                  return `<button type="button" class="chip ${on ? "on" : "off"}" data-year-class="${ed.year}:${cls.id}">${cls.name}</button>`;
+                })
+                .join("");
+              return `<div class="class-year"><h3>${ed.year} classes</h3><div class="chip-row">${chips}</div></div>`;
+            })
+            .join("");
+        }
+        if (els.filterTop3Abs) {
+          els.filterTop3Abs.classList.toggle("active", state.top3Abs);
+          els.filterTop3Abs.setAttribute("aria-pressed", state.top3Abs ? "true" : "false");
+        }
+        if (els.filterTop3Class) {
+          els.filterTop3Class.classList.toggle("active", state.top3Class);
+          els.filterTop3Class.setAttribute("aria-pressed", state.top3Class ? "true" : "false");
+        }
+        if (els.filterYearWeather) {
+          els.filterYearWeather.classList.toggle("active", state.showYearWeather);
+          els.filterYearWeather.setAttribute("aria-pressed", state.showYearWeather ? "true" : "false");
+        }
+        if (els.weatherYear) {
+          els.weatherYear.innerHTML = editions
+            .map((ed) => `<option value="${ed.year}">${ed.year}</option>`)
+            .join("");
+          els.weatherYear.value = String(state.weatherYear || "");
+        }
+        if (els.resultsKeyLand) {
+          els.resultsKeyLand.classList.toggle("off", !state.showResultsLand);
+          els.resultsKeyLand.setAttribute("aria-pressed", state.showResultsLand ? "true" : "false");
+        }
+        if (els.resultsKeyRhumbline) {
+          els.resultsKeyRhumbline.classList.toggle("off", !state.showResultsRhumbline);
+          els.resultsKeyRhumbline.setAttribute("aria-pressed", state.showResultsRhumbline ? "true" : "false");
+        }
+      }
+
+      function renderResultsMap() {
+        if (!els.resultsMap || !state.payload) return;
+        const rows = visibleResultBoats();
+        const course = (state.payload.meta && state.payload.meta.course) || {};
+        const lat = state.payload.climatology.grid.lat;
+        const lon = state.payload.climatology.grid.lon;
+        const weatherEd = (ybData().editions || []).find((ed) => ed.year === Number(state.weatherYear));
+        const weather = weatherEd && weatherEd.weather;
+        const traces = [];
+        if (state.showYearWeather && weather && weather.available) {
+          traces.push({
+            type: "heatmap",
+            z: fillEnclosedSeaHoles(weather.mean_tws_kt),
+            x: weather.lon,
+            y: weather.lat,
+            zmin: 0,
+            zmax: fixedMeanWindMax(),
+            colorscale: threeToneScale,
+            colorbar: { title: "Mean wind (kt)", tick0: 0, dtick: 2 },
+            zsmooth: false,
+            xgap: 1,
+            ygap: 1,
+            opacity: 0.88,
+            hoverinfo: "skip",
+            name: "Year weather",
+          });
+        }
+        if (state.showResultsLand) traces.push(...landTraces());
+        rows.forEach((row, idx) => {
+          const color = YEAR_COLORS[row.edition.year] || ROUTE_COLORS[idx % ROUTE_COLORS.length];
+          traces.push({
+            type: "scatter",
+            mode: "lines",
+            x: row.boat.lon,
+            y: row.boat.lat,
+            name: `${row.edition.year} ${row.boat.name}`,
+            line: { width: row.boat.absolute_rank && row.boat.absolute_rank <= 3 ? 3.2 : 1.8, color },
+            opacity: 0.92,
+            hoverinfo: "skip",
+            showlegend: false,
+          });
+        });
+        const keyRoute = [
+          [course.start && course.start[0], course.start && course.start[1]],
+          [course.gate && course.gate[0], course.gate && course.gate[1]],
+          [course.finish && course.finish[0], course.finish && course.finish[1]],
+        ].filter((pt) => pt[0] != null && pt[1] != null);
+        traces.push({
+          type: "scatter",
+          mode: "lines+markers",
+          x: keyRoute.map((pt) => pt[1]),
+          y: keyRoute.map((pt) => pt[0]),
+          name: "Rhumbline",
+          line: { width: 3, color: "#ffffff" },
+          marker: { size: 7, color: "#ffffff" },
+          hoverinfo: "skip",
+          showlegend: false,
+          visible: state.showResultsRhumbline,
+        });
+        const view = mapViewRanges(state.resultsRange) || {
+          xRange: [Math.min(...lon), Math.max(...lon)],
+          yRange: [Math.min(...lat), Math.max(...lat)],
+        };
+        const title = state.showYearWeather && weather && weather.available
+          ? `YB tracks + ${state.weatherYear} race-window wind`
+          : "YB tracks";
+        syncMapPlotSize(els.resultsMap, state.resultsRange);
+        applyPlot(
+          els.resultsMap,
+          traces,
+          {
+            ...plotLayoutBase,
+            ...mapEqualAspectLayout(title, view.xRange, view.yRange),
+            images: getMapImages(),
+            showlegend: false,
+          },
+          {}
+        );
+        if (els.resultsMap.on && !els.resultsMap._pmcRelayoutBound) {
+          els.resultsMap._pmcRelayoutBound = true;
+          els.resultsMap.on("plotly_relayout", () => {
+            rememberResultsRange(els.resultsMap);
+            syncMapPlotSize(els.resultsMap, state.resultsRange);
+          });
+        }
+      }
+
+      function renderResultsLegendAndTable() {
+        const rows = visibleResultBoats();
+        const years = [...new Set(rows.map((row) => row.edition.year))];
+        if (els.resultsLegend) {
+          els.resultsLegend.innerHTML = years
+            .map((year) => {
+              const color = YEAR_COLORS[year] || "#ccc";
+              return `<span class="map-key-item static"><span class="map-key-swatch" style="background:${color}"></span>${year}</span>`;
+            })
+            .join("");
+        }
+        const weatherEd = (ybData().editions || []).find((ed) => ed.year === Number(state.weatherYear));
+        const weather = weatherEd && weatherEd.weather;
+        let note = `${rows.length} tracks shown.`;
+        if (state.showYearWeather) {
+          if (weather && weather.available) {
+            note += ` Year weather: ${weather.note}`;
+          } else {
+            note += " Year weather is not loaded for this edition yet. The map still shows tracks.";
+          }
+        }
+        if (els.resultsNote) els.resultsNote.textContent = note;
+        if (!els.resultsTable) return;
+        const body = rows
+          .sort((a, b) => a.edition.year - b.edition.year || (a.boat.absolute_rank || 99) - (b.boat.absolute_rank || 99))
+          .map((row) => {
+            const classes = row.classes
+              .map((cls) => {
+                const rank = classElapsedRank(row.edition, row.boat, cls);
+                return `${cls.name}${rank ? " #" + rank : ""}`;
+              })
+              .join(", ");
+            return `<tr>
+              <td>${row.edition.year}</td>
+              <td>${row.boat.name}</td>
+              <td>${row.boat.absolute_rank || "—"}</td>
+              <td>${row.boat.elapsed_label || "—"}</td>
+              <td>${row.boat.finished ? "Finished" : row.boat.status}</td>
+              <td>${classes}</td>
+            </tr>`;
+          })
+          .join("");
+        els.resultsTable.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Year</th><th>Boat</th><th>Abs</th><th>Elapsed</th><th>Status</th><th>Classes</th></tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>`;
+      }
+
+      function renderResultsPage() {
+        renderResultsControls();
+        renderResultsMap();
+        renderResultsLegendAndTable();
+      }
+
+      function renderAll() {
+        refreshTimeLabelsOnly();
+        renderCalmMap();
+        renderRouteComparison();
+        renderHeadToHeadTable();
+        renderPointDetail();
+        renderTransects();
+        renderSarShadow();
+        renderSkillPage();
+        if (state.page === "current") renderCurrentWeatherPage();
+        if (state.page === "results") renderResultsPage();
+        if (state.page === "settings") renderSettingsPage();
+      }
+
+      function bindEvents() {
+        if (state.eventsBound) return;
+        state.eventsBound = true;
+        bindMapClick();
+        if (els.tabResults) els.tabResults.classList.toggle("hidden", !SHOW_RESULTS_TAB);
+        if (els.tabWeather) els.tabWeather.onclick = () => setPage("weather");
+        if (els.tabCurrent) els.tabCurrent.onclick = () => setPage("current");
+        if (els.tabSkill) els.tabSkill.onclick = () => setPage("skill");
+        if (els.tabSettings) els.tabSettings.onclick = () => setPage("settings");
+        if (els.tabResults) {
+          els.tabResults.onclick = () => {
+            if (SHOW_RESULTS_TAB) setPage("results");
+          };
+        }
+        if (els.skillHideBiased) {
+          els.skillHideBiased.onclick = () => {
+            state.skillHideBiased = !state.skillHideBiased;
+            renderSkillPage();
+          };
+        }
+        if (els.skillMetric) {
+          els.skillMetric.onchange = () => {
+            state.skillMetric = els.skillMetric.value;
+            renderSkillPage();
+          };
+        }
+        if (els.yearsAll) {
+          els.yearsAll.onclick = () => {
+            Object.keys(state.yearOn).forEach((year) => {
+              state.yearOn[year] = true;
+            });
+            renderResultsPage();
+          };
+        }
+        if (els.yearsNone) {
+          els.yearsNone.onclick = () => {
+            Object.keys(state.yearOn).forEach((year) => {
+              state.yearOn[year] = false;
+            });
+            renderResultsPage();
+          };
+        }
+        if (els.filterTop3Abs) {
+          els.filterTop3Abs.onclick = () => {
+            state.top3Abs = !state.top3Abs;
+            renderResultsPage();
+          };
+        }
+        if (els.filterTop3Class) {
+          els.filterTop3Class.onclick = () => {
+            state.top3Class = !state.top3Class;
+            renderResultsPage();
+          };
+        }
+        if (els.filterYearWeather) {
+          els.filterYearWeather.onclick = () => {
+            state.showYearWeather = !state.showYearWeather;
+            renderResultsPage();
+          };
+        }
+        if (els.weatherYear) {
+          els.weatherYear.onchange = () => {
+            state.weatherYear = Number(els.weatherYear.value);
+            renderResultsPage();
+          };
+        }
+        if (els.resultsKeyLand) {
+          els.resultsKeyLand.onclick = () => {
+            state.showResultsLand = !state.showResultsLand;
+            renderResultsPage();
+          };
+        }
+        if (els.resultsKeyRhumbline) {
+          els.resultsKeyRhumbline.onclick = () => {
+            state.showResultsRhumbline = !state.showResultsRhumbline;
+            renderResultsPage();
+          };
+        }
+        document.addEventListener("click", (ev) => {
+          const yearBtn = ev.target.closest("[data-year]");
+          if (yearBtn && yearBtn.closest("#year-toggles")) {
+            const year = Number(yearBtn.getAttribute("data-year"));
+            state.yearOn[year] = !state.yearOn[year];
+            renderResultsPage();
+            return;
+          }
+          const classBtn = ev.target.closest("[data-year-class]");
+          if (classBtn && classBtn.closest("#class-filters")) {
+            const [year, classId] = classBtn.getAttribute("data-year-class").split(":");
+            state.classOn[Number(year)][classId] = !state.classOn[Number(year)][classId];
+            renderResultsPage();
+            return;
+          }
+          const actBtn = ev.target.closest("[data-results-act]");
+          if (actBtn && els.resultsMap) {
+            const act = actBtn.getAttribute("data-results-act");
+            if (act === "all") {
+              state.resultsRange = null;
+              resetPlot(els.resultsMap);
+            } else if (act === "in") {
+              zoomPlot(els.resultsMap, 0.7);
+              rememberResultsRange(els.resultsMap);
+            } else if (act === "out") {
+              zoomPlot(els.resultsMap, 1 / 0.7);
+              rememberResultsRange(els.resultsMap);
+            }
+            requestAnimationFrame(() => {
+              syncMapPlotSize(els.resultsMap, state.resultsRange);
+              if (els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
+            });
+          }
+        });
+        els.hourSlider.oninput = () => {
+          stopHourPlay();
+          applySelectedHour(els.hourSlider.value);
+        };
+        if (els.hourPlay) els.hourPlay.onclick = () => toggleHourPlay();
+        if (els.mapLayer) {
+          els.mapLayer.onchange = () => {
+            state.mapLayer = els.mapLayer.value;
+            renderCalmMap();
+          };
+        }
+        if (els.modeLocal) {
+          els.modeLocal.onclick = () => {
+            state.timeMode = "local";
+            updateTimeModeButtons();
+            renderAll();
+          };
+        }
+        if (els.modeUtc) {
+          els.modeUtc.onclick = () => {
+            state.timeMode = "utc";
+            updateTimeModeButtons();
+            renderAll();
+          };
+        }
+        document.addEventListener("click", (ev) => {
+          const btn = ev.target.closest(".zoom-toolbar button");
+          if (btn) {
+            const wrap = btn.closest(".plot-wrap");
+            const plot = wrap && wrap.querySelector(".plot");
+            const act = btn.getAttribute("data-act");
+            if (act === "select") {
+              setMapTool(state.mapTool === "select" ? "zoom" : "select");
+              return;
+            }
+            if (!plot || !plot.data) return;
+            if (plot === els.mapPlot && state.mapTool === "select") setMapTool("zoom");
+            if (act === "all") {
+              if (plot === els.mapPlot) state.mapRange = null;
+              resetPlot(plot);
+            } else if (act === "in") {
+              zoomPlot(plot, 0.7);
+              if (plot === els.mapPlot) rememberMapRange(plot);
+            } else if (act === "out") {
+              zoomPlot(plot, 1 / 0.7);
+              if (plot === els.mapPlot) rememberMapRange(plot);
+            }
+            if (plot === els.mapPlot) {
+              requestAnimationFrame(() => {
+                syncMapPlotSize();
+                Plotly.Plots.resize(els.mapPlot);
+                syncMapHitLayer();
+              });
+            }
+            return;
+          }
+          const toggle = ev.target.closest("[data-route-toggle]");
+          if (toggle) {
+            const id = toggle.getAttribute("data-route-toggle");
+            state.routeOn[id] = toggle.checked;
+            if (!toggle.checked && state.routeFocus === id) state.routeFocus = null;
+            renderCalmMap();
+            renderRouteComparison();
+            return;
+          }
+          const routeEl = ev.target.closest("[data-route-id]");
+          if (routeEl && (routeEl.closest("#route-legend") || routeEl.closest("#route-summary"))) {
+            const id = routeEl.getAttribute("data-route-id");
+            state.routeFocus = state.routeFocus === id ? null : id;
+            if (state.routeFocus) state.routeOn[id] = true;
+            renderCalmMap();
+            renderRouteComparison();
+          }
+        });
+        if (els.routesShowAll) {
+          els.routesShowAll.onclick = () => {
+            const routes = (state.payload && state.payload.routes) || [];
+            ensureRouteState(routes);
+            Object.keys(state.routeOn).forEach((id) => {
+              state.routeOn[id] = true;
+            });
+            renderCalmMap();
+            renderRouteComparison();
+          };
+        }
+        if (els.routesHideAll) {
+          els.routesHideAll.onclick = () => {
+            const routes = (state.payload && state.payload.routes) || [];
+            ensureRouteState(routes);
+            Object.keys(state.routeOn).forEach((id) => {
+              state.routeOn[id] = false;
+            });
+            state.routeFocus = null;
+            renderCalmMap();
+            renderRouteComparison();
+          };
+        }
+        if (els.routesClearFocus) {
+          els.routesClearFocus.onclick = () => {
+            state.routeFocus = null;
+            renderCalmMap();
+            renderRouteComparison();
+          };
+        }
+        els.dataFileInput.onchange = async () => {
+          const file = els.dataFileInput.files && els.dataFileInput.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text();
+            const payload = JSON.parse(text);
+            persistPayload(payload, file.name);
+            mountWithPayload(payload, `Remembered file: ${file.name}`);
+          } catch (err) {
+            setStatus(`Failed to parse selected JSON: ${String(err)}`, true);
+          }
+        };
+        els.useBundled.onclick = () => {
+          if (useBundledPayload("Bundled dashboard/data.js")) return;
+          tryLoadDefaultData().then((payload) => {
+            if (payload) {
+              clearPersistedPayload();
+              mountWithPayload(payload, "Bundled dashboard/data.json");
+            } else setStatus("Bundled data is not available. Select a JSON file.", true);
+          });
+        };
+        const skillUseBundled = document.getElementById("skill-use-bundled");
+        if (skillUseBundled) {
+          skillUseBundled.onclick = () => {
+            if (!useBundledPayload("Bundled dashboard/data.js")) {
+              setStatus("Bundled data is not available.", true);
+              return;
+            }
+            setPage("skill");
+          };
+        }
+        if (els.cwObsInput) {
+          els.cwObsInput.onchange = async () => {
+            const file = els.cwObsInput.files && els.cwObsInput.files[0];
+            if (file) await handleObservationUpload(file);
+          };
+        }
+        if (els.cwDrop) {
+          ["dragenter", "dragover"].forEach((evt) => {
+            els.cwDrop.addEventListener(evt, (e) => {
+              e.preventDefault();
+              els.cwDrop.classList.add("dragover");
+            });
+          });
+          ["dragleave", "drop"].forEach((evt) => {
+            els.cwDrop.addEventListener(evt, (e) => {
+              e.preventDefault();
+              els.cwDrop.classList.remove("dragover");
+            });
+          });
+          els.cwDrop.addEventListener("drop", async (e) => {
+            const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file) await handleObservationUpload(file);
+          });
+        }
+      }
+
+      async function tryLoadDefaultData() {
+        try {
+          const res = await fetch("./data.json", { cache: "no-store" });
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function bindMapClick() {
+        if (!els.mapPlot || els.mapPlot._pmcClickBound) return;
+        els.mapPlot._pmcClickBound = true;
+        if (els.mapKeyLand) {
+          els.mapKeyLand.onclick = () => {
+            state.showLand = !state.showLand;
+            updateMapKeyButtons();
+            renderCalmMap();
+          };
+        }
+        if (els.mapKeyRhumbline) {
+          els.mapKeyRhumbline.onclick = () => {
+            state.showRhumbline = !state.showRhumbline;
+            updateMapKeyButtons();
+            renderCalmMap();
+          };
+        }
+        if (els.mapPlot.on) {
+          els.mapPlot.on("plotly_relayout", () => {
+            rememberMapRange(els.mapPlot);
+            if (state.mapTool === "select") syncMapHitLayer();
+          });
+        }
+        updateMapToolButtons();
+        updateMapKeyButtons();
+        if (!window._pmcMapResizeBound) {
+          window._pmcMapResizeBound = true;
+          let resizeTimer = null;
+          window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+              if (!state.payload) return;
+              syncMapPlotSize(els.mapPlot, state.mapRange);
+              if (els.mapPlot && els.mapPlot.data) {
+                Plotly.Plots.resize(els.mapPlot);
+                syncMapHitLayer();
+              }
+              if (els.resultsMap) {
+                syncMapPlotSize(els.resultsMap, state.resultsRange);
+                if (els.resultsMap.data) Plotly.Plots.resize(els.resultsMap);
+              }
+            }, 120);
+          });
+        }
+      }
+
+      function persistPayload(payload, name) {
+        try {
+          localStorage.setItem(STORAGE_PAYLOAD, JSON.stringify(payload));
+          localStorage.setItem(STORAGE_NAME, name || "data.json");
+          localStorage.setItem(STORAGE_PREFER, "1");
+        } catch (err) {
+          els.fileLoaderHelp.textContent =
+            "This browser will not remember a file:// selection after reload. " +
+            "Pick the file again, or keep using the bundled data.js.";
+        }
+      }
+
+      function clearPersistedPayload() {
+        try {
+          localStorage.removeItem(STORAGE_PAYLOAD);
+          localStorage.removeItem(STORAGE_NAME);
+          localStorage.removeItem(STORAGE_PREFER);
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      function loadStoredPayload() {
+        try {
+          const raw = localStorage.getItem(STORAGE_PAYLOAD);
+          if (!raw) return null;
+          return {
+            payload: JSON.parse(raw),
+            name: localStorage.getItem(STORAGE_NAME) || "saved file",
+          };
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function mountWithPayload(payload, sourceLabel) {
+        state.payload = payload;
+        state.selectedHour = 0;
+        const start = (payload.meta && payload.meta.course && payload.meta.course.start) || [];
+        const seedLat = start[0] != null ? start[0] : payload.climatology.grid.lat[0];
+        const seedLon = start[1] != null ? start[1] : payload.climatology.grid.lon[0];
+        const seed = nearestCellWithWind(seedLat, seedLon);
+        state.selectedLatIdx = seed.latIdx;
+        state.selectedLonIdx = seed.lonIdx;
+        state.routeOn = {};
+        state.routeFocus = null;
+        state.mapRange = null;
+        state.meanWindMax = null;
+        stopHourPlay();
+        els.hourSlider.min = "0";
+        els.hourSlider.max = String(payload.climatology.by_hour.length - 1);
+        els.hourSlider.value = "0";
+        state.mapLayer = "mean_tws_kt";
+        if (els.mapLayer) els.mapLayer.value = state.mapLayer;
+        state.skillBin = "all";
+        state.skillMonths = (payload.meta && payload.meta.skill && payload.meta.skill.default_month_filter) || "summer";
+        state._skillMonthsInit = true;
+        state.skillLead = 3;
+        state.skillHideBiased = false;
+        state.skillMetric = "vec_rmse_kt";
+        state.skillModelOn = {};
+        state.skillSort = { key: "vec_rmse_kt", dir: "asc" };
+        state.cwLead = (payload.current_weather && payload.current_weather.meta && payload.current_weather.meta.default_lead_bucket) || "48-72";
+        state.cwInstrument = "ascat_metop_b";
+        state.cwModelOn = {};
+        state.cwResidualModel = null;
+        buildWarnings(payload.meta);
+        updateTimeModeButtons();
+        renderAll();
+        bindEvents();
+        setStatus(`Loaded dashboard payload (${sourceLabel}).`, false);
+        els.fileLoaderHelp.textContent =
+          `Now showing: ${sourceLabel}. A chosen file is remembered in this browser so reload keeps it.`;
+      }
+
+      function skillRowCount(payload) {
+        return Array.isArray(payload && payload.skill) ? payload.skill.length : 0;
+      }
+
+      function useBundledPayload(label) {
+        clearPersistedPayload();
+        const bundled = window.DASHBOARD_PAYLOAD;
+        if (bundled) {
+          mountWithPayload(bundled, label || "Bundled dashboard/data.js");
+          return true;
+        }
+        return false;
+      }
+
+      function initAnalytics() {
+        if (els.analyticsLink && GOATCOUNTER_SITE) {
+          els.analyticsLink.href = `https://${GOATCOUNTER_SITE}.goatcounter.com`;
+        }
+        if (!GOATCOUNTER_SITE) return;
+        if (location.protocol === "file:") return;
+        if (document.querySelector("script[data-goatcounter]")) return;
+        const script = document.createElement("script");
+        script.async = true;
+        script.defer = true;
+        script.dataset.goatcounter = `https://${GOATCOUNTER_SITE}.goatcounter.com/count`;
+        script.src = "https://gc.zgo.at/count.js";
+        document.head.appendChild(script);
+      }
+
+      async function init() {
+        initAnalytics();
+        bindEvents();
+        const saved = loadStoredPayload();
+        const bundled = window.DASHBOARD_PAYLOAD || null;
+        let preferSaved = false;
+        try {
+          preferSaved = Boolean(saved && localStorage.getItem(STORAGE_PREFER) === "1");
+        } catch (err) {
+          preferSaved = false;
+        }
+        // Stale remembered files often predate model skill. Prefer bundled when it
+        // has skill rows and the saved payload does not.
+        if (
+          preferSaved
+          && bundled
+          && skillRowCount(saved.payload) === 0
+          && skillRowCount(bundled) > 0
+        ) {
+          clearPersistedPayload();
+          preferSaved = false;
+        }
+        if (preferSaved) {
+          mountWithPayload(saved.payload, `Remembered file: ${saved.name}`);
+          return;
+        }
+        if (bundled) {
+          mountWithPayload(bundled, "Bundled dashboard/data.js");
+          return;
+        }
+        const fetched = await tryLoadDefaultData();
+        if (fetched) {
+          mountWithPayload(fetched, "Bundled dashboard/data.json");
+          return;
+        }
+        if (saved) {
+          mountWithPayload(saved.payload, `Remembered file: ${saved.name}`);
+          return;
+        }
+        setStatus("Could not load bundled data. Select a local data.json below.", true);
+        els.fileLoaderHelp.textContent =
+          "Your browser blocked automatic load of the bundled file. Select dashboard/data.json once; it will be remembered here.";
+      }
+
+      init();
+    </script>
+  </body>
+</html>
