@@ -1,0 +1,82 @@
+# Explicit LOA (feet) for Palermo–Montecarlo YB boats where known from
+# public race coverage / design type. Used only for the 45–60 ft cross-check.
+# Keys matched case-insensitively after whitespace normalisation.
+
+boats:
+  # 2025 / recent — from race news and known designs
+  "NO REGRET": 52.0          # ICE 52
+  "ARKAS SAILING TEAM BLUE MOON": 52.0  # TP52
+  "SAGOLA LAURIA": 45.0      # Farr 45
+  "SOUTH KENSIGTON": 35.0    # First 35 (typo in YB)
+  "SOUTH KENSINGTON": 35.0
+  "K'MENA": 32.6             # J/99
+  "OVERDOSE CHARLY": 36.0    # Dehler 36
+  "TENGHER": 42.0            # Swan 42
+  "MANTICORE-CVSF": 60.0     # Mylius 60
+  "BLACK JACK 100": 100.0
+  "BLACK JACK": 100.0
+  "CASSIOPEIA 68": 68.0
+  "ACI 40": 40.0
+  "MADE IN MIDI": 40.0
+  "MADE INMIDI": 40.0
+  "VAQUITA": 40.0
+  "CROSSING ROUTES - VAQUITA": 40.0
+  "IMAGIN'ACT SOCOMEC": 40.0
+  "INTUITION": 72.0          # Maxi class
+  "BALTHASAR": 70.0          # Maxi
+  "ORSA MAGGIORE": 70.0      # Maxi / naval sail training
+  "SISI": 65.0               # Maxi class
+  "LUCKY": 65.0              # Maxi class
+  "TEAM 42": 42.0
+  "FALCON": 52.0             # commonly TP/ICE-class mid-fifty; confirm if needed
+  "FARRAWAY": 50.0           # ORC Group 1 mid-size
+  "PISTRICE": 50.0
+  "PISTRICE ZENITRAM SAILS": 50.0
+  "GORILLA GANG XL": 52.0
+  "GORILLA GANG": 50.0
+  "SAILING FACTORY 2": 50.0
+  "CELLISSIMA": 50.0
+  "PROSPETTICA": 50.0
+  "NOTTE DI STELLE": 48.0
+  "AZAHAR": 50.0
+  "SUR": 50.0
+  "SUPER KALIMERA": 50.0
+  "STARFLY": 45.0
+  "STARFLY LEGA NAVALE PALERMO": 45.0
+  "STRAFLY": 45.0
+  "JOY YOUNG TEAM": 40.0
+  "LADY JANE X-RATED": 45.0
+  "LADY JANE X RATED": 45.0
+  "I AM BAD": 40.0
+  "BORA FAST": 40.0
+  "DAGOBAH 2": 40.0
+  "CHANGE TRASPARENT": 40.0
+  "ALAKALUF": 50.0
+  "ALDEBARAN": 45.0
+  "ANGELICA II": 45.0
+  "ANTARES": 45.0
+  "FAVORIT": 45.0
+  "FAVORIT PLUS": 45.0
+  "FELIX III": 45.0
+  "JASMINE": 45.0
+  "SHOOTING STAR": 50.0
+  "AFAZIK IMPULSE": 40.0
+  "AFAZIK IMPULSE (NEOJIVARO)": 40.0
+  "NEOJIVARO": 40.0
+  "IMPULSE": 40.0
+  "RAMBLER": 90.0
+  "MALIZIA II YACHT CLUB DE MONACO": 60.0
+  "I LOVE POLAND": 70.0
+  "PENDRAGON VI": 50.0
+  "TONNERRE DE GLEN": 56.0
+  "ARTIE III JEEP": 52.0
+  "MAGIC TWELVE": 45.0
+  "TRIPLE9": 32.6            # J/99 family naming
+  "QQ7": 50.0
+  "SCAMP 3": 30.0
+  "BEWILD": 40.0
+  "ENALIA": 45.0
+  "WIND": 45.0
+  "PRIMAVISTA LAURIA": 45.0
+  "SPIRIT OF NERINA LAURIA": 45.0
+  "COMANCHE - SAGOLA - LAURIA": 45.0

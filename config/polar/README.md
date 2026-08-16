@@ -24,4 +24,6 @@ That writes `config/polar/boat.pol` when the file is missing.
 ## Public vs private
 
 - `contracts/fixtures/polar_52ft.pol` — fabricated fixture; safe to publish.
+- `contracts/fixtures/polar_55ft_generic.pol` — plausible generic 50–60 ft
+  speeds for analyses when `boat.pol` is absent (still **not** a VPP).
 - `config/polar/boat.pol` — proprietary VPP; must stay out of the public tree.

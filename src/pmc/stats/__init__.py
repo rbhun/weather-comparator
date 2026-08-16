@@ -5,7 +5,7 @@ from __future__ import annotations
 import itertools
 import math
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 import pandas as pd
@@ -428,4 +428,20 @@ def _initial_bearing_deg(
     y = np.cos(lat1) * np.sin(lat2) - np.sin(lat1) * np.cos(lat2) * np.cos(dlon)
     bearing = np.degrees(np.arctan2(x, y))
     return np.mod(bearing + 360.0, 360.0)
+
+
+def __getattr__(name: str) -> Any:
+    if name in {
+        "WindCheckConfig",
+        "annotate_samples_with_wind",
+        "collect_motion_samples",
+        "format_summary_markdown",
+        "run_wind_check",
+        "summarise_residuals",
+        "track_motion_samples",
+    }:
+        from pmc.stats import yb_wind_check
+
+        return getattr(yb_wind_check, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

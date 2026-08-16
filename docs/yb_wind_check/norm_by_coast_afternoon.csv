@@ -1,0 +1,6 @@
+coast_window,n,residual_median_kt,residual_p10_kt,residual_p90_kt,sog_median_kt,predicted_median_kt,analysis_tws_median_kt
+near_coast_afternoon,11214,0.3,-2.44,3.49,6.0,5.9,6.81
+near_coast_night,10633,0.14,-3.29,3.49,4.91,4.98,4.26
+offshore_afternoon,14874,0.0,-2.56,2.68,5.72,5.65,5.76
+offshore_night,23702,-0.03,-2.87,2.76,5.56,5.63,6.22
+other,35211,-0.09,-3.16,2.84,5.34,5.56,5.8

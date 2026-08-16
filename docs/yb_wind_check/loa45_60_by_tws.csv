@@ -1,0 +1,5 @@
+tws_bin,n,residual_median_kt,residual_p10_kt,residual_p90_kt,sog_median_kt,predicted_median_kt,analysis_tws_median_kt
+0-6kt,9327,0.16,-3.33,3.44,4.35,4.72,3.39
+12-20kt,4313,-0.91,-3.38,2.48,6.65,7.91,14.17
+20kt+,393,-2.6,-4.45,-0.12,8.15,10.82,21.74
+6-12kt,7031,0.09,-2.53,3.19,6.44,6.67,8.62
