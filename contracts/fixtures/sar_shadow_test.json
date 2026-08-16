@@ -1,0 +1,462 @@
+{
+  "hypothesis": "Within each SAR scene, mean wind speed in the 0\u20135 nm band along the Sardinian east coast is 3\u20134 kt lower than in the 7.5\u201310 nm band (paired difference).",
+  "sampling_limitation": "Sentinel-1 is sun-synchronous with roughly 06:00 and 18:00 local overpasses. The archive therefore samples near dawn and dusk and largely misses mid-afternoon, when a thermal or lee effect would be strongest and when much of the fleet passes that coast. A null SAR differential may mean the overpass window is uninformative, not that the shadow does not exist.",
+  "min_scenes_threshold": 15,
+  "n_scenes_retained": 22,
+  "n_scenes_raw": 24,
+  "verdict": "supported",
+  "pipeline_valid": true,
+  "control_indistinguishable_from_zero": true,
+  "default_buffer_km": 1.5,
+  "scene_inventory": {
+    "by_year_raw": {
+      "2018": 3,
+      "2019": 3,
+      "2020": 3,
+      "2021": 3,
+      "2022": 3,
+      "2023": 3,
+      "2024": 3,
+      "2025": 3
+    },
+    "by_year_retained": {
+      "2019": 3,
+      "2020": 3,
+      "2021": 3,
+      "2022": 3,
+      "2023": 3,
+      "2024": 3,
+      "2018": 2,
+      "2025": 2
+    },
+    "total_raw": 24,
+    "retained": 22,
+    "both_bands_filter": "scene requires valid retrievals in 0\u20135 nm and 7.5\u201310 nm"
+  },
+  "paired_differentials_kt": {
+    "sar": {
+      "mean": -3.4655592570713027,
+      "ci95": [
+        -3.4856030261956135,
+        -3.4449839439514567
+      ],
+      "n": 22,
+      "sign_consistency": 1.0,
+      "samples": [
+        -3.512,
+        -3.455,
+        -3.52,
+        -3.473,
+        -3.411,
+        -3.498,
+        -3.509,
+        -3.377,
+        -3.545,
+        -3.488,
+        -3.416,
+        -3.451,
+        -3.434,
+        -3.39,
+        -3.423,
+        -3.52,
+        -3.438,
+        -3.496,
+        -3.479,
+        -3.407,
+        -3.451,
+        -3.55
+      ]
+    },
+    "arome": {
+      "mean": -3.4000000000000004,
+      "ci95": [
+        -3.4000000000000004,
+        -3.4000000000000004
+      ],
+      "n": 22,
+      "sign_consistency": 1.0,
+      "samples": [
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4,
+        -3.4
+      ]
+    },
+    "era5": {
+      "mean": -0.5999999999999999,
+      "ci95": [
+        -0.5999999999999999,
+        -0.5999999999999999
+      ],
+      "n": 22,
+      "sign_consistency": 1.0,
+      "samples": [
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6,
+        -0.6
+      ]
+    }
+  },
+  "control": {
+    "corridor_id": "tyrrhenian_control",
+    "label": "Tyrrhenian open-water control",
+    "paired_differential_kt": {
+      "mean": 0.010947641792193055,
+      "ci95": [
+        -0.012452582641782239,
+        0.03521077718689143
+      ],
+      "n": 24,
+      "sign_consistency": 0.4166666666666667,
+      "samples": [
+        0.00218562380361557,
+        0.029082329288482665,
+        -0.04219699900746345,
+        -0.0011386933175325394,
+        -0.06722415266370774,
+        0.15963581221437453,
+        -0.01777001134479046,
+        0.0165131386231184,
+        0.06477250933861732,
+        -0.1037717127046585,
+        0.011997758487701416,
+        -0.04396273833990097,
+        0.0696118400759697,
+        -0.056334036434412,
+        0.021625440611600877,
+        -0.0049783653304576875,
+        0.027820822080373765,
+        0.07029867096590996,
+        -0.010021613471031188,
+        0.11623199293875694,
+        0.039080770327329636,
+        0.007006416595220566,
+        -0.07687129963064193,
+        0.051149899906158446
+      ]
+    },
+    "interpretation": "Control differential must be indistinguishable from zero; otherwise the Sardinian result is suppressed."
+  },
+  "buffer_sensitivity": [
+    {
+      "buffer_km": 1.0,
+      "n": 22,
+      "mean_kt": -3.465753810705337,
+      "ci95_kt": [
+        -3.4862221575083123,
+        -3.4457804612858185
+      ]
+    },
+    {
+      "buffer_km": 1.5,
+      "n": 22,
+      "mean_kt": -3.4655592570713027,
+      "ci95_kt": [
+        -3.485378988011533,
+        -3.44455703928662
+      ]
+    },
+    {
+      "buffer_km": 2.0,
+      "n": 22,
+      "mean_kt": -3.4658905596539955,
+      "ci95_kt": [
+        -3.4856087850716575,
+        -3.445562269401048
+      ]
+    }
+  ],
+  "incidence_diagnostic": {
+    "n_pairs": 22,
+    "corr_incidence_delta_vs_speed_diff": null,
+    "points": [
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.511874323798537
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4552256057350634
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.5198345177024604
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4730526212630273
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.41135184953475
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.49767333045876
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.509279474842548
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.3765023653242587
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.5452463337329627
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4882694940297605
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4156619219210147
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.451068239676893
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4339440440170765
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.3897931455278396
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4226358971111774
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.5195050057168005
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.438448301385045
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4957333344362973
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4792781268936395
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.406805418340206
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.4512844384691714
+      },
+      {
+        "incidence_delta_deg": -0.5851593017578125,
+        "speed_diff_kt": -3.549835865651369
+      }
+    ],
+    "note": "If the speed differential is an incidence-angle gradient in disguise, correlation with cross-track incidence delta will be large."
+  },
+  "low_speed_tail": {
+    "mean_frac_below_3ms": 0.46545454545454545,
+    "note": "Surfactants and slicks invert to spuriously low wind and concentrate in sheltered coastal water \u2014 the most dangerous confounder.",
+    "survives_excluding_below_3ms": {
+      "n": 13,
+      "mean_kt": null,
+      "ci95_kt": [
+        null,
+        null
+      ]
+    }
+  },
+  "arome_at_overpass": {
+    "note": "Compare AROME's paired differential restricted to SAR overpass times with the SAR differential. If AROME's own dawn/dusk shadow is weak, the test is uninformative.",
+    "arome_mean_kt": -3.4000000000000004,
+    "arome_ci95_kt": [
+      -3.4000000000000004,
+      -3.4000000000000004
+    ],
+    "sar_mean_kt": -3.4655592570713027,
+    "sar_ci95_kt": [
+      -3.4856030261956135,
+      -3.4449839439514567
+    ]
+  },
+  "three_way_table": [
+    {
+      "time_utc": "2019-08-05T16:00:00Z",
+      "sar_diff_kt": -3.511874323798537,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2020-08-08T04:00:00Z",
+      "sar_diff_kt": -3.4552256057350634,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2021-08-11T16:00:00Z",
+      "sar_diff_kt": -3.5198345177024604,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2022-08-14T04:00:00Z",
+      "sar_diff_kt": -3.4730526212630273,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2023-08-17T16:00:00Z",
+      "sar_diff_kt": -3.41135184953475,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2024-08-20T04:00:00Z",
+      "sar_diff_kt": -3.49767333045876,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2018-08-26T04:00:00Z",
+      "sar_diff_kt": -3.509279474842548,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2019-08-29T16:00:00Z",
+      "sar_diff_kt": -3.3765023653242587,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2020-08-04T04:00:00Z",
+      "sar_diff_kt": -3.5452463337329627,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2021-08-07T16:00:00Z",
+      "sar_diff_kt": -3.4882694940297605,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2022-08-10T04:00:00Z",
+      "sar_diff_kt": -3.4156619219210147,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2023-08-13T16:00:00Z",
+      "sar_diff_kt": -3.451068239676893,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2024-08-16T04:00:00Z",
+      "sar_diff_kt": -3.4339440440170765,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2025-08-19T16:00:00Z",
+      "sar_diff_kt": -3.3897931455278396,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2018-08-22T04:00:00Z",
+      "sar_diff_kt": -3.4226358971111774,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2019-08-25T16:00:00Z",
+      "sar_diff_kt": -3.5195050057168005,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2020-08-28T04:00:00Z",
+      "sar_diff_kt": -3.438448301385045,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2021-08-03T16:00:00Z",
+      "sar_diff_kt": -3.4957333344362973,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2022-08-06T04:00:00Z",
+      "sar_diff_kt": -3.4792781268936395,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2023-08-09T16:00:00Z",
+      "sar_diff_kt": -3.406805418340206,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2024-08-12T04:00:00Z",
+      "sar_diff_kt": -3.4512844384691714,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    },
+    {
+      "time_utc": "2025-08-15T16:00:00Z",
+      "sar_diff_kt": -3.549835865651369,
+      "arome_diff_kt": -3.4,
+      "era5_diff_kt": -0.6
+    }
+  ],
+  "era5_caveat": "ERA5 is unreliable for Bonifacio acceleration and Sicilian/Corsican thermals; included as a low-resolution baseline, not as truth.",
+  "fixture_note": "SYNTHETIC SAR fixture with injected -3.5 kt lee; not real S1 evidence."
+}

@@ -423,6 +423,74 @@ MODELS_NON_ASSIMILATING_SCATTEROMETER = (
     "ecmwf_aifs025",
 )
 
+def validate_sar_store(sar: xr.Dataset) -> None:
+    """Validate C10 SAR scalar wind-speed store (speed only; no u/v/direction)."""
+    for dim in ("scene", "lat", "lon"):
+        if dim not in sar.dims and dim not in sar.coords:
+            raise ValueError(f"Missing SAR dimension/coordinate: {dim}")
+    if "wind_speed_ms" not in sar.data_vars:
+        raise ValueError("Missing variable: wind_speed_ms")
+    if sar["wind_speed_ms"].dims != ("scene", "lat", "lon"):
+        raise ValueError("wind_speed_ms dims must be (scene, lat, lon)")
+    for forbidden in ("u10", "v10", "wind_dir", "wind_direction", "twd", "twd_deg"):
+        if forbidden in sar.data_vars or forbidden in sar.coords:
+            raise ValueError(
+                f"SAR store must not contain '{forbidden}' — direction is not "
+                "independent evidence and must not appear in C10."
+            )
+    lat_vals = sar["lat"].values.astype(float)
+    lon_vals = sar["lon"].values.astype(float)
+    if np.any(np.diff(lat_vals) <= 0.0):
+        raise ValueError("lat axis must be strictly ascending.")
+    if np.any(np.diff(lon_vals) <= 0.0):
+        raise ValueError("lon axis must be strictly ascending.")
+    if "time" not in sar.coords:
+        raise ValueError("Missing coordinate: time (one UTC valid time per scene)")
+    if sar["time"].sizes.get("scene", sar.sizes.get("scene", 0)) != sar.sizes["scene"]:
+        # Allow time as (scene,) coordinate.
+        if "scene" not in sar["time"].dims:
+            raise ValueError("time must be aligned on the scene dimension.")
+    for attr in ("source", "product_id", "fetched_utc", "direction_policy"):
+        if attr not in sar.attrs:
+            raise ValueError(f"Missing SAR dataset attr: {attr}")
+    if str(sar.attrs.get("direction_policy")) != "speed_only_no_direction":
+        raise ValueError("direction_policy must be 'speed_only_no_direction'")
+
+
+def validate_sar_shadow_payload(section: dict[str, Any]) -> None:
+    """Validate optional dashboard section sar_shadow_test."""
+    required = {
+        "verdict",
+        "pipeline_valid",
+        "n_scenes_retained",
+        "min_scenes_threshold",
+        "scene_inventory",
+        "sampling_limitation",
+        "hypothesis",
+    }
+    if not required.issubset(section.keys()):
+        missing = sorted(required - set(section.keys()))
+        raise ValueError(f"sar_shadow_test missing keys: {missing}")
+    verdict = section["verdict"]
+    allowed = {"supported", "contradicted", "insufficient sample"}
+    if verdict not in allowed:
+        raise ValueError(f"verdict must be one of {sorted(allowed)}")
+    n = int(section["n_scenes_retained"])
+    threshold = int(section["min_scenes_threshold"])
+    if n < threshold and verdict != "insufficient sample":
+        raise ValueError(
+            "verdict must be 'insufficient sample' when n_scenes_retained "
+            f"({n}) < min_scenes_threshold ({threshold})"
+        )
+    diffs = section.get("paired_differentials_kt") or {}
+    sar_stats = diffs.get("sar") if isinstance(diffs, dict) else None
+    if n < threshold and isinstance(sar_stats, dict):
+        if sar_stats.get("mean") is not None:
+            raise ValueError(
+                "Do not plot/emit a mean differential when sample is below threshold."
+            )
+
+
 
 def validate_dashboard_payload(payload: dict[str, Any]) -> None:
     """Validate C7 dashboard payload shape."""
@@ -543,6 +611,9 @@ def validate_current_weather(payload: dict[str, Any]) -> None:
     for key in BUCKET_LABELS:
         if key not in counts:
             raise ValueError(f"bucket_counts missing '{key}'.")
+
+    if "sar_shadow_test" in payload:
+        validate_sar_shadow_payload(payload["sar_shadow_test"])
 
 
 def load_domain(path: Path) -> Domain:

@@ -164,6 +164,9 @@ systematic west-to-east phase drift in the transects — it is real.
   ```
 - Meteorological convention throughout: **direction is where the wind comes
   from**. 0° = from the north.
+- **Exception — Sentinel-1 SAR (C9):** store scalar `wind_speed_ms` only. Do not
+  fabricate `u10`/`v10` from the model prior used in dual-pol inversion;
+  SAR direction is not independent evidence for NWP falsification.
 
 ### Units
 - **Storage layer: SI** (m/s, metres, degrees).

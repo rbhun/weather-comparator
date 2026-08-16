@@ -1149,6 +1149,39 @@
         </p>
       </section>
 
+      <section id="sar-shadow" class="card">
+        <h2>5) Sentinel-1 SAR lee-shadow test</h2>
+        <p class="subnote">
+          Falsification test of the AROME east-Sardinia wind shadow (0–5 nm vs 7.5–10 nm),
+          paired within each SAR scene. Speed only — direction is not independent evidence.
+        </p>
+        <div id="sar-empty" class="help hidden">
+          SAR shadow-test payload is not present. Run <code>python -m pmc.sar analyse --fixture</code>
+          and merge <code>sar_shadow_test</code> into data.json.
+        </div>
+        <div id="sar-body" class="hidden">
+          <div id="sar-verdict" class="skill-stability" role="status"></div>
+          <div id="sar-inventory" class="meta-grid" aria-label="Scene inventory"></div>
+          <p id="sar-sampling" class="chart-note"></p>
+          <div class="grid-2">
+            <div class="plot-wrap">
+              <div id="sar-diff-plot" class="plot short" aria-label="Paired differentials"></div>
+            </div>
+            <div class="plot-wrap">
+              <div id="sar-buffer-plot" class="plot short" aria-label="Buffer sensitivity"></div>
+            </div>
+          </div>
+          <details class="fold">
+            <summary>Three-way table (SAR · AROME · ERA5) and incidence diagnostic</summary>
+            <div id="sar-three-way"></div>
+            <div class="plot-wrap" style="margin-top:0.75rem">
+              <div id="sar-incidence-plot" class="plot short" aria-label="Incidence diagnostic"></div>
+            </div>
+          </details>
+          <p id="sar-control-note" class="help"></p>
+        </div>
+      </section>
+
       <section id="file-loader" class="card">
         <h3>Load data file</h3>
         <p id="file-loader-help" class="help">
@@ -1629,6 +1662,16 @@
         transectSelect: document.getElementById("transect-select"),
         transectPlot: document.getElementById("transect-plot"),
         transectEmpty: document.getElementById("transect-empty"),
+        sarEmpty: document.getElementById("sar-empty"),
+        sarBody: document.getElementById("sar-body"),
+        sarVerdict: document.getElementById("sar-verdict"),
+        sarInventory: document.getElementById("sar-inventory"),
+        sarSampling: document.getElementById("sar-sampling"),
+        sarDiffPlot: document.getElementById("sar-diff-plot"),
+        sarBufferPlot: document.getElementById("sar-buffer-plot"),
+        sarThreeWay: document.getElementById("sar-three-way"),
+        sarIncidencePlot: document.getElementById("sar-incidence-plot"),
+        sarControlNote: document.getElementById("sar-control-note"),
         skillBiasBanner: document.getElementById("skill-bias-banner"),
         skillMeta: document.getElementById("skill-meta"),
         skillStability: document.getElementById("skill-stability"),
@@ -2955,6 +2998,258 @@
         draw();
       }
 
+      function renderSarShadow() {
+        if (!els.sarBody || !els.sarEmpty) return;
+        const sar = state.payload && state.payload.sar_shadow_test;
+        if (!sar || typeof sar !== "object") {
+          els.sarEmpty.classList.remove("hidden");
+          els.sarBody.classList.add("hidden");
+          if (els.sarDiffPlot) {
+            Plotly.purge(els.sarDiffPlot);
+            els.sarDiffPlot.innerHTML = "";
+          }
+          if (els.sarBufferPlot) {
+            Plotly.purge(els.sarBufferPlot);
+            els.sarBufferPlot.innerHTML = "";
+          }
+          if (els.sarIncidencePlot) {
+            Plotly.purge(els.sarIncidencePlot);
+            els.sarIncidencePlot.innerHTML = "";
+          }
+          return;
+        }
+        els.sarEmpty.classList.add("hidden");
+        els.sarBody.classList.remove("hidden");
+
+        const n = Number(sar.n_scenes_retained || 0);
+        const thr = Number(sar.min_scenes_threshold || 15);
+        const verdict = String(sar.verdict || "insufficient sample");
+        const pipelineOk = sar.pipeline_valid !== false;
+        let verdictClass = "skill-stability";
+        if (verdict === "supported" && pipelineOk) verdictClass += "";
+        else if (verdict === "contradicted") verdictClass += " warn";
+        else verdictClass += " warn";
+        els.sarVerdict.className = verdictClass;
+        els.sarVerdict.innerHTML =
+          `<strong>Verdict: ${verdict}</strong>` +
+          ` · retained scenes n=${n} (threshold ${thr})` +
+          (pipelineOk ? "" : " · <strong>pipeline invalid</strong> (control corridor failed — Sardinian mean suppressed)");
+
+        const inv = sar.scene_inventory || {};
+        const byYear = inv.by_year_retained || inv.by_year || {};
+        const yearBits = Object.keys(byYear)
+          .sort()
+          .map((y) => `<div><strong>${y}</strong><span>${byYear[y]} scenes</span></div>`)
+          .join("");
+        els.sarInventory.innerHTML =
+          `<div><strong>Raw scenes</strong><span>${inv.total_raw ?? "—"}</span></div>` +
+          `<div><strong>Retained (both bands)</strong><span>${inv.retained ?? n}</span></div>` +
+          yearBits;
+
+        els.sarSampling.textContent = String(
+          sar.sampling_limitation ||
+            "Sentinel-1 samples near dawn/dusk local; mid-afternoon is largely missed."
+        );
+
+        const diffs = sar.paired_differentials_kt || {};
+        const ctrl = (sar.control && sar.control.paired_differential_kt) || {};
+        const series = [
+          { name: "SAR", key: "sar", color: "#78a6ff" },
+          { name: "AROME", key: "arome", color: "#f0c674" },
+          { name: "ERA5", key: "era5", color: "#b7c4e5" },
+          { name: "Control", stats: ctrl, color: "#9adbc6" },
+        ];
+        const traces = [];
+        const showMeans = n >= thr && pipelineOk && verdict !== "insufficient sample";
+        series.forEach((s) => {
+          const st = s.stats || diffs[s.key] || {};
+          const samples = Array.isArray(st.samples) ? st.samples.map(asNum) : [];
+          if (showMeans && samples.length) {
+            traces.push({
+              type: "box",
+              name: s.name,
+              y: samples,
+              marker: { color: s.color },
+              boxpoints: false,
+              hoverinfo: "skip",
+            });
+          }
+        });
+        if (!showMeans) {
+          // Explicit empty state — do not plot a mean when under-powered.
+          applyPlot(
+            els.sarDiffPlot,
+            [
+              {
+                type: "scatter",
+                x: [0],
+                y: [0],
+                mode: "text",
+                text: [
+                  n < thr
+                    ? `n=${n} < ${thr}: insufficient sample — mean not plotted`
+                    : "Mean suppressed (pipeline invalid or insufficient sample)",
+                ],
+                textfont: { color: "#ffe5a8", size: 14 },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title: "Paired differential (0–5 nm − 7.5–10 nm)",
+              xaxis: { visible: false },
+              yaxis: { visible: false },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        } else {
+          applyPlot(
+            els.sarDiffPlot,
+            traces,
+            {
+              title: "Paired differential (kt) · inshore − offshore",
+              yaxis: { title: "kt (negative = inshore weaker)", zeroline: true, automargin: true },
+              showlegend: true,
+              legend: { orientation: "h", y: 1.12 },
+              margin: { ...plotLayoutBase.margin, t: 72 },
+              annotations: [
+                {
+                  text: "Hypothesis: −3 to −4 kt. CIs via bootstrap on scene pairs.",
+                  showarrow: false,
+                  xref: "paper",
+                  yref: "paper",
+                  x: 0,
+                  y: -0.18,
+                  font: { color: "#b7c4e5", size: 12 },
+                },
+              ],
+            },
+            { noZoom: true }
+          );
+        }
+
+        const buffers = Array.isArray(sar.buffer_sensitivity) ? sar.buffer_sensitivity : [];
+        const bx = buffers.map((b) => asNum(b.buffer_km));
+        const by = buffers.map((b) => (b.mean_kt == null ? null : asNum(b.mean_kt)));
+        const blo = buffers.map((b) => (b.ci95_kt && b.ci95_kt[0] != null ? asNum(b.ci95_kt[0]) : null));
+        const bhi = buffers.map((b) => (b.ci95_kt && b.ci95_kt[1] != null ? asNum(b.ci95_kt[1]) : null));
+        if (buffers.length && by.some((v) => v != null)) {
+          applyPlot(
+            els.sarBufferPlot,
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: bx,
+                y: by,
+                name: "mean",
+                line: { color: "#78a6ff", width: 2 },
+                marker: { size: 9 },
+                error_y: {
+                  type: "data",
+                  symmetric: false,
+                  array: by.map((v, i) => (v == null || bhi[i] == null ? 0 : bhi[i] - v)),
+                  arrayminus: by.map((v, i) => (v == null || blo[i] == null ? 0 : v - blo[i])),
+                  color: "#b7c4e5",
+                },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title: "Land-buffer sensitivity",
+              xaxis: { title: "Buffer (km)", automargin: true },
+              yaxis: { title: "Paired diff (kt)", zeroline: true, automargin: true },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        } else {
+          applyPlot(
+            els.sarBufferPlot,
+            [
+              {
+                type: "scatter",
+                x: bx.length ? bx : [1, 1.5, 2],
+                y: bx.map(() => 0),
+                mode: "markers",
+                marker: { color: "#b7c4e5", size: 8 },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title: "Land-buffer sensitivity (means withheld — insufficient sample)",
+              xaxis: { title: "Buffer (km)" },
+              yaxis: { title: "Paired diff (kt)", zeroline: true },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        }
+
+        const table = Array.isArray(sar.three_way_table) ? sar.three_way_table : [];
+        const rows = table
+          .slice(0, 40)
+          .map((r) => {
+            const fmt = (v) => (v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(2));
+            return `<tr><td>${r.time_utc || "—"}</td><td>${fmt(r.sar_diff_kt)}</td><td>${fmt(
+              r.arome_diff_kt
+            )}</td><td>${fmt(r.era5_diff_kt)}</td></tr>`;
+          })
+          .join("");
+        els.sarThreeWay.innerHTML = `
+          <p class="help">${sar.era5_caveat || "ERA5 is a low-resolution baseline, not truth."}</p>
+          <table>
+            <thead><tr><th>Scene (UTC)</th><th>SAR Δkt</th><th>AROME Δkt</th><th>ERA5 Δkt</th></tr></thead>
+            <tbody>${rows || "<tr><td colspan=4>No retained scenes.</td></tr>"}</tbody>
+          </table>`;
+
+        const inc = sar.incidence_diagnostic || {};
+        const pts = Array.isArray(inc.points) ? inc.points : [];
+        if (pts.length) {
+          applyPlot(
+            els.sarIncidencePlot,
+            [
+              {
+                type: "scatter",
+                mode: "markers",
+                x: pts.map((p) => asNum(p.incidence_delta_deg)),
+                y: pts.map((p) => asNum(p.speed_diff_kt)),
+                marker: { color: "#f0c674", size: 7 },
+                hoverinfo: "skip",
+              },
+            ],
+            {
+              title:
+                "Incidence Δ vs speed Δ" +
+                (inc.corr_incidence_delta_vs_speed_diff == null
+                  ? ""
+                  : ` · corr=${Number(inc.corr_incidence_delta_vs_speed_diff).toFixed(2)}`),
+              xaxis: { title: "Inshore − offshore incidence (°)", automargin: true },
+              yaxis: { title: "Speed paired diff (kt)", zeroline: true, automargin: true },
+              margin: { ...plotLayoutBase.margin, t: 48 },
+            },
+            { noZoom: true }
+          );
+        } else if (els.sarIncidencePlot) {
+          Plotly.purge(els.sarIncidencePlot);
+          els.sarIncidencePlot.innerHTML = "";
+        }
+
+        const cMean = ctrl.mean;
+        const cCi = ctrl.ci95 || [null, null];
+        els.sarControlNote.textContent =
+          `Control (${(sar.control && sar.control.label) || "Tyrrhenian"}): ` +
+          (cMean == null
+            ? "no estimate."
+            : `mean ${Number(cMean).toFixed(2)} kt, 95% CI [${Number(cCi[0]).toFixed(2)}, ${Number(
+                cCi[1]
+              ).toFixed(2)}] kt. `) +
+          (sar.control_indistinguishable_from_zero
+            ? "Indistinguishable from zero — pipeline valid."
+            : "NOT indistinguishable from zero — Sardinian result suppressed.") +
+          (sar.fixture_note ? ` ${sar.fixture_note}` : "");
+      }
+
       function renderSkillTable() {
         renderSkillPage();
       }
@@ -4259,6 +4554,7 @@
         renderHeadToHeadTable();
         renderPointDetail();
         renderTransects();
+        renderSarShadow();
         renderSkillPage();
         if (state.page === "current") renderCurrentWeatherPage();
         if (state.page === "results") renderResultsPage();
