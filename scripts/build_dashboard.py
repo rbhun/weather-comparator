@@ -69,6 +69,103 @@ def _find_live_wind_store() -> Path | None:
     return candidates[-1]
 
 
+def _trim_sar_shadow_payload(section: dict[str, Any]) -> dict[str, Any]:
+    """Keep the dashboard section compact (samples + diagnostic points)."""
+    out = json.loads(json.dumps(section))  # deep copy via JSON
+    diffs = out.get("paired_differentials_kt") or {}
+    for key in ("sar", "arome", "era5"):
+        stats = diffs.get(key)
+        if isinstance(stats, dict) and isinstance(stats.get("samples"), list):
+            stats["samples"] = [round(float(x), 3) for x in stats["samples"]]
+    inc = out.get("incidence_diagnostic") or {}
+    if isinstance(inc.get("points"), list):
+        inc["points"] = inc["points"][:40]
+    table = out.get("three_way_table")
+    if isinstance(table, list):
+        out["three_way_table"] = table[:40]
+    return out
+
+
+def _latest_sar_store() -> Path | None:
+    """Prefer a real cached C10 zarr under data/sar/; else the committed fixture."""
+    data_dir = ROOT / "data" / "sar"
+    if data_dir.exists():
+        candidates = sorted(
+            [p for p in data_dir.glob("*.zarr") if p.is_dir()],
+            key=lambda p: p.stat().st_mtime,
+        )
+        if candidates:
+            return candidates[-1]
+    fixture = ROOT / "contracts" / "fixtures" / "sar_scenes_small.zarr"
+    if fixture.exists():
+        return fixture
+    return None
+
+
+def _build_sar_shadow_section() -> dict[str, Any] | None:
+    """Build or load the optional Historical-weather SAR lee-shadow section."""
+    precomputed = ROOT / "contracts" / "fixtures" / "sar_shadow_test.json"
+    store_path = _latest_sar_store()
+    synthetic_warn = (
+        "SAR lee-shadow section currently embeds the SYNTHETIC fixture "
+        "(injected -3.5 kt lee). Replace with real Copernicus Marine scenes "
+        "before tactical use."
+    )
+
+    def _load_precomputed() -> dict[str, Any] | None:
+        if not precomputed.exists():
+            return None
+        section = json.loads(precomputed.read_text(encoding="utf-8"))
+        section.setdefault("fixture_note", synthetic_warn)
+        return _trim_sar_shadow_payload(section)
+
+    try:
+        from pmc.sar.analyse import analyse_shadow_test
+        from pmc.sar.fetch import load_sar_config, open_sar_store
+    except Exception as exc:  # noqa: BLE001
+        print(f"[WARN] SAR module unavailable ({exc}); trying precomputed JSON.")
+        return _load_precomputed()
+
+    if store_path is None:
+        print("[WARN] No SAR zarr store; using precomputed sar_shadow_test.json")
+        section = _load_precomputed()
+        if section is None:
+            print("[WARN] No SAR store or precomputed payload; omitting sar_shadow_test")
+        return section
+
+    cfg = dict(load_sar_config(ROOT / "config" / "sar.yaml"))
+    # Dashboard rebuilds should stay responsive; full bootstrap is for analyse CLI.
+    cfg["bootstrap_samples"] = min(int(cfg.get("bootstrap_samples", 2000)), 1000)
+
+    sar = None
+    try:
+        sar = open_sar_store(store_path)
+        section = analyse_shadow_test(sar, cfg)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[WARN] SAR analyse failed ({exc}); falling back to precomputed JSON.")
+        return _load_precomputed()
+    finally:
+        if sar is not None:
+            try:
+                sar.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+    is_fixture = "contracts/fixtures" in str(store_path).replace("\\", "/")
+    if is_fixture:
+        section["fixture_note"] = synthetic_warn
+    rel = (
+        store_path.relative_to(ROOT)
+        if store_path.is_relative_to(ROOT)
+        else store_path
+    )
+    print(
+        f"[sar] store={rel} verdict={section.get('verdict')} "
+        f"n={section.get('n_scenes_retained')} fixture={is_fixture}"
+    )
+    return _trim_sar_shadow_payload(section)
+
+
 def _load_polar(path: Path):
     if not path.exists():
         raise FileNotFoundError(f"Polar file not found: {path}")
@@ -524,6 +621,12 @@ def main() -> int:
 
             current_weather = empty_current_weather_payload()
 
+        sar_shadow = _build_sar_shadow_section()
+        if sar_shadow is not None:
+            note = sar_shadow.get("fixture_note")
+            if note and note not in meta["warnings"]:
+                meta["warnings"].append(str(note))
+
         extra = {
             "transects": _format_transects_for_dashboard(transects),
             "leg2_win_rate_by_arrival_hour_local": leg2_hour_rows,
@@ -534,6 +637,8 @@ def main() -> int:
             },
             "current_weather": current_weather,
         }
+        if sar_shadow is not None:
+            extra["sar_shadow_test"] = sar_shadow
         payload_path = report_mod.emit(
             climatology_ds=climatology,
             routes_summary=route_summaries,
