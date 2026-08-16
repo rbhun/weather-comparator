@@ -77,11 +77,18 @@ Caveats:
 1. Prepare payload:
 
    ```bash
-   PYTHONPATH="/workspace/src:/workspace" \
-     python3 -m pmc.report \
-     --input "/workspace/contracts/fixtures/data.json" \
-     --output "/workspace/dashboard/data.json"
+   # Full rebuild from wind/results (includes current_weather + sar_shadow_test)
+   PYTHONPATH="src:." python3 scripts/build_dashboard.py
+
+   # Or normalize an existing JSON:
+   PYTHONPATH="src:." python3 -m pmc.report \
+     --input contracts/fixtures/data.json \
+     --output dashboard/data.json
    ```
+
+   `build_dashboard.py` embeds `sar_shadow_test` automatically: prefers
+   `data/sar/*.zarr`, else analyses the committed SAR fixture, else loads
+   `contracts/fixtures/sar_shadow_test.json`. Fixture use adds a meta warning.
 
    This also writes `dashboard/data.js` so the page can load on `file://`
    without a file picker.
