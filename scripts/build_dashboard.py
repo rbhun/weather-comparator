@@ -500,6 +500,40 @@ def main() -> int:
             if bias_warning not in meta["warnings"]:
                 meta["warnings"].append(bias_warning)
 
+        cw_path = ROOT / "contracts" / "fixtures" / "verify" / "current_weather.json"
+        current_weather = None
+        if cw_path.exists():
+            current_weather = json.loads(cw_path.read_text(encoding="utf-8"))
+        elif (ROOT / "data" / "verify").exists():
+            try:
+                from pmc.verify import build_current_weather_payload, load_verify_config
+
+                vcfg = load_verify_config(
+                    ROOT / "config" / "verify.yaml",
+                    store_dir=ROOT / "data" / "verify",
+                )
+                current_weather = build_current_weather_payload(
+                    ROOT / "data" / "verify",
+                    cfg=vcfg,
+                    stations_yaml=ROOT / "config" / "stations.yaml",
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(f"[WARN] current_weather build failed: {exc}")
+        if current_weather is None:
+            from pmc.verify import empty_current_weather_payload
+
+            current_weather = empty_current_weather_payload()
+
+        extra = {
+            "transects": _format_transects_for_dashboard(transects),
+            "leg2_win_rate_by_arrival_hour_local": leg2_hour_rows,
+            "bonifacio_decision_support": {
+                "label": BONIFACIO_PANEL_LABEL,
+                "entry_point": [bon_entry_point[0], bon_entry_point[1]],
+                "rows": bonifacio_panel_rows,
+            },
+            "current_weather": current_weather,
+        }
         payload_path = report_mod.emit(
             climatology_ds=climatology,
             routes_summary=route_summaries,
@@ -507,15 +541,7 @@ def main() -> int:
             skill_rows=skill_rows,
             meta=meta,
             output_path=output_path,
-            extra_sections={
-                "transects": _format_transects_for_dashboard(transects),
-                "leg2_win_rate_by_arrival_hour_local": leg2_hour_rows,
-                "bonifacio_decision_support": {
-                    "label": BONIFACIO_PANEL_LABEL,
-                    "entry_point": [bon_entry_point[0], bon_entry_point[1]],
-                    "rows": bonifacio_panel_rows,
-                },
-            },
+            extra_sections=extra,
         )
         payload = json.loads(payload_path.read_text(encoding="utf-8"))
         validate_dashboard_payload(payload)

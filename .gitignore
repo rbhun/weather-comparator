@@ -5,6 +5,9 @@ data/**
 !data/skill/
 !data/skill/skill_rows.json
 !data/.gitkeep
+# Runtime live-verification store (fixtures live under contracts/fixtures/verify/)
+!data/verify/
+!data/verify/.gitkeep
 dashboard/data.json
 !dashboard/data.json
 

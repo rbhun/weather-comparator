@@ -1,0 +1,12 @@
+{
+  "instrument": "rfscat_cfosat",
+  "convention": "oceanographic",
+  "product_wind_dir_deg": 135.0,
+  "wind_speed_ms": 18.0,
+  "reference_u10_ms": 12.727922061357859,
+  "reference_v10_ms": -12.727922061357852,
+  "lat": 41.5,
+  "lon": 8.0,
+  "time": "2026-08-10T12:00:00Z",
+  "note": "Independent reference: meteo FROM 315\u00b0 at 18 m/s (mistral)."
+}

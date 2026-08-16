@@ -1,0 +1,23 @@
+{
+  "obs_class": "land_station",
+  "cells": [
+    {
+      "station_id": "LIET",
+      "lat": 39.919,
+      "lon": 9.683,
+      "time": "2026-08-10T10:00:00Z",
+      "mslp_hpa": 1014.0,
+      "obs_u10": 0.0,
+      "obs_v10": -3.0
+    },
+    {
+      "station_id": "LFKF",
+      "lat": 41.502,
+      "lon": 9.098,
+      "time": "2026-08-10T10:00:00Z",
+      "mslp_hpa": 1012.5,
+      "obs_u10": 2.0,
+      "obs_v10": -4.0
+    }
+  ]
+}
