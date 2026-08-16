@@ -7,6 +7,8 @@ parallel against frozen interfaces.
 - `polar_52ft.pol`: fabricated Expedition-style polar (FIXTURE ONLY).
 - `climatology_small.nc`: derived from the synthetic wind cube.
 - `data.json`: C7 dashboard payload fixture.
+- `sar_scenes_small.zarr`: synthetic Sentinel-1 L3 scalar-speed scenes (C9).
+- `sar_shadow_test.json`: optional dashboard section from the SAR fixture.
 
 Do not delete this directory. Removing it breaks parallel development
 for the other agents.
