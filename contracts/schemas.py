@@ -391,9 +391,42 @@ def validate_climatology(climo: xr.Dataset) -> None:
             )
 
 
+LEAD_BUCKETS = ("0-12", "12-24", "24-48", "48-72")
+SPEED_BUCKETS = ("3-8kt", "8-15kt", "15+kt", "sub_3ms", "all")
+OBS_CLASSES = ("scatterometer", "land_station", "sentinel1")
+BUCKET_LABELS = ("headline", "coastal", "light_air", "qc_reject")
+VERIFY_MIN_RANK_N = 30
+VERIFY_LAND_DISTANCE_KM_DEFAULT = 20.0
+VERIFY_LIGHT_AIR_MS = 3.0
+
+# Direction convention after product-family documentation. Do not guess at ingest
+# time — failing the per-instrument fixture test means the table is wrong.
+INSTRUMENT_DIR_CONVENTION: dict[str, str] = {
+    "ascat_metop_b": "meteorological",
+    "ascat_metop_c": "meteorological",
+    "hscat_hy2b": "oceanographic",
+    "hscat_hy2c": "oceanographic",
+    "hscat_hy2d": "oceanographic",
+    "rfscat_cfosat": "oceanographic",
+}
+
+MODELS_ASSIMILATING_SCATTEROMETER = (
+    "ecmwf_ifs",
+    "ecmwf_ifs025",
+    "icon_global",
+    "icon_eu",
+    "arome_france",
+    "arpege_europe",
+)
+MODELS_NON_ASSIMILATING_SCATTEROMETER = (
+    "gfs_global",
+    "ecmwf_aifs025",
+)
+
+
 def validate_dashboard_payload(payload: dict[str, Any]) -> None:
     """Validate C7 dashboard payload shape."""
-    top = {"meta", "climatology", "routes", "head_to_head", "skill"}
+    top = {"meta", "climatology", "routes", "head_to_head", "skill", "current_weather"}
     if not top.issubset(payload.keys()):
         raise ValueError("Dashboard payload missing top-level keys.")
 
@@ -416,6 +449,100 @@ def validate_dashboard_payload(payload: dict[str, Any]) -> None:
         raise ValueError("head_to_head must be a list.")
     if not isinstance(payload["skill"], list):
         raise ValueError("skill must be a list.")
+    validate_current_weather(payload["current_weather"])
+
+
+def validate_current_weather(payload: dict[str, Any]) -> None:
+    """Validate C9 current-weather dashboard section."""
+    required = {
+        "meta",
+        "scorecard",
+        "trend",
+        "residuals",
+        "pressure",
+        "sentinel",
+        "expedition_calibration",
+        "bucket_counts",
+    }
+    if not required.issubset(payload.keys()):
+        missing = sorted(required - set(payload.keys()))
+        raise ValueError(f"current_weather missing keys: {missing}")
+
+    meta = payload["meta"]
+    for key in (
+        "generated_utc",
+        "equivalent_neutral_correction",
+        "min_rank_n",
+        "default_lead_bucket",
+        "circularity_lead_buckets",
+        "models_assimilating_scatterometer",
+        "models_non_assimilating",
+        "warnings",
+    ):
+        if key not in meta:
+            raise ValueError(f"current_weather.meta missing '{key}'.")
+    if meta["default_lead_bucket"] != "48-72":
+        raise ValueError("default_lead_bucket must be '48-72'.")
+    if int(meta["min_rank_n"]) < 1:
+        raise ValueError("min_rank_n must be >= 1.")
+
+    for row in payload["scorecard"]:
+        for key in (
+            "pass_id",
+            "instrument",
+            "model",
+            "lead_bucket",
+            "region",
+            "speed_bucket",
+            "vec_rmse_ms",
+            "vec_rmse_ci95",
+            "speed_bias_ms",
+            "speed_bias_ci95",
+            "dir_mae_deg",
+            "n",
+            "rankable",
+            "circularity_contaminated",
+        ):
+            if key not in row:
+                raise ValueError(f"scorecard row missing '{key}'.")
+        n = int(row["n"])
+        rankable = bool(row["rankable"])
+        if n < int(meta["min_rank_n"]) and rankable:
+            raise ValueError("scorecard row with n < min_rank_n must not be rankable.")
+        if row["lead_bucket"] not in LEAD_BUCKETS and row["lead_bucket"] != "all":
+            raise ValueError(f"Unknown lead_bucket: {row['lead_bucket']}")
+
+    for row in payload["expedition_calibration"]:
+        source = str(row.get("source", ""))
+        if not source.startswith("scatterometer:"):
+            raise ValueError(
+                "expedition_calibration source must be scatterometer-only; "
+                f"got {source!r}"
+            )
+        for key in (
+            "model",
+            "tws_scale_pct",
+            "twd_twist_deg",
+            "n",
+            "tws_scale_ci95",
+            "twd_twist_ci95",
+        ):
+            if key not in row:
+                raise ValueError(f"expedition_calibration row missing '{key}'.")
+
+    pressure = payload["pressure"]
+    for key in ("stations", "mslp_scores", "onset_lags"):
+        if key not in pressure:
+            raise ValueError(f"pressure missing '{key}'.")
+
+    sentinel = payload["sentinel"]
+    if sentinel.get("status") not in {"no_acquisition", "available"}:
+        raise ValueError("sentinel.status must be no_acquisition or available.")
+
+    counts = payload["bucket_counts"]
+    for key in BUCKET_LABELS:
+        if key not in counts:
+            raise ValueError(f"bucket_counts missing '{key}'.")
 
 
 def load_domain(path: Path) -> Domain:

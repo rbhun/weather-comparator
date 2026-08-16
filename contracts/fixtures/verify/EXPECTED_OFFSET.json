@@ -1,0 +1,9 @@
+{
+  "speed_bias_ms": 1.5,
+  "twd_twist_deg": 8.0,
+  "tws_scale_pct": 112.5,
+  "model": "gfs_global",
+  "instrument": "ascat_metop_b",
+  "lead_bucket": "48-72",
+  "n": 40
+}

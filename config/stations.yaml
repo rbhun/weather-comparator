@@ -1,0 +1,66 @@
+# Land stations for MSLP + timing diagnostics only.
+# Wind from these stations never feeds Expedition calibration.
+stations:
+  - id: LICJ
+    name: Punta Raisi
+    lat: 38.181
+    lon: 13.099
+  - id: LICP
+    name: Boccadifalco
+    lat: 38.110
+    lon: 13.313
+  - id: LIEO
+    name: Olbia
+    lat: 40.899
+    lon: 9.518
+  - id: LIET
+    name: Tortoli/Arbatax
+    lat: 39.919
+    lon: 9.683
+    high_value: true
+    note: Sardinian east-coast corridor
+  - id: LIEA
+    name: Alghero
+    lat: 40.632
+    lon: 8.291
+  - id: LIEE
+    name: Cagliari
+    lat: 39.251
+    lon: 9.054
+  - id: LFKF
+    name: Figari
+    lat: 41.502
+    lon: 9.098
+    high_value: true
+    note: Bonifacio gap flow
+  - id: LFKJ
+    name: Ajaccio
+    lat: 41.924
+    lon: 8.803
+  - id: LFKB
+    name: Bastia
+    lat: 42.553
+    lon: 9.484
+  - id: LFKC
+    name: Calvi
+    lat: 42.524
+    lon: 8.793
+  - id: LFMN
+    name: Nice
+    lat: 43.658
+    lon: 7.216
+  - id: LIMJ
+    name: Genova
+    lat: 44.413
+    lon: 8.942
+
+# Thermal onset: first crossing of speed >= threshold with direction in sector.
+thermal_onset:
+  speed_kt: 6.0
+  direction_from_deg_min: 90
+  direction_from_deg_max: 220
+
+gradient_arrival:
+  speed_kt: 12.0
+  direction_from_deg_min: 300
+  direction_from_deg_max: 30

@@ -25,6 +25,20 @@ the strategic question adequately on its own — see A3's brief for why.
 
 ---
 
+## A7 — Live observation verification (Current weather)
+
+Own `src/pmc/verify/` and the **Current weather** dashboard tab.
+
+Scores currently-running forecasts against scatterometer, land-station, and
+Sentinel-1 observations. Contract: **C9**. Develop against
+`contracts/fixtures/verify/`. Do not pool observation classes. Expedition
+calibration is scatterometer 48–72 h only.
+
+Done when: acceptance tests in `tests/test_verify.py` pass, the tab renders
+offline from the fixture payload, and re-ingest is idempotent.
+
+---
+
 ## A1 — Data pipeline
 
 Own `src/pmc/io/`.

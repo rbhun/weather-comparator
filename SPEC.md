@@ -204,6 +204,7 @@ pmc2026/
     follow/              # A3: fixed-track route follower
     route/               # A4: isochrone optimiser
     stats/               # A5: climatology, calm probability, skill
+    verify/              # A7: live obs verification (Current weather)
     report/              # A6: JSON emit
   dashboard/             # A6: single-file HTML
   tests/

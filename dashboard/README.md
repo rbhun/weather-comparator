@@ -4,8 +4,12 @@ Offline tactical dashboard for PMC-2026.
 
 ## What it does
 
-- Thin header tabs: **Historical weather**, **Model skill**, **Historical
-  result** (YB tracks), and **Settings**.
+- Thin header tabs: **Historical weather**, **Current weather**, **Model skill**,
+  **Historical result** (YB tracks), and **Settings**.
+- **Current weather** scores live forecasts against scatterometer / land-station /
+  Sentinel-1 observations (C9). Default lead view is 48–72 h; Expedition
+  calibration is scatterometer-only. Observation JSON dry-run drop target lives
+  on that tab.
 - **Model skill** is its own page: winners by lead, RMSE/bias/direction vs lead
   day, wind-bin and model filters, hide-biased toggle, and a sortable detail
   table. ECMWF/AIFS rows stay visually separated as reference-biased.

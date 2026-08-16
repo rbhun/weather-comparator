@@ -186,12 +186,16 @@ but steady" from "light and random", which are completely different tactically.
     { "model": "gfs_global", "lead_days": 3, "wind_bin": "0-6kt",
       "vec_rmse_kt": 0.0, "speed_bias_kt": 0.0, "dir_mae_deg": 0.0,
       "reference_biased": false }
-  ]
+  ],
+  "current_weather": { /* see C9 */ }
 }
 ```
 
 `reference_biased: true` for every ECMWF/AIFS row. The dashboard must render
 those rows visually distinct and annotated.
+
+`current_weather` is required (C9). Live verification is distinct from
+historical `skill`.
 
 Numbers are rounded to 2 decimals on emit. Keep the file under 20 MB.
 
@@ -222,3 +226,158 @@ def emit(...) -> Path
 
 Signatures are frozen. Add keyword arguments with defaults if you must; never
 change or reorder existing ones.
+
+```python
+# verify (live observation verification — Current weather tab)
+def ingest_observations(path: Path, *, dry_run: bool = False) -> IngestReport
+def run_verification_pass(pass_id: str, cfg: VerifyConfig) -> PassSummary
+def build_current_weather_payload(store_dir: Path) -> dict
+```
+
+---
+
+## C9 — Live observation verification (Current weather)
+
+Distinct from historical model skill (C7 `skill`). Scores **currently-running**
+forecasts against live observations, refreshed ~6-hourly until race start.
+
+### Observation classes — never pooled
+
+| Class | Verifies | Feeds Expedition calibration? |
+|---|---|---|
+| `scatterometer` | Offshore 10 m wind vector | **Yes** — sole operational input |
+| `land_station` | MSLP + thermal/gradient timing | **No** |
+| `sentinel1` | Opportunistic 1 km wind-speed snapshot | **No** — display only |
+
+### Persistence (append-only, idempotent)
+
+`data/verify/collocated.parquet` — raw collocated pairs (recompute metrics
+without re-fetching). Re-ingesting the same source file must insert zero new
+rows (dedupe key below).
+
+```
+pass_id           str
+obs_class         "scatterometer" | "land_station" | "sentinel1"
+instrument        str                 # first-class; never pool across instruments
+source_file_hash  str                 # sha256 of raw bytes
+cell_id           str                 # stable hash of (lat,lon,obs_time,instrument)
+model             str
+run_init          datetime64[ns] UTC
+valid_time        datetime64[ns] UTC  # per-cell observation time
+lead_hours        float32
+lat, lon          float32
+obs_u10, obs_v10  float32             # m/s eastward/northward
+model_u10, model_v10  float32         # m/s
+lead_bucket       "0-12" | "12-24" | "24-48" | "48-72"
+speed_bucket      "3-8kt" | "8-15kt" | "15+kt" | "sub_3ms"
+region            str
+bucket_label      "headline" | "coastal" | "light_air" | "qc_reject"
+land_dist_km      float32
+```
+
+Dedupe key: `(source_file_hash, cell_id, model, run_init, lead_bucket)`.
+
+Aggregate score rows (derived, regenerable) live alongside at
+`data/verify/scores.parquet`, keyed by
+`(pass_id, instrument, model, run_init, lead_bucket, region, speed_bucket)`.
+
+### Direction convention
+
+Per-instrument, explicit, tested. Store only `u10`/`v10` after conversion.
+Meteorological FROM is the internal convention (SPEC §5). Fixtures under
+`contracts/fixtures/verify/instruments/` carry an independently computed
+reference `(u10, v10)` for one unambiguous cell; ingest must match.
+
+### Metrics (components only)
+
+On `u10`/`v10`, never speed/direction pairs between modules:
+
+- Vector RMSE (primary), speed bias (model − obs), direction MAE (circular,
+  only where obs speed ≥ 3 m/s), `n`, bootstrap 95% CI on RMSE and bias.
+
+Display conversion to knots happens exactly once in the dashboard layer.
+
+### Dashboard payload section
+
+`current_weather` key inside C7 `dashboard/data.json` (also via
+`emit(..., extra_sections={"current_weather": ...})`):
+
+```jsonc
+{
+  "meta": {
+    "generated_utc": "...Z",
+    "equivalent_neutral_correction": false,
+    "min_rank_n": 30,
+    "default_lead_bucket": "48-72",
+    "circularity_lead_buckets": ["0-12"],
+    "models_assimilating_scatterometer": ["ecmwf_ifs", "icon_global", "icon_eu", "arome_france", "arpege_europe"],
+    "models_non_assimilating": ["gfs_global", "ecmwf_aifs025"],
+    "warnings": ["..."]
+  },
+  "scorecard": [
+    {
+      "pass_id": "...", "instrument": "ascat_metop_b", "model": "gfs_global",
+      "lead_bucket": "48-72", "region": "all", "speed_bucket": "all",
+      "vec_rmse_ms": 0.0, "vec_rmse_ci95": [0.0, 0.0],
+      "speed_bias_ms": 0.0, "speed_bias_ci95": [0.0, 0.0],
+      "dir_mae_deg": 0.0, "n": 0,
+      "rankable": true, "circularity_contaminated": false
+    }
+  ],
+  "trend": [
+    { "pass_id": "...", "pass_time_utc": "...Z", "model": "...",
+      "instrument": "...", "lead_bucket": "48-72", "vec_rmse_ms": 0.0, "n": 0 }
+  ],
+  "residuals": [
+    { "pass_id": "...", "model": "...", "lat": 0.0, "lon": 0.0,
+      "du_ms": 0.0, "dv_ms": 0.0, "obs_time_utc": "...Z" }
+  ],
+  "pressure": {
+    "stations": [
+      { "id": "LIET", "name": "Arbatax", "lat": 0.0, "lon": 0.0 }
+    ],
+    "mslp_scores": [
+      { "station_id": "LIET", "model": "...", "lead_bucket": "48-72",
+        "bias_hpa": 0.0, "rmse_hpa": 0.0, "n": 0 }
+    ],
+    "onset_lags": [
+      { "station_id": "LIET", "day_utc": "2026-08-10", "model": "...",
+        "obs_onset_utc": "...Z", "model_onset_utc": "...Z",
+        "lag_minutes": 0, "kind": "thermal" }
+    ]
+  },
+  "sentinel": {
+    "status": "no_acquisition" | "available",
+    "acquisition_utc": null,
+    "footprint": null,
+    "speed_field": null,
+    "model_speed_fields": []
+  },
+  "expedition_calibration": [
+    {
+      "model": "gfs_global",
+      "tws_scale_pct": 100.0,
+      "twd_twist_deg": 0.0,
+      "n": 0,
+      "tws_scale_ci95": [100.0, 100.0],
+      "twd_twist_ci95": [0.0, 0.0],
+      "source": "scatterometer:48-72"
+    }
+  ],
+  "bucket_counts": {
+    "headline": 0, "coastal": 0, "light_air": 0, "qc_reject": 0
+  }
+}
+```
+
+Rules enforced by validators and tests:
+
+1. `expedition_calibration[].source` must start with `scatterometer:`.
+2. Land-station and Sentinel paths must be structurally unable to write
+   calibration rows.
+3. Rows with `n < min_rank_n` have `rankable: false`.
+4. Lead bucket `0-12` has `circularity_contaminated: true` for assimilating
+   models; default UI view is `48-72`.
+
+Fixture: `contracts/fixtures/verify/current_weather.json` plus per-instrument
+NetCDF cells under `contracts/fixtures/verify/instruments/`.

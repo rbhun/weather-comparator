@@ -1,0 +1,2525 @@
+{
+  "meta": {
+    "generated_utc": "2026-08-10T18:00:00Z",
+    "equivalent_neutral_correction": false,
+    "min_rank_n": 30,
+    "default_lead_bucket": "48-72",
+    "circularity_lead_buckets": [
+      "0-12"
+    ],
+    "models_assimilating_scatterometer": [
+      "ecmwf_ifs",
+      "ecmwf_ifs025",
+      "icon_global",
+      "icon_eu",
+      "arome_france",
+      "arpege_europe"
+    ],
+    "models_non_assimilating": [
+      "gfs_global",
+      "ecmwf_aifs025"
+    ],
+    "warnings": [
+      "0\u201312 h scatterometer scores are assimilation-contaminated for IFS, ICON, AROME and ARPEGE \u2014 they measure assimilation, not skill.",
+      "48\u201372 h is the decision-relevant lead bucket (default view).",
+      "Expedition calibration uses scatterometer 48\u201372 h only; land stations and Sentinel-1 cannot contribute.",
+      "Equivalent-neutral correction: not applied."
+    ]
+  },
+  "scorecard": [
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "ascat_metop_b",
+      "model": "ecmwf_ifs",
+      "lead_bucket": "48-72",
+      "region": "other",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 15,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "ascat_metop_b",
+      "model": "ecmwf_ifs",
+      "lead_bucket": "48-72",
+      "region": "tyrrhenian_open",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 25,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "ascat_metop_b",
+      "model": "gfs_global",
+      "lead_bucket": "48-72",
+      "region": "other",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 15,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "ascat_metop_b",
+      "model": "gfs_global",
+      "lead_bucket": "48-72",
+      "region": "tyrrhenian_open",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 25,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "hscat_hy2b",
+      "model": "ecmwf_ifs",
+      "lead_bucket": "48-72",
+      "region": "other",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 3,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "hscat_hy2b",
+      "model": "ecmwf_ifs",
+      "lead_bucket": "48-72",
+      "region": "tyrrhenian_open",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 7,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "hscat_hy2b",
+      "model": "gfs_global",
+      "lead_bucket": "48-72",
+      "region": "other",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 3,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "hscat_hy2b",
+      "model": "gfs_global",
+      "lead_bucket": "48-72",
+      "region": "tyrrhenian_open",
+      "speed_bucket": "15+kt",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 7,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "ascat_metop_b",
+      "model": "ecmwf_ifs",
+      "lead_bucket": "48-72",
+      "region": "all",
+      "speed_bucket": "all",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 40,
+      "rankable": true,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "ascat_metop_b",
+      "model": "gfs_global",
+      "lead_bucket": "48-72",
+      "region": "all",
+      "speed_bucket": "all",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 40,
+      "rankable": true,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "hscat_hy2b",
+      "model": "ecmwf_ifs",
+      "lead_bucket": "48-72",
+      "region": "all",
+      "speed_bucket": "all",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 10,
+      "rankable": false,
+      "circularity_contaminated": false
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "instrument": "hscat_hy2b",
+      "model": "gfs_global",
+      "lead_bucket": "48-72",
+      "region": "all",
+      "speed_bucket": "all",
+      "vec_rmse_ms": 2.3245,
+      "vec_rmse_ci95": [
+        2.3245,
+        2.3245
+      ],
+      "speed_bias_ms": 1.5,
+      "speed_bias_ci95": [
+        1.5,
+        1.5
+      ],
+      "dir_mae_deg": 8.0,
+      "n": 10,
+      "rankable": false,
+      "circularity_contaminated": false
+    }
+  ],
+  "trend": [
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "instrument": "ascat_metop_b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 15
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "instrument": "ascat_metop_b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 25
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "instrument": "ascat_metop_b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 15
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "instrument": "ascat_metop_b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 25
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "instrument": "hscat_hy2b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 3
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "instrument": "hscat_hy2b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 7
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "instrument": "hscat_hy2b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 3
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "instrument": "hscat_hy2b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 7
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "instrument": "ascat_metop_b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 40
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "instrument": "ascat_metop_b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 40
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "instrument": "hscat_hy2b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 10
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "pass_time_utc": "2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "instrument": "hscat_hy2b",
+      "lead_bucket": "48-72",
+      "vec_rmse_ms": 2.3245,
+      "n": 10
+    }
+  ],
+  "residuals": [
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.0,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.0,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.25,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.25,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.5,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.5,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.5,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.5,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.5,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.5,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.5,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.5,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.75,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.75,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.75,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.75,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.75,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.75,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 40.75,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 40.75,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.0,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.0,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.0,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.0,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.0,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.0,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.0,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.0,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.0,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.25,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.25,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.25,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.25,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.25,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.25,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.25,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.25,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.25,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.5,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.5,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.5,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.5,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.5,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.5,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.5,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.5,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.5,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.75,
+      "lon": 11.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.75,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.75,
+      "lon": 11.25,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.75,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.75,
+      "lon": 11.5,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.75,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.75,
+      "lon": 11.75,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "gfs_global",
+      "lat": 41.75,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    },
+    {
+      "pass_id": "pass-2026-08-10T12:00:00Z",
+      "model": "ecmwf_ifs",
+      "lat": 41.75,
+      "lon": 12.0,
+      "du_ms": 0.3607778549194336,
+      "dv_ms": 2.296298027038574,
+      "obs_time_utc": "2026-08-10T12:00:00Z"
+    }
+  ],
+  "pressure": {
+    "stations": [
+      {
+        "id": "LICJ",
+        "name": "Punta Raisi",
+        "lat": 38.181,
+        "lon": 13.099,
+        "high_value": false
+      },
+      {
+        "id": "LICP",
+        "name": "Boccadifalco",
+        "lat": 38.11,
+        "lon": 13.313,
+        "high_value": false
+      },
+      {
+        "id": "LIEO",
+        "name": "Olbia",
+        "lat": 40.899,
+        "lon": 9.518,
+        "high_value": false
+      },
+      {
+        "id": "LIET",
+        "name": "Tortoli/Arbatax",
+        "lat": 39.919,
+        "lon": 9.683,
+        "high_value": true
+      },
+      {
+        "id": "LIEA",
+        "name": "Alghero",
+        "lat": 40.632,
+        "lon": 8.291,
+        "high_value": false
+      },
+      {
+        "id": "LIEE",
+        "name": "Cagliari",
+        "lat": 39.251,
+        "lon": 9.054,
+        "high_value": false
+      },
+      {
+        "id": "LFKF",
+        "name": "Figari",
+        "lat": 41.502,
+        "lon": 9.098,
+        "high_value": true
+      },
+      {
+        "id": "LFKJ",
+        "name": "Ajaccio",
+        "lat": 41.924,
+        "lon": 8.803,
+        "high_value": false
+      },
+      {
+        "id": "LFKB",
+        "name": "Bastia",
+        "lat": 42.553,
+        "lon": 9.484,
+        "high_value": false
+      },
+      {
+        "id": "LFKC",
+        "name": "Calvi",
+        "lat": 42.524,
+        "lon": 8.793,
+        "high_value": false
+      },
+      {
+        "id": "LFMN",
+        "name": "Nice",
+        "lat": 43.658,
+        "lon": 7.216,
+        "high_value": false
+      },
+      {
+        "id": "LIMJ",
+        "name": "Genova",
+        "lat": 44.413,
+        "lon": 8.942,
+        "high_value": false
+      }
+    ],
+    "mslp_scores": [
+      {
+        "station_id": "LFKF",
+        "model": "gfs_global",
+        "lead_bucket": "48-72",
+        "bias_hpa": 2.5,
+        "rmse_hpa": 2.5,
+        "n": 1,
+        "rankable": false
+      },
+      {
+        "station_id": "LIET",
+        "model": "gfs_global",
+        "lead_bucket": "48-72",
+        "bias_hpa": 1.0,
+        "rmse_hpa": 1.0,
+        "n": 1,
+        "rankable": false
+      }
+    ],
+    "onset_lags": []
+  },
+  "sentinel": {
+    "status": "available",
+    "acquisition_utc": "2026-08-10T05:12:00Z",
+    "footprint": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            9.7,
+            39.5
+          ],
+          [
+            10.3,
+            39.5
+          ],
+          [
+            10.3,
+            41.0
+          ],
+          [
+            9.7,
+            41.0
+          ],
+          [
+            9.7,
+            39.5
+          ]
+        ]
+      ]
+    },
+    "speed_field": {
+      "lat": [
+        39.5,
+        39.55,
+        39.6,
+        39.65,
+        39.7,
+        39.75,
+        39.8,
+        39.85,
+        39.9,
+        39.95,
+        40.0,
+        40.05,
+        40.1,
+        40.15,
+        40.2,
+        40.25,
+        40.3,
+        40.35,
+        40.4,
+        40.45,
+        40.5,
+        40.55,
+        40.6,
+        40.65,
+        40.7,
+        40.75,
+        40.8,
+        40.85,
+        40.9,
+        40.95
+      ],
+      "lon": [
+        9.7,
+        9.75,
+        9.8,
+        9.85,
+        9.9,
+        9.95,
+        10.0,
+        10.05,
+        10.1,
+        10.15,
+        10.2,
+        10.25,
+        10.3
+      ],
+      "speed_ms": [
+        [
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0
+        ],
+        [
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4
+        ],
+        [
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8
+        ],
+        [
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2
+        ],
+        [
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6
+        ],
+        [
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0
+        ],
+        [
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4
+        ],
+        [
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8
+        ],
+        [
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2
+        ],
+        [
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6
+        ],
+        [
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0
+        ],
+        [
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4
+        ],
+        [
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8
+        ],
+        [
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2
+        ],
+        [
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6
+        ],
+        [
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0
+        ],
+        [
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4
+        ],
+        [
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8
+        ],
+        [
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2
+        ],
+        [
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6
+        ],
+        [
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0
+        ],
+        [
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4
+        ],
+        [
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8
+        ],
+        [
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2
+        ],
+        [
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6
+        ],
+        [
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0,
+          6.2,
+          6.4,
+          6.0
+        ],
+        [
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4,
+          6.6000000000000005,
+          6.800000000000001,
+          6.4
+        ],
+        [
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8,
+          7.0,
+          7.2,
+          6.8
+        ],
+        [
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2,
+          7.4,
+          7.6000000000000005,
+          7.2
+        ],
+        [
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6,
+          7.8,
+          8.0,
+          7.6
+        ]
+      ]
+    },
+    "model_speed_fields": [
+      {
+        "model": "gfs_global",
+        "valid_time_utc": "2026-08-10T06:00:00Z",
+        "lat": [
+          39.5,
+          39.55,
+          39.6,
+          39.65,
+          39.7,
+          39.75,
+          39.8,
+          39.85,
+          39.9,
+          39.95,
+          40.0,
+          40.05,
+          40.1,
+          40.15,
+          40.2,
+          40.25,
+          40.3,
+          40.35,
+          40.4,
+          40.45,
+          40.5,
+          40.55,
+          40.6,
+          40.65,
+          40.7,
+          40.75,
+          40.8,
+          40.85,
+          40.9,
+          40.95
+        ],
+        "lon": [
+          9.7,
+          9.75,
+          9.8,
+          9.85,
+          9.9,
+          9.95,
+          10.0,
+          10.05,
+          10.1,
+          10.15,
+          10.2,
+          10.25,
+          10.3
+        ],
+        "speed_ms": [
+          [
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5
+          ],
+          [
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8
+          ],
+          [
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1
+          ],
+          [
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4
+          ],
+          [
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7
+          ],
+          [
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5
+          ],
+          [
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8
+          ],
+          [
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1
+          ],
+          [
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4
+          ],
+          [
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7
+          ],
+          [
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5
+          ],
+          [
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8
+          ],
+          [
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1
+          ],
+          [
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4
+          ],
+          [
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7
+          ],
+          [
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5
+          ],
+          [
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8
+          ],
+          [
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1
+          ],
+          [
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4
+          ],
+          [
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7
+          ],
+          [
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5
+          ],
+          [
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8
+          ],
+          [
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1
+          ],
+          [
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4
+          ],
+          [
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7
+          ],
+          [
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5,
+            6.5
+          ],
+          [
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8,
+            6.8
+          ],
+          [
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1,
+            7.1
+          ],
+          [
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4,
+            7.4
+          ],
+          [
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7,
+            7.7
+          ]
+        ]
+      }
+    ]
+  },
+  "expedition_calibration": [
+    {
+      "model": "ecmwf_ifs",
+      "instrument": "ascat_metop_b",
+      "tws_scale_pct": 112.5,
+      "twd_twist_deg": 8.0,
+      "n": 40,
+      "tws_scale_ci95": [
+        112.5,
+        112.5
+      ],
+      "twd_twist_ci95": [
+        8.0,
+        8.0
+      ],
+      "source": "scatterometer:ascat_metop_b:48-72"
+    },
+    {
+      "model": "ecmwf_ifs",
+      "instrument": "hscat_hy2b",
+      "tws_scale_pct": 112.5,
+      "twd_twist_deg": 8.0,
+      "n": 10,
+      "tws_scale_ci95": [
+        112.5,
+        112.5
+      ],
+      "twd_twist_ci95": [
+        8.0,
+        8.0
+      ],
+      "source": "scatterometer:hscat_hy2b:48-72"
+    },
+    {
+      "model": "gfs_global",
+      "instrument": "ascat_metop_b",
+      "tws_scale_pct": 112.5,
+      "twd_twist_deg": 8.0,
+      "n": 40,
+      "tws_scale_ci95": [
+        112.5,
+        112.5
+      ],
+      "twd_twist_ci95": [
+        8.0,
+        8.0
+      ],
+      "source": "scatterometer:ascat_metop_b:48-72"
+    },
+    {
+      "model": "gfs_global",
+      "instrument": "hscat_hy2b",
+      "tws_scale_pct": 112.5,
+      "twd_twist_deg": 8.0,
+      "n": 10,
+      "tws_scale_ci95": [
+        112.5,
+        112.5
+      ],
+      "twd_twist_ci95": [
+        8.0,
+        8.0
+      ],
+      "source": "scatterometer:hscat_hy2b:48-72"
+    }
+  ],
+  "bucket_counts": {
+    "headline": 100,
+    "coastal": 0,
+    "light_air": 0,
+    "qc_reject": 0
+  }
+}

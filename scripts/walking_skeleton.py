@@ -189,6 +189,10 @@ def main() -> int:
                 "reference_biased": False,
             },
         ]
+        import json as _json
+
+        cw_path = ROOT / "contracts" / "fixtures" / "verify" / "current_weather.json"
+        current_weather = _json.loads(cw_path.read_text(encoding="utf-8"))
         return report_mod.emit(
             climatology_ds=climo,
             routes_summary=route_summaries,
@@ -196,6 +200,7 @@ def main() -> int:
             skill_rows=skill_rows,
             meta=meta,
             output_path=payload_path,
+            extra_sections={"current_weather": current_weather},
         )
 
     output = run_stage("emit dashboard payload", _emit)

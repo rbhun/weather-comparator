@@ -1,0 +1,41 @@
+# Live observation verification (Current weather tab)
+land_distance_km: 20.0
+light_air_ms: 3.0
+thin_grid_deg: 0.25
+max_points_per_pass: 400
+time_tolerance_minutes: 30
+equivalent_neutral_correction: false
+equivalent_neutral_delta_ms: 0.2
+min_rank_n: 30
+default_lead_bucket: "48-72"
+bootstrap_samples: 500
+bootstrap_seed: 20260816
+
+models:
+  - ecmwf_ifs
+  - ecmwf_aifs025
+  - icon_global
+  - icon_eu
+  - gfs_global
+  - arome_france
+  - arpege_europe
+
+lead_buckets:
+  - [0, 12, "0-12"]
+  - [12, 24, "12-24"]
+  - [24, 48, "24-48"]
+  - [48, 72, "48-72"]
+
+regions:
+  tyrrhenian_open:
+    lat: [38.5, 41.0]
+    lon: [10.5, 14.0]
+  sardinia_east_corridor:
+    lat: [39.0, 41.2]
+    lon: [9.6, 10.8]
+  bonifacio_approach:
+    lat: [40.8, 41.6]
+    lon: [8.5, 9.8]
+  ligurian:
+    lat: [42.5, 44.0]
+    lon: [6.5, 10.0]
