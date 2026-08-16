@@ -56,13 +56,18 @@ def main() -> int:
     n_routes = run_stage("assert all routes pass gate", _assert_routes)
     print(f"  routes checked: {n_routes}")
 
-    wind_path = io_mod.fetch_wind(
-        source="analysis",
-        start=course.start_time_utc.date(),
-        end=course.start_time_utc.date(),
-        cfg=domain,
-    )
-    wind_path_abs = ROOT / wind_path
+    wind_path = ROOT / "contracts" / "fixtures" / "wind_small.zarr"
+    try:
+        fetched = io_mod.fetch_wind(
+            source="analysis",
+            start=course.start_time_utc.date(),
+            end=course.start_time_utc.date(),
+            cfg=domain,
+        )
+        wind_path = ROOT / fetched if not Path(fetched).is_absolute() else Path(fetched)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[INFO] fetch_wind unavailable ({exc}); using fixture wind store.")
+    wind_path_abs = wind_path
     wind = run_stage("open fixture wind zarr", lambda: xr.open_zarr(wind_path_abs, consolidated=True))
     run_stage("validate C1 wind store", lambda: validate_wind_store(wind))
 
@@ -153,7 +158,7 @@ def main() -> int:
                     "stall_rate": float(results[route.id]["stalled"].mean()),
                 }
             )
-        payload_path = ROOT / "dashboard" / "data.json"
+        payload_path = ROOT / "contracts" / "fixtures" / "skeleton_data.json"
         meta = {
             "generated_utc": pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ"),
             "display_timezone": course.display_timezone,
@@ -200,6 +205,27 @@ def main() -> int:
 
     output = run_stage("emit dashboard payload", _emit)
     print(f"  emitted: {output.relative_to(ROOT)}")
+
+    def _sar_shadow_fixture():
+        from pmc.sar.fetch import open_sar_store, load_sar_config
+        from pmc.sar.analyse import analyse_shadow_test
+
+        sar_path = ROOT / "contracts" / "fixtures" / "sar_scenes_small.zarr"
+        if not sar_path.exists():
+            raise FileNotFoundError(f"Missing SAR fixture {sar_path}")
+        cfg = load_sar_config()
+        cfg = dict(cfg)
+        cfg["bootstrap_samples"] = 200
+        cfg["min_scenes_threshold"] = 10
+        result = analyse_shadow_test(open_sar_store(sar_path), cfg)
+        if result["n_scenes_retained"] < 1:
+            raise ValueError("SAR fixture retained zero scenes")
+        if result["verdict"] not in {"supported", "contradicted", "insufficient sample"}:
+            raise ValueError(f"Unexpected SAR verdict: {result['verdict']}")
+        return result["verdict"], result["n_scenes_retained"]
+
+    verdict, n_sar = run_stage("SAR lee-shadow fixture analysis", _sar_shadow_fixture)
+    print(f"  SAR verdict={verdict} n={n_sar}")
 
     stubs = [
         "pmc.io.fetch_wind (returns fixture path)",

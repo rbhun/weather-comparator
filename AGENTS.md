@@ -236,3 +236,19 @@ Design constraints — the reader is exhausted, on a moving boat, at night:
 Done when: it opens offline on a machine that has never seen the project,
 renders the fixture data, and someone who has not read this document can find
 the calm-risk map without being told where it is.
+
+---
+
+## SAR — Sentinel-1 lee-shadow falsification
+
+Own `src/pmc/sar/` and `config/sar.yaml`. Optional C9 contract.
+
+Falsification test of the AROME HD finding that the Sardinian east coast has a
+3–4 kt wind shadow inside 5 nm vs 7.5–10 nm. Uses Copernicus Marine Sentinel-1
+L3 **speed only** (no direction). Paired within-scene differencing is
+mandatory; a Tyrrhenian control corridor must be ~zero or the pipeline
+invalidates itself. Dashboard section on Historical weather (not a new tab).
+Verdicts: `supported` | `contradicted` | `insufficient sample`.
+
+Done when: acceptance tests in `tests/test_sar.py` pass, fixture analysis runs
+offline, and the dashboard renders `sar_shadow_test` without network calls.

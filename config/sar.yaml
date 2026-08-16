@@ -1,0 +1,65 @@
+# Sentinel-1 SAR lee-shadow falsification test configuration.
+# Hypothesis registered before analysis: mean wind in the 0–5 nm band is
+# 3–4 kt lower than in the 7.5–10 nm band within the same scene.
+
+product_id: "cmems_obs-wind_glo_phy_my_l3-s1_P1D-m"
+cache_dir: "data/sar"
+
+# Augusts covered by the multi-year archive (S1A workhorse; S1B failed Dec 2021).
+years: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+months: [8]
+
+# Paired bands (nautical miles from coastline / virtual coast).
+bands_nm:
+  - [0.0, 5.0]
+  - [5.0, 7.5]
+  - [7.5, 10.0]
+  - [10.0, 20.0]
+inshore_band_nm: [0.0, 5.0]
+offshore_band_nm: [7.5, 10.0]
+
+# Land spillover buffer. Sensitivity is reported across all listed values;
+# primary analysis uses default_buffer_km.
+default_buffer_km: 1.5
+buffer_sensitivity_km: [1.0, 1.5, 2.0]
+
+# Surfactant / slick confounder: re-run excluding retrievals below this speed.
+low_speed_exclude_ms: 3.0
+
+# Minimum retained scenes before a mean differential may be plotted / claimed.
+min_scenes_threshold: 15
+
+# Bootstrap CI for the paired-difference mean.
+bootstrap_samples: 2000
+bootstrap_seed: 20260816
+control_zero_alpha: 0.05
+
+# Sardinian east-coast study corridor (real distance-to-coast).
+sardinia_corridor:
+  id: sardinia_east
+  label: "Sardinian east coast"
+  lat_min: 39.2
+  lat_max: 41.15
+  lon_min: 9.4
+  lon_max: 10.6
+
+# Open-water control: same band widths measured from a virtual N–S coast line
+# in the Tyrrhenian, far from Sardinia and Sicily. Any non-zero differential
+# here is an artefact of retrieval or band geometry.
+control_corridor:
+  id: tyrrhenian_control
+  label: "Tyrrhenian open-water control"
+  lat_min: 39.5
+  lat_max: 41.0
+  lon_min: 11.8
+  lon_max: 13.2
+  virtual_coast_lon: 11.8
+
+# Registered prediction (kt). Used only for verdict wording, not as a prior.
+hypothesis_diff_kt:
+  low: -4.0
+  high: -3.0
+
+# Copernicus Marine credentials via env (never commit):
+# COPERNICUSMARINE_USERNAME / COPERNICUSMARINE_PASSWORD
+# or COPERNICUSMARINE_SERVICE_USERNAME / COPERNICUSMARINE_SERVICE_PASSWORD

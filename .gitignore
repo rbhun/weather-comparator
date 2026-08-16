@@ -24,3 +24,5 @@ __pycache__/
 .venv/
 # Keep committed fixtures (fabricated polar_52ft.pol is OK to publish)
 !contracts/fixtures/**
+contracts/fixtures/skeleton_data.json
+contracts/fixtures/skeleton_data.js

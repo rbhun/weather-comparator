@@ -216,9 +216,52 @@ def optimise(wind, polar, start, course: Course) -> RouteResult
 # stats
 def climatology(wind: xr.Dataset, months: list[int]) -> xr.Dataset
 def head_to_head(results: dict[str, pd.DataFrame]) -> pd.DataFrame
+# sar
+def analyse_shadow_test(sar: xr.Dataset, cfg: dict | None = None) -> dict
 # report
 def emit(...) -> Path
 ```
 
 Signatures are frozen. Add keyword arguments with defaults if you must; never
 change or reorder existing ones.
+
+---
+
+## C9 — SAR scalar wind speed store
+
+Sentinel-1 L3 wind from Copernicus Marine Wind TAC. **Speed only.** The
+dual-pol inversion uses a model-derived a priori wind to constrain direction,
+so SAR direction is not independent evidence and must never appear in this
+store or be used to test a model-derived hypothesis.
+
+Zarr (or NetCDF) on disk at `data/sar/{product}.zarr`.
+
+```
+dims:      scene, lat, lon
+coords:
+  scene     int32, 0..n-1
+  time      datetime64[ns], UTC, one valid time per scene (aligned on scene)
+  lat       float32, ascending
+  lon       float32, ascending
+vars:
+  wind_speed_ms   float32 (scene, lat, lon)   m/s, scalar 10 m equivalent
+  incidence_deg   float32 (scene, lat, lon)   SAR incidence angle
+  quality_flag    int8    (scene, lat, lon)   0 = usable; non-zero = discard
+attrs:
+  source            "sentinel1_l3_cmems"
+  product_id        str
+  fetched_utc       ISO 8601
+  direction_policy  "speed_only_no_direction"
+  units_note        "wind_speed_ms is SI; analysis layer converts to knots once"
+```
+
+Land / invalid retrievals are NaN in `wind_speed_ms`. Do **not** invent `u10` /
+`v10` from a model prior — that would reintroduce the dependency this store
+exists to break.
+
+Fixture: `contracts/fixtures/sar_scenes_small.zarr` — synthetic August scenes
+over the Sardinian east-coast corridor and a Tyrrhenian control corridor, with
+known paired differentials for offline tests.
+
+Dashboard payload optional section: `sar_shadow_test` (see module README). The
+C7 validator accepts it as an optional top-level key; absence is valid.

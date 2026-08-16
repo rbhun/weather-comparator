@@ -15,7 +15,12 @@ Offline tactical dashboard for PMC-2026.
   Selection of those fields comes later. Create the free GoatCounter site
   `rbhun-pmc` once at goatcounter.com so the Settings link has data.
 - Renders a single-file HTML dashboard from `dashboard/data.json`.
-- Shows calm-risk heatmap (`p_below_5kt`) with route overlays.
+- Shows cross-shore transects when present.
+- **Sentinel-1 SAR lee-shadow test** (Historical weather §5): paired
+  within-scene falsification of the AROME east-Sardinia wind shadow. Renders
+  scene inventory first; verdict is `supported` / `contradicted` /
+  `insufficient sample`. Below `min_scenes_threshold` no mean is plotted.
+  Payload key: `sar_shadow_test` (optional).
 - Renders a pre-cached OpenStreetMap base map (CARTO Voyager tiles) plus an
   OpenSeaMap seamark overlay beneath the calm-risk heatmap, from local raster
   tiles in `dashboard/tiles/` (no network needed at render time).
