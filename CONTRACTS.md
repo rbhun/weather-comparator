@@ -361,7 +361,7 @@ Display conversion to knots happens exactly once in the dashboard layer.
       "n": 0,
       "tws_scale_ci95": [100.0, 100.0],
       "twd_twist_ci95": [0.0, 0.0],
-      "source": "scatterometer:48-72"
+      "source": "scatterometer:ascat_metop_b:48-72"
     }
   ],
   "bucket_counts": {
